@@ -331,6 +331,12 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 // ─────────────────────────────────────────────────────────────────────────
 const API_BASE = 'http://localhost:5000';
 const MOCK = new URLSearchParams(location.search).has('mock'); // ?mock=1 for offline/demo rendering with fixture data
+// ?mock=1&synth=1 additionally simulates a deployment running on synthetic
+// data (provenance is a response-level field per the contract, not
+// per-corridor, so this flips it for every mock endpoint at once — and also
+// switches the fixture data generator to the old inflated formula that
+// produced the up-to-0.92 values the real synthetic generator produced).
+const FORCE_SYNTHETIC = MOCK && new URLSearchParams(location.search).has('synth');
 
 // ─────────────────────────────────────────────────────────────────────────
 // STATE
@@ -346,16 +352,29 @@ let apiReachable = null;      // null=unknown, true/false
 let corridorsFailed = false;
 
 // ─────────────────────────────────────────────────────────────────────────
-// LABEL / COLOR — derived from the documented thresholds in api_contract.md
-// (<0.35 Free, <0.60 Moderate, <0.80 Heavy, else Severe). Server-provided
-// `label` is always preferred when a response includes one.
+// LABEL / COLOR — derived from the documented thresholds in api_contract.md.
+// RECALIBRATED 2026-08-16: real bootstrap data peaks at 0.435, so the old
+// 0.35/0.60/0.80 bands (tuned to synthetic data that ran up to 0.92) made
+// Heavy/Severe unreachable and painted every corridor "Free". Must match
+// the server exactly or a bar's colour will contradict its own label text.
+// Server-provided `label` is always preferred when a response includes one;
+// this is only the client-side derivation for values without one attached
+// (e.g. points inside an /advice profile array).
 // ─────────────────────────────────────────────────────────────────────────
-function labelFor(v){ return v<0.35?'Free':v<0.60?'Moderate':v<0.80?'Heavy':'Severe'; }
-function colorFor(v){ return v<0.35?'var(--green)':v<0.60?'var(--amber)':v<0.80?'var(--orange)':'var(--magenta)'; }
+function labelFor(v){ return v<0.091?'Free':v<0.200?'Moderate':v<0.310?'Heavy':'Severe'; }
+function colorFor(v){ return v<0.091?'var(--green)':v<0.200?'var(--amber)':v<0.310?'var(--orange)':'var(--magenta)'; }
 function colorForLabel(l){ return l==='Free'?'var(--green)':l==='Moderate'?'var(--amber)':l==='Heavy'?'var(--orange)':'var(--magenta)'; }
-function badgeBg(v){ return v<0.35?'rgba(0,255,157,0.1)':v<0.6?'rgba(255,184,0,0.1)':v<0.8?'rgba(255,140,0,0.1)':'rgba(255,45,107,0.1)'; }
+function badgeBg(v){ return v<0.091?'rgba(0,255,157,0.1)':v<0.200?'rgba(255,184,0,0.1)':v<0.310?'rgba(255,140,0,0.1)':'rgba(255,45,107,0.1)'; }
 function pad2(n){ return String(n).padStart(2,'0'); }
 function fmtHour(h){ return pad2(((h%24)+24)%24) + ':00'; }
+
+// Real congestion_index values cluster 0–0.435 (documented peak), not 0–1.
+// Bar widths / chart bar heights are VISUAL elements — rescale them to this
+// realistic ceiling so the map/sidebar actually differentiate hours instead
+// of every bar looking short and washed out. Labels/thresholds above stay
+// on the absolute contract scale; only pixel/percent sizing uses this.
+const VISUAL_MAX = 0.45;
+function visualFrac(v){ return Math.max(0, Math.min(1, v / VISUAL_MAX)); }
 
 // ─────────────────────────────────────────────────────────────────────────
 // MOCK FIXTURES (only used with ?mock=1 — lets the UI be verified without a
@@ -371,9 +390,30 @@ const MOCK_CORRIDORS = [
   {id:6,name:"Mehrauli-Gurgaon Road",sub:"Ghitorni -> IFFCO Chowk",road_class:"arterial",start:[28.50,77.15],end:[28.47233,77.07242],length_km:9.5},
   {id:7,name:"Southern Peripheral Road",sub:"Rajiv Chowk -> Sohna",road_class:"arterial",start:[28.39328,77.04842],end:[28.35,77.02],length_km:11.0},
 ];
-function mockProfile(cid, day){
+// Realistic generator: matches the real bootstrap sweep's documented range
+// (peak 0.435). Produces visible Free/Moderate/Heavy/Severe variation across
+// the day under the recalibrated thresholds instead of clustering at "Free".
+function mockProfileReal(cid, day){
   const rc = MOCK_CORRIDORS[cid].road_class;
-  const base = {highway:0.5, expressway:0.45, arterial:0.4}[rc];
+  const base = {highway:0.05, expressway:0.045, arterial:0.04}[rc];
+  const peakAmt = {highway:0.33, expressway:0.30, arterial:0.25}[rc];
+  const weekend = day>=5;
+  const vals=[];
+  for(let h=0;h<24;h++){
+    let peak=0;
+    if(!weekend){ if(h>=8&&h<=10) peak=peakAmt; else if(h>=17&&h<=20) peak=peakAmt*0.85; }
+    else if(h>=11&&h<=16) peak=peakAmt*0.45;
+    const nightFactor = (h<6||h>=22) ? 0.35 : 1;
+    const v = (base+peak)*nightFactor + (cid%3)*0.008;
+    vals.push(Math.round(Math.max(0.01, Math.min(0.435, v))*1000)/1000);
+  }
+  return vals;
+}
+// Reproduces the OLD synthetic-data-generator bug on purpose (values up to
+// ~0.92) so ?mock=1&synth=1 demonstrates exactly why provenance:"synthetic"
+// must be visibly flagged rather than presented as if it were measured.
+function mockProfileSynthetic(cid, day){
+  const base = 0.5;
   const weekend = day>=5;
   const vals=[];
   for(let h=0;h<24;h++){
@@ -381,34 +421,53 @@ function mockProfile(cid, day){
     if(!weekend){ if(h>=8&&h<=10) peak=0.4; if(h>=17&&h<=20) peak=0.35; }
     else if(h>=11&&h<=16) peak=0.25;
     const night = (h<6||h>=22) ? -0.3 : 0;
-    vals.push(Math.max(0.01, Math.min(0.98, base*0.5+peak+night+(cid%3)*0.02)));
+    vals.push(Math.round(Math.max(0.01, Math.min(0.98, base*0.5+peak+night+(cid%3)*0.02))*1000)/1000);
   }
   return vals;
 }
+function mockProfile(cid, day){ return FORCE_SYNTHETIC ? mockProfileSynthetic(cid, day) : mockProfileReal(cid, day); }
+
 function mockFetch(path, params){
   const p = params || {};
-  if(path==='/health') return {status:'ok',model_version:'gbt-2026-08-16-mock',provenance:'bootstrap',corridors:8,trained_rows:1344};
+  const PROV = FORCE_SYNTHETIC ? 'synthetic' : 'bootstrap'; // response-level, per contract — never per-corridor
+  if(path==='/health') return {status:'ok',model_version:'gbt-2026-08-16-mock',provenance:PROV,corridors:8,trained_rows:1344};
   if(path==='/corridors') return {corridors: MOCK_CORRIDORS};
   if(path==='/advice'){
     const cid=+p.corridor, day=+p.day;
     const prof = mockProfile(cid, day);
     const bestHour = prof.indexOf(Math.min(...prof));
     const peakHour = prof.indexOf(Math.max(...prof));
-    const synthetic = cid===6;
+    const confidence = cid===6 ? 0.32 : 0.9; // simulates a corridor with thin real-data coverage
     return {corridor_id:cid, day, profile:prof,
-      best_windows:[{start_hour:22,end_hour:5,avg_index:0.05,label:'Free',text:'Clear after 10 PM'}],
+      best_windows:[{start_hour:22,end_hour:5,avg_index:Math.min(...prof),label:labelFor(Math.min(...prof)),text:'Clear after 10 PM'}],
       worst_windows:[{start_hour:17,end_hour:20,avg_index:prof[18],label:labelFor(prof[18]),text:'Avoid 5-8 PM'}],
       best_hour:bestHour, peak_hour:peakHour,
       summary:`Leave before 7 AM or after 9 PM. Worst is ${peakHour}:00 (+${Math.round(prof[peakHour]*20)} min).`,
-      provenance: synthetic?'synthetic':'bootstrap', confidence: synthetic?0.32:0.9};
+      provenance: PROV, confidence};
+  }
+  if(path==='/advice/all'){
+    const day=+p.day;
+    const corridors = MOCK_CORRIDORS.map(c=>{
+      const prof = mockProfile(c.id, day);
+      const bestHour = prof.indexOf(Math.min(...prof));
+      const peakHour = prof.indexOf(Math.max(...prof));
+      const confidence = c.id===6 ? 0.32 : 0.9;
+      return {corridor_id:c.id, profile:prof,
+        best_windows:[{start_hour:22,end_hour:5,avg_index:Math.min(...prof),label:labelFor(Math.min(...prof)),text:'Clear after 10 PM'}],
+        worst_windows:[{start_hour:17,end_hour:20,avg_index:prof[18],label:labelFor(prof[18]),text:'Avoid 5-8 PM'}],
+        best_hour:bestHour, peak_hour:peakHour,
+        summary:`Leave before 7 AM or after 9 PM. Worst is ${peakHour}:00 (+${Math.round(prof[peakHour]*20)} min).`,
+        confidence};
+    });
+    return {day, corridors, provenance: PROV, model_version:'gbt-2026-08-16-mock'};
   }
   if(path==='/predict'){
     const cid=+p.corridor, day=+p.day, hour=+p.hour;
     const v = mockProfile(cid, day)[hour];
-    const synthetic = cid===6;
+    const confidence = cid===6 ? 0.32 : 0.9;
     return {corridor_id:cid, day, hour, congestion_index:v, label:labelFor(v),
       delay_minutes: Math.round(v*20*10)/10, typical_minutes: Math.round((16+v*20)*10)/10, free_flow_minutes:16.1,
-      provenance: synthetic?'synthetic':'bootstrap', confidence: synthetic?0.32:0.9, model_version:'gbt-2026-08-16-mock'};
+      provenance: PROV, confidence, model_version:'gbt-2026-08-16-mock'};
   }
   if(path==='/best-time'){
     const cid=+p.corridor, day=+p.day, earliest=+p.earliest, latest=+p.latest;
@@ -419,23 +478,23 @@ function mockFetch(path, params){
     const worstH = hours.reduce((a,h)=>prof[h]>prof[a]?h:a, hours[0]);
     const alts = hours.filter(h=>h!==bestH).map(h=>({hour:h,congestion_index:prof[h],delay_minutes:Math.round(prof[h]*20*10)/10}))
                        .sort((a,b)=>a.congestion_index-b.congestion_index).slice(0,3);
-    const synthetic = cid===6;
+    const confidence = cid===6 ? 0.32 : 0.9;
     return {corridor_id:cid, day, earliest, latest, recommended_hour:bestH, congestion_index:prof[bestH], label:labelFor(prof[bestH]),
       delay_minutes: Math.round(prof[bestH]*20*10)/10, saving_vs_worst_minutes: Math.round((prof[worstH]-prof[bestH])*20*10)/10,
       alternatives: alts, summary:`Of ${fmtHour(earliest)}-${fmtHour(latest)}, leave at ${fmtHour(bestH)}.`,
-      provenance: synthetic?'synthetic':'bootstrap', confidence: synthetic?0.32:0.9};
+      provenance: PROV, confidence};
   }
   if(path==='/now'){
     const corridors = MOCK_CORRIDORS.map(c=>{
       const v = mockProfile(c.id, curDay)[curHour];
       return {id:c.id, name:c.name, congestion_index:v, label:labelFor(v), delay_minutes:Math.round(v*20*10)/10,
-        trend:'flat', verdict: v<0.35?'go_now':v<0.6?'wait':'avoid', text: v<0.35?'Clear. Good time to travel.':'Some delay expected.'};
+        trend:'flat', verdict: v<0.091?'go_now':v<0.200?'wait':'avoid', text: v<0.091?'Clear. Good time to travel.':'Some delay expected.'};
     });
     const worst = corridors.reduce((a,c)=>c.congestion_index>a.congestion_index?c:a, corridors[0]);
     return {now_ist:new Date().toISOString(), day:curDay, hour:curHour, corridors,
       summary:{avg_congestion: corridors.reduce((a,c)=>a+c.congestion_index,0)/corridors.length, worst_corridor: worst.name,
                clear_count: corridors.filter(c=>c.label==='Free').length},
-      provenance:'bootstrap'};
+      provenance:PROV};
   }
   throw Object.assign(new Error('mock: unknown path'), {status:404});
 }
@@ -618,7 +677,7 @@ function renderCorridorList(){
         <div class="ci-name">${c.name}</div>
         <div class="ci-sub">${c.sub}</div>
         <div class="ci-bottom">
-          <div class="ci-bar-wrap"><div class="ci-bar" style="width:${Math.round(info.v*100)}%;background:${col};${degraded?'opacity:.55':''}"></div></div>
+          <div class="ci-bar-wrap"><div class="ci-bar" style="width:${Math.round(visualFrac(info.v)*100)}%;background:${col};${degraded?'opacity:.55':''}"></div></div>
           <div class="ci-pct" style="color:${col}">${Math.round(info.v*100)}%</div>
           <div class="ci-badge" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</div>
         </div>
@@ -688,7 +747,7 @@ function renderDetail(){
   const hours = [0,3,6,9,12,15,18,21];
   const bars = hours.map(h=>{
     const v = prof[h];
-    const ht = Math.max(4, Math.round(v*40));
+    const ht = Math.max(4, Math.round(visualFrac(v)*40));
     const isN = Math.abs(h-curHour) < 2 || (curHour>=22 && h===0) || (curHour<2 && h===21);
     return `<div class="df-bar${isN?' now':''}" style="height:${ht}px;background:${colorFor(v)}" title="${fmtHour(h)} · ${Math.round(v*100)}%"></div>`;
   }).join('');
@@ -835,18 +894,22 @@ async function loadHealth(){
 
 async function loadAdviceForDay(day){
   if(!CORRIDORS.length) return;
-  await Promise.all(CORRIDORS.map(async c=>{
-    const key = c.id+'_'+day;
-    if(adviceCache[key]) return;
-    try{
-      const a = await apiGet('/advice', {corridor:c.id, day});
-      adviceCache[key] = a;
-    }catch(e){
-      // leave uncached -> UI shows "loading/no data" state for this corridor
-      console.warn('advice failed for', c.id, day, e.message);
-    }
-    render();
-  }));
+  const key0 = (CORRIDORS[0] && CORRIDORS[0].id) + '_' + day;
+  if(adviceCache[key0]) { render(); return; } // already cached for this day
+  try{
+    // Single bulk call (GET /advice/all?day=) instead of 8 parallel /advice
+    // calls — same per-corridor object shape, wrapped in a `corridors` array.
+    // provenance is response-level per the contract (shared by every
+    // corridor in this response); confidence stays per-corridor.
+    const data = await apiGet('/advice/all', {day});
+    (data.corridors||[]).forEach(entry=>{
+      adviceCache[entry.corridor_id+'_'+day] = Object.assign({}, entry, {provenance: data.provenance, day});
+    });
+  }catch(e){
+    // Leave uncached -> UI shows "loading/no data" (dashed lines, "loading…"
+    // rows) for every corridor on this day rather than a partial/blank page.
+    console.warn('advice/all failed for day', day, e.message);
+  }
   render();
 }
 
@@ -1031,6 +1094,16 @@ setInterval(loadNow, 60000);
 (function init(){
   initTheme();
   populateHourSelects();
+  const hourParam = new URLSearchParams(location.search).get('hour');
+  if(hourParam!==null){
+    const h = parseInt(hourParam,10);
+    if(!isNaN(h) && h>=0 && h<=23) curHour = h;
+  }
+  const dayParam = new URLSearchParams(location.search).get('day');
+  if(dayParam!==null){
+    const d = parseInt(dayParam,10);
+    if(!isNaN(d) && d>=0 && d<=6) curDay = d;
+  }
   const dayBtns = document.querySelectorAll('.day-btn');
   dayBtns[curDay].classList.add('active');
   document.getElementById('timeSlider').value = curHour;
