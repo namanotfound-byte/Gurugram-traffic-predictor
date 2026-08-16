@@ -1,0 +1,37 @@
+name: Retrain Traffic Model
+
+# Runs once a week, retraining the model on whatever real data has
+# accumulated in data/gurugram_traffic_raw.csv so far. As more real data
+# builds up, predictions gradually shift away from synthetic patterns
+# toward Gurugram's actual traffic behavior.
+on:
+  schedule:
+    - cron: "0 3 * * 1"   # every Monday 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train model
+        run: python model/traffic_model.py train
+
+      - name: Commit updated model
+        run: |
+          git config user.name "traffic-collector-bot"
+          git config user.email "actions@github.com"
+          git add models/traffic_gbt.joblib
+          git diff --staged --quiet || git commit -m "model: weekly retrain on accumulated real data"
+          git push

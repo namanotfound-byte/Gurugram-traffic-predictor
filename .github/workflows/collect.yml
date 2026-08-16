@@ -1,0 +1,37 @@
+name: Collect Gurugram Traffic Data
+
+# Runs every 30 minutes, forever, on GitHub's free servers.
+# This is what actually builds your real dataset over the next few weeks.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pandas numpy requests
+
+      - name: Collect one round of traffic data
+        env:
+          TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+        run: python model/traffic_model.py collect-once
+
+      - name: Commit new data
+        run: |
+          git config user.name "traffic-collector-bot"
+          git config user.email "actions@github.com"
+          git add data/gurugram_traffic_raw.csv
+          git diff --staged --quiet || git commit -m "data: automated collection round"
+          git push
