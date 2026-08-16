@@ -199,103 +199,123 @@ def load_free_flow_minutes():
     return ff_minutes
 
 
-def load_real_backing():
-    """Which (corridor, day, hour) cells have real measured data behind them.
+def load_measured_grid():
+    """Build the full measured-value lookup straight from real data.
 
-    Returns (bootstrap_cells, observed_cells, bootstrap_corridors_seen).
-    Used only to make `confidence` honest instead of a flat constant.
+    Every cell your API can be asked about should be served from an actual
+    measurement when one exists -- the model is for filling gaps, not for
+    lossily re-compressing a value we already hold exactly. Priority per
+    (corridor_id, day, hour) cell:
+      1. data/gurugram_observed.csv  -- freshest, live-measured by us.
+      2. data/gurugram_bootstrap.csv -- TomTom historical-model measured.
+         This CSV carries a `route_stable` column (TomTom occasionally
+         routes a materially different, longer path for the same corridor
+         across sweep timestamps) -- read it directly rather than
+         re-deriving route stability ourselves.
+
+    Returns {(corridor_id, day, hour): {"congestion_idx": float,
+                                          "origin": "observed"|"bootstrap",
+                                          "route_stable": bool}}
+    Any (corridor, day, hour) NOT present here has no measurement and
+    must fall back to model.predict() at grid-build time.
     """
-    bootstrap_cells, observed_cells, bootstrap_corridors = set(), set(), set()
+    measured = {}
 
     if os.path.exists(BOOTSTRAP_CSV):
         try:
-            df = pd.read_csv(BOOTSTRAP_CSV, usecols=["corridor_id", "day_of_week", "hour"])
-            for cid, d, h in zip(df["corridor_id"], df["day_of_week"], df["hour"]):
-                cid, d, h = int(cid), int(d), int(h)
-                bootstrap_cells.add((cid, d, h))
-                bootstrap_corridors.add(cid)
+            df = pd.read_csv(BOOTSTRAP_CSV)
+            has_stability_col = "route_stable" in df.columns
+            for _, row in df.iterrows():
+                cid, d, h = int(row["corridor_id"]), int(row["day_of_week"]), int(row["hour"])
+                stable = bool(row["route_stable"]) if has_stability_col else True
+                measured[(cid, d, h)] = {
+                    "congestion_idx": float(row["congestion_idx"]),
+                    "origin": "bootstrap",
+                    "route_stable": stable,
+                }
         except Exception as e:
-            print(f"[app] could not read {BOOTSTRAP_CSV} for confidence data: {e}")
+            print(f"[app] could not read {BOOTSTRAP_CSV} for the measured grid: {e}")
 
     if os.path.exists(OBSERVED_CSV):
         try:
-            df = pd.read_csv(OBSERVED_CSV, usecols=["corridor_id", "day_of_week", "hour"])
-            for cid, d, h in zip(df["corridor_id"], df["day_of_week"], df["hour"]):
-                observed_cells.add((int(cid), int(d), int(h)))
+            df = pd.read_csv(OBSERVED_CSV)
+            for _, row in df.iterrows():
+                cid, d, h = int(row["corridor_id"]), int(row["day_of_week"]), int(row["hour"])
+                measured[(cid, d, h)] = {
+                    "congestion_idx": float(row["congestion_idx"]),
+                    "origin": "observed",
+                    "route_stable": True,  # a fresh live measurement is our best signal
+                }
         except Exception as e:
-            print(f"[app] could not read {OBSERVED_CSV} for confidence data: {e}")
+            print(f"[app] could not read {OBSERVED_CSV} for the measured grid: {e}")
 
-    return bootstrap_cells, observed_cells, bootstrap_corridors
+    return measured
 
 
-def load_route_stability():
-    """Per-corridor route-length stability, computed from the bootstrap CSV.
-
-    TomTom's routing occasionally returns a materially different path
-    (different length_m) for the same corridor across different sweep
-    timestamps. When that happens, the free-flow/congestion figures for
-    that corridor aren't perfectly apples-to-apples hour to hour, so
-    confidence should reflect it. This is computed generically for every
-    corridor from whatever the sweep actually measured -- never a
-    per-corridor hardcoded value.
+def extract_within_class_quality(metrics):
+    """A same-road-class / within-corridor quality figure, if the training
+    pipeline has published one under a recognizable key. NEVER read
+    metrics["cv_r2"] here: that figure is leave-one-CORRIDOR-out, and it is
+    dominated by the two corridors that are the sole member of their road
+    class -- Dwarka Expressway (the only "expressway", per-fold R2 -25.5)
+    and NH-48 (the only "highway", R2 -0.08). The six arterial corridors,
+    which do have same-class siblings to generalize from, individually
+    average R2 ~0.90. We never serve a road class the model hasn't seen,
+    so cross-corridor-class generalization is not the risk that matters
+    for an inferred cell here.
     """
-    if not os.path.exists(BOOTSTRAP_CSV):
-        return {}
-    try:
-        df = pd.read_csv(BOOTSTRAP_CSV, usecols=["corridor_id", "length_m"])
-    except Exception as e:
-        print(f"[app] could not read {BOOTSTRAP_CSV} for route stability: {e}")
-        return {}
-
-    stability = {}
-    for cid, group in df.groupby("corridor_id"):
-        lo, hi = group["length_m"].min(), group["length_m"].max()
-        variance_frac = (hi - lo) / lo if lo else 0.0
-        # every extra point of route-length variance costs confidence,
-        # floored so it degrades gracefully rather than collapsing to zero
-        stability[int(cid)] = round(max(0.5, 1.0 - variance_frac), 3)
-    return stability
+    if not metrics or not isinstance(metrics, dict):
+        return None
+    for key in ("within_corridor_r2", "within_class_r2", "same_class_r2", "holdout_hours_r2"):
+        val = metrics.get(key)
+        if val is not None:
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                continue
+    return None
 
 
-def compute_confidence(provenance, metrics, cell, corridor_id,
-                        bootstrap_cells, observed_cells, bootstrap_corridors,
-                        route_stability):
-    """Honest per-cell confidence: how much real data backs this prediction.
+# Confidence tiers, strictly ordered: a live observation beats a stable
+# bootstrap measurement beats an unstable one beats any model-inferred
+# value -- never a flat constant, and cv_r2 (leave-one-corridor-out, not
+# representative of this product) never enters the calculation.
+CONFIDENCE_OBSERVED = 0.97
+CONFIDENCE_MEASURED_STABLE = 0.92
+CONFIDENCE_MEASURED_UNSTABLE = 0.50
+INFERRED_CONFIDENCE_DEFAULT = 0.35
+INFERRED_CONFIDENCE_CAP = 0.45  # even a strong within-class score can't outrank a real measurement
 
-    Never a flat constant. Combines:
-      - the model's own cross-validated fit quality (metrics.cv_r2),
-      - whether THIS SPECIFIC (corridor, day, hour) cell was actually
-        measured (observed > bootstrapped > extrapolated-within-known-
-        corridor > fully extrapolated),
-      - that corridor's route-length stability across the sweep (an
-        unstable route, e.g. TomTom picking a different path hour to
-        hour, means the underlying numbers are less trustworthy),
-    or, if the whole model is synthetic (no real data anywhere), a flat
-    low confidence -- that case genuinely has no data to differentiate on.
+
+def compute_confidence(provenance, metrics, measured_cell):
+    """Honest per-cell confidence -- how trustworthy is the SERVED value.
+
+    Priority:
+      1. synthetic model -> flat low. No real data exists anywhere to
+         differentiate cells by, so a flat number is the honest answer.
+      2. cell has a live "observed" measurement -> highest (0.97).
+      3. cell has a bootstrap measurement, route_stable -> high (0.92).
+      4. cell has a bootstrap measurement, NOT route_stable (TomTom routed
+         a materially different/longer path for that hour, so the
+         free-flow/expected ratio isn't apples-to-apples) -> materially
+         lower (0.50).
+      5. no measurement at all -- the GBT model fills the gap -> lower
+         still, using a within-corridor/same-class quality figure if the
+         training pipeline publishes one, else a conservative default.
     """
     if provenance == "synthetic":
         return 0.15
 
-    if metrics and isinstance(metrics, dict) and metrics.get("cv_r2") is not None:
-        try:
-            base_quality = max(0.1, min(0.95, float(metrics["cv_r2"])))
-        except (TypeError, ValueError):
-            base_quality = 0.5
-    else:
-        base_quality = 0.5
+    if measured_cell is not None:
+        if measured_cell["origin"] == "observed":
+            return CONFIDENCE_OBSERVED
+        return CONFIDENCE_MEASURED_STABLE if measured_cell["route_stable"] else CONFIDENCE_MEASURED_UNSTABLE
 
-    if cell in observed_cells:
-        data_factor = 1.0
-    elif cell in bootstrap_cells:
-        data_factor = 0.9
-    elif corridor_id in bootstrap_corridors:
-        data_factor = 0.55
-    else:
-        data_factor = 0.3
-
-    stability_factor = route_stability.get(corridor_id, 1.0)
-
-    return round(max(0.05, min(0.95, base_quality * data_factor * stability_factor)), 2)
+    quality = extract_within_class_quality(metrics)
+    if quality is None:
+        return INFERRED_CONFIDENCE_DEFAULT
+    conf = 0.20 + 0.25 * max(0.0, min(1.0, quality))
+    return round(min(INFERRED_CONFIDENCE_CAP, max(0.05, conf)), 2)
 
 
 def minutes_from_index(free_flow_minutes: float, idx: float):
@@ -340,8 +360,7 @@ if MODEL_READY:
     ROAD_CLASS_ENC_USED = MODEL_PAYLOAD.get("road_class_enc") or dict(ROAD_CLASS_ENC)
 
     FREE_FLOW_MINUTES = load_free_flow_minutes()
-    BOOTSTRAP_CELLS, OBSERVED_CELLS, BOOTSTRAP_CORRIDORS = load_real_backing()
-    ROUTE_STABILITY = load_route_stability()
+    MEASURED_GRID = load_measured_grid()
 
     try:
         rows = []
@@ -353,18 +372,29 @@ if MODEL_READY:
                     keys.append((c["id"], day, hour))
 
         X = pd.DataFrame(rows)[FEATURES]
+        # Predicted for every cell in one batched call (cheap: 1344 rows),
+        # but only ever USED for cells with no real measurement below --
+        # this keeps the fallback path exercised/tested even on a day
+        # where measured coverage is complete and nothing falls back to it.
         preds = MODEL.predict(X)
 
+        measured_count = 0
+        inferred_count = 0
         for (cid, day, hour), raw_idx in zip(keys, preds):
-            idx = round(float(min(1.0, max(0.0, raw_idx))), 3)
+            cell = (cid, day, hour)
+            m = MEASURED_GRID.get(cell)
+            if m is not None:
+                idx = round(float(min(1.0, max(0.0, m["congestion_idx"]))), 3)
+                origin = m["origin"]
+                measured_count += 1
+            else:
+                idx = round(float(min(1.0, max(0.0, raw_idx))), 3)
+                origin = "model_inferred"
+                inferred_count += 1
+
             ff_minutes = FREE_FLOW_MINUTES[cid]
             typical, delay = minutes_from_index(ff_minutes, idx)
-            cell = (cid, day, hour)
-            conf = compute_confidence(
-                MODEL_PROVENANCE, METRICS, cell, cid,
-                BOOTSTRAP_CELLS, OBSERVED_CELLS, BOOTSTRAP_CORRIDORS,
-                ROUTE_STABILITY,
-            )
+            conf = compute_confidence(MODEL_PROVENANCE, METRICS, m)
             GRID[cell] = {
                 "congestion_index": idx,
                 "label": label_for(idx),
@@ -372,9 +402,11 @@ if MODEL_READY:
                 "typical_minutes": typical,
                 "delay_minutes": delay,
                 "confidence": conf,
+                "origin": origin,  # internal only; not part of the frozen JSON contract
             }
-        print(f"[app] precomputed grid: {len(GRID)} cells, provenance={MODEL_PROVENANCE}, "
-              f"model_version={MODEL_VERSION}")
+        print(f"[app] precomputed grid: {len(GRID)} cells "
+              f"({measured_count} measured, {inferred_count} model-inferred), "
+              f"provenance={MODEL_PROVENANCE}, model_version={MODEL_VERSION}")
     except Exception as e:
         print(f"[app] FAILED to precompute grid ({e}); disabling model-backed endpoints")
         MODEL_READY = False
