@@ -1,23 +1,32 @@
 name: Collect Gurugram Traffic Data (live, observed)
 
-# Runs every 30 minutes, best-effort, on GitHub's free servers.
+# Runs every 15 minutes, best-effort, on GitHub's free servers.
+#
+# Cadence was moved from 30 -> 15 minutes on 2026-08-17 (see collect_live.py's
+# module docstring for the quota math and the honest tradeoff: consecutive
+# 15-minute samples are strongly autocorrelated, so this is not "2x the
+# information" — the real payoff is catching short-lived monsoon rain
+# onset/offset transitions that a 30-minute cadence can straddle entirely).
 #
 # IMPORTANT — read the "Live data collection" section of README.md before
 # relying on this. GitHub Actions `schedule:` triggers are NOT a reliable
 # timekeeper: under platform load runs are frequently delayed by anywhere
 # from a few minutes to over an hour, and GitHub disables scheduled
 # workflows entirely on repos with 60 days of no activity. Treat this as
-# "roughly every 30 minutes, whenever GitHub gets around to it" rather than
-# a guaranteed cadence. If you need true 30-minute cadence, run
-# `python collect_live.py --loop` on a small always-on VM instead.
+# "roughly every 15 minutes, whenever GitHub gets around to it" rather than
+# a guaranteed cadence — in practice this cron will land noticeably fewer
+# than the nominal 96 rounds/day. If you need true 15-minute cadence, run
+# `python collect_live.py --loop` on a small always-on VM instead (a
+# $4-6/mo box is plenty; see README).
 #
 # This calls collect_live.py, which uses TomTom's Routing API — NOT the
 # Flow Segment Data API that model/traffic_model.py's collect-once used.
 # That endpoint returns 403 on this project's key; see collect_live.py's
-# module docstring for the full story.
+# module docstring for the full story. Each round now also attaches Open-Meteo
+# weather + Indian-holiday calendar features (weather.py) to every row.
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab
 
 permissions:
@@ -48,6 +57,17 @@ jobs:
       - name: Collect one round of live traffic data
         env:
           TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+        # NOTE: --budget-guard is intentionally NOT used here. Its state file
+        # (data/.tomtom_budget.json) is git-ignored local run state, and each
+        # CI run checks out a fresh ephemeral runner with no prior state — so
+        # in this workflow it would always read "0 used today" and provide no
+        # real cross-run protection, only false confidence. It's meant for
+        # `collect_live.py --loop` on a persistent VM, where the state file
+        # (and the process) actually survive between rounds. Quota safety
+        # here instead comes from the request math itself: 8 req/round x the
+        # 15-minute cron's nominal 96 rounds/day = 768/day, well under
+        # TomTom's 2,500/day free-tier cap even before accounting for
+        # GitHub's scheduler typically delivering fewer than 96 rounds/day.
         run: python collect_live.py --once
 
       - name: Commit new data (retries on push conflicts)

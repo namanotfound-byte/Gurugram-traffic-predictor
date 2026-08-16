@@ -1,5 +1,8 @@
 # Dependencies for collect_live.py only.
 # Deliberately kept separate from requirements.txt (which pulls in
 # scikit-learn/pandas/numpy/joblib for training) so the collect.yml
-# workflow — which runs every 30 minutes — installs as little as possible.
+# workflow — which runs every 15 minutes — installs as little as possible.
 requests>=2.31
+# weather.py (Open-Meteo HTTP client, used by collect_live.py to attach
+# weather/calendar features to every row) also just needs requests + holidays.
+holidays>=0.40

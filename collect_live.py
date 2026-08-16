@@ -42,19 +42,60 @@ filter to only real, present-moment observations.
 QUOTA
 -----
 TomTom's free tier is 2,500 requests/day. One round here is exactly
-len(CORRIDORS) == 8 requests (one calculateRoute call per corridor). At
-the intended cadence of one round every 30 minutes:
+len(CORRIDORS) == 8 requests (one calculateRoute call per corridor).
 
-    8 requests/round * 48 rounds/day = 384 requests/day
+Cadence was moved from every 30 minutes to every 15 minutes (2026-08-17):
 
-That leaves roughly 2,500 - 384 ~= 2,100 requests/day of headroom, but be
-aware the one-off bootstrap historical sweep (bootstrap_collect.py) draws
-from the *same* daily quota if it shares a key — run it accordingly.
+    8 requests/round * 96 rounds/day = 768 requests/day
+
+against the 2,500/day cap — the 30-minute cadence used only 384/day, i.e.
+~85% of the daily budget was sitting idle. 768/day still leaves ~1,700/day
+of headroom for the bootstrap sweep / manual experimentation sharing the
+same key.
+
+HONEST CAVEAT on what doubling the sampling rate actually buys: consecutive
+15-minute samples of the same corridor are strongly autocorrelated (traffic
+15 minutes from now looks a lot like traffic now), so 2x the rows is far
+less than 2x the *information* for a model that predicts the diurnal curve.
+The real payoff is temporal resolution on RAIN ONSET/OFFSET, which are
+short-lived (often 15-45 minutes) — at 30-minute cadence a rain event can
+start and finish between two samples and look like it never happened; at
+15-minute cadence it's far more likely to be caught mid-transition, which is
+exactly the regime the residual model most needs to see (see
+model/forecast_model.py and weather.py's rain_last_3h feature).
+
+WEATHER + CALENDAR FEATURES (2026-08-17)
+------------------------------------------
+Every row now also carries the Gurugram weather (from weather.py, backed by
+Open-Meteo, cached on disk) and calendar features (public holidays / festival
+window / month-end) for that row's date+hour. Weather is fetched ONCE per
+round (it's a single city-wide reading, not per-corridor) and stamped onto
+all 8 corridor rows for that round. This is what lets model/forecast_model.py
+learn a weather/calendar-conditioned residual on top of the bootstrap
+baseline — see that file's module docstring for the modelling rationale.
+
+`--backfill-weather` retroactively attaches these columns to rows collected
+before this feature existed (via weather.py's archive/forecast auto-select),
+rewriting the CSV in place. It is a one-time migration path, not something
+the CI workflow runs on a schedule — collect.yml is deliberately left alone
+(see .github/workflows/collect.yml) and only gets weather on rows collected
+after this change via the normal --once path.
+
+BUDGET GUARD
+------------
+`--budget-guard` (optional) tracks TomTom requests made today in
+data/.tomtom_budget.json (git-ignored — it's local run state, not a data
+asset) and refuses to start a new round once `--daily-cap` (default 2000,
+leaving headroom under the 2,500 hard limit for other consumers of the same
+key) would be exceeded. Off by default so a bare --once/--loop behaves
+exactly as before.
 
 USAGE
 -----
-    python collect_live.py --once      # single round, then exit (used by CI)
-    python collect_live.py --loop      # loop forever, one round / 30 min (VM)
+    python collect_live.py --once               # single round, then exit (used by CI)
+    python collect_live.py --loop                # loop forever, one round / 15 min (VM)
+    python collect_live.py --backfill-weather     # attach weather/calendar cols to old rows
+    python collect_live.py --once --budget-guard --daily-cap 2000
 
 The TomTom key is read from the TOMTOM_API_KEY environment variable, or
 else from a .env file (KEY=VALUE lines) in this file's directory. The key
@@ -67,6 +108,7 @@ truth for this repo. Corridors are never redefined here.
 import argparse
 import csv
 import datetime
+import json
 import os
 import random
 import sys
@@ -75,6 +117,7 @@ import time
 import requests
 
 from corridors import CORRIDORS
+import weather as wx
 
 # ─────────────────────────────────────────────
 # CONFIG
@@ -82,6 +125,7 @@ from corridors import CORRIDORS
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_CSV = os.path.join(REPO_ROOT, "data", "gurugram_observed.csv")
 ENV_FILE = os.path.join(REPO_ROOT, ".env")
+BUDGET_STATE_FILE = os.path.join(REPO_ROOT, "data", ".tomtom_budget.json")
 
 ROUTING_URL_TMPL = "https://api.tomtom.com/routing/1/calculateRoute/{start}:{end}/json"
 
@@ -89,13 +133,23 @@ CSV_COLUMNS = [
     "corridor_id", "corridor_name", "road_class", "day_of_week", "hour",
     "minute", "length_m", "free_flow_s", "live_s", "historic_s",
     "traffic_delay_s", "congestion_idx", "source", "collected_at",
+    # weather (weather.py / Open-Meteo) — see module docstring
+    "temperature_c", "precipitation_mm", "is_raining", "rain_intensity",
+    "rain_last_3h", "visibility_m", "low_visibility",
+    # calendar (weather.py / holidays package) — see module docstring
+    "is_holiday", "holiday_name", "is_festival_period", "is_month_end",
+    "days_to_nearest_holiday",
 ]
 
-ROUND_MINUTES = 30      # target collection cadence (also the dedupe bucket size)
+ROUND_MINUTES = 15      # target collection cadence (also the dedupe bucket size —
+                         # this single constant controls both; changing the
+                         # cadence without changing this would silently start
+                         # discarding samples at the old bucket size)
 MAX_RETRIES = 4         # per-corridor retry budget on 429 / 5xx / network errors
 BACKOFF_BASE_S = 2.0
 REQUEST_TIMEOUT_S = 15
 INTER_REQUEST_SLEEP_S = 0.3   # be polite to the API; spreads the 8-request burst out a bit
+DEFAULT_DAILY_CAP = 2000      # used only when --budget-guard is passed
 
 
 # ─────────────────────────────────────────────
@@ -160,6 +214,47 @@ def fetch_corridor_summary(corridor, api_key):
     return None
 
 
+def ensure_csv_schema():
+    """Migrate data/gurugram_observed.csv to the current CSV_COLUMNS if the
+    on-disk header is stale (e.g. rows collected before the weather/calendar
+    columns existed). Without this, appending new-schema rows under an old
+    header silently corrupts the file — csv.DictReader has no way to know
+    the extra trailing fields belong to columns that didn't exist yet when
+    the header was written, and mis-parses every row after the schema
+    changed. Safe to call on every run; a no-op once the header is current."""
+    if not os.path.exists(OUTPUT_CSV):
+        return
+
+    with open(OUTPUT_CSV, newline="") as f:
+        raw_rows = list(csv.reader(f))
+    if not raw_rows:
+        return
+
+    header = raw_rows[0]
+    if header == CSV_COLUMNS:
+        return  # already current
+
+    print(f"[MIGRATE] {OUTPUT_CSV} header is stale ({len(header)} cols vs {len(CSV_COLUMNS)} "
+          f"expected) — migrating to current schema, padding missing columns with blanks.")
+
+    migrated = []
+    for row in raw_rows[1:]:
+        if len(row) == len(header):
+            d = dict(zip(header, row))
+        else:
+            # Row already has more fields than this stale header names (e.g. a
+            # prior partial migration) — take positionally by CSV_COLUMNS order.
+            d = dict(zip(CSV_COLUMNS, row))
+        migrated.append({col: d.get(col, "") for col in CSV_COLUMNS})
+
+    with open(OUTPUT_CSV, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+        writer.writeheader()
+        writer.writerows(migrated)
+
+    print(f"[MIGRATE] done: {len(migrated)} rows now under the current {len(CSV_COLUMNS)}-column schema.")
+
+
 def load_existing_keys():
     """Set of (corridor_id, 'YYYY-MM-DDTHH:MM') already in the CSV, for dedupe against re-runs."""
     keys = set()
@@ -175,28 +270,121 @@ def load_existing_keys():
 
 
 # ─────────────────────────────────────────────
+# BUDGET GUARD (optional, --budget-guard)
+# ─────────────────────────────────────────────
+def _load_budget_state():
+    if not os.path.exists(BUDGET_STATE_FILE):
+        return {"date": None, "requests": 0}
+    try:
+        with open(BUDGET_STATE_FILE) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {"date": None, "requests": 0}
+
+
+def _save_budget_state(state):
+    os.makedirs(os.path.dirname(BUDGET_STATE_FILE), exist_ok=True)
+    tmp = BUDGET_STATE_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(state, f)
+    os.replace(tmp, BUDGET_STATE_FILE)
+
+
+def budget_requests_used_today():
+    """Requests already spent today, per the local state file. Resets across an
+    IST day boundary (matches weather.py's day convention for consistency)."""
+    today = str(datetime.date.today())
+    state = _load_budget_state()
+    if state.get("date") != today:
+        return 0
+    return int(state.get("requests", 0))
+
+
+def budget_record_requests(n):
+    today = str(datetime.date.today())
+    state = _load_budget_state()
+    if state.get("date") != today:
+        state = {"date": today, "requests": 0}
+    state["requests"] = int(state.get("requests", 0)) + n
+    _save_budget_state(state)
+
+
+# ─────────────────────────────────────────────
 # COLLECTION
 # ─────────────────────────────────────────────
-def collect_round():
+def _fetch_weather_and_events(rounded):
+    """One weather + calendar lookup per round (city-wide, not per-corridor) —
+    stamped onto all corridor rows for this round. Never raises: a weather API
+    hiccup should not lose a round of TomTom data, so failures are logged and
+    the weather/event columns are left blank for this round instead."""
+    date = rounded.date()
+    hour = rounded.hour
+    try:
+        w = wx.get_hourly_weather(date, hour) or {}
+    except Exception as e:
+        print(f"  [WARN] weather lookup failed ({e}); weather columns left blank for this round.")
+        w = {}
+    try:
+        e = wx.get_event_features(date)
+    except Exception as ex:
+        print(f"  [WARN] event-feature lookup failed ({ex}); calendar columns left blank for this round.")
+        e = {}
+    return {
+        "temperature_c": w.get("temperature_c"),
+        "precipitation_mm": w.get("precipitation_mm"),
+        "is_raining": w.get("is_raining"),
+        "rain_intensity": w.get("rain_intensity"),
+        "rain_last_3h": w.get("rain_last_3h"),
+        "visibility_m": w.get("visibility_m"),
+        "low_visibility": w.get("low_visibility"),
+        "is_holiday": e.get("is_holiday"),
+        "holiday_name": e.get("holiday_name"),
+        "is_festival_period": e.get("is_festival_period"),
+        "is_month_end": e.get("is_month_end"),
+        "days_to_nearest_holiday": e.get("days_to_nearest_holiday"),
+    }
+
+
+def collect_round(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
     """Run one round (up to len(CORRIDORS) requests). Returns rows written (>=0),
-    or -1 if the round could not start at all (no API key configured)."""
+    or -1 if the round could not start at all (no API key configured, or the
+    budget guard refuses the whole round outright)."""
     api_key = load_api_key()
     if not api_key:
         print("[ERROR] TOMTOM_API_KEY not set (checked environment and .env). Aborting round.")
         return -1
 
+    if budget_guard:
+        used = budget_requests_used_today()
+        if used + len(CORRIDORS) > daily_cap:
+            print(f"[BUDGET GUARD] {used} TomTom requests already used today; this round needs up to "
+                  f"{len(CORRIDORS)} more, which would exceed --daily-cap={daily_cap}. Refusing to start.")
+            return -1
+
+    ensure_csv_schema()
+
     now = datetime.datetime.now()
     rounded = round_timestamp(now)
     collected_at = rounded.isoformat()
     existing = load_existing_keys()
+    weather_and_events = _fetch_weather_and_events(rounded)
 
     os.makedirs(os.path.dirname(OUTPUT_CSV), exist_ok=True)
     write_header = not os.path.exists(OUTPUT_CSV)
 
     print(f"[{now.isoformat(timespec='seconds')}] Collecting live-observed round "
           f"({len(CORRIDORS)} corridors, bucket={collected_at})...")
+    print(f"  weather: temp={weather_and_events['temperature_c']}C "
+          f"precip={weather_and_events['precipitation_mm']}mm "
+          f"raining={weather_and_events['is_raining']} "
+          f"rain_last_3h={weather_and_events['rain_last_3h']}mm "
+          f"visibility={weather_and_events['visibility_m']}m | "
+          f"holiday={weather_and_events['holiday_name']} "
+          f"festival_period={weather_and_events['is_festival_period']} "
+          f"month_end={weather_and_events['is_month_end']}")
 
     rows_written = 0
+    tomtom_requests_made = 0
     with open(OUTPUT_CSV, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
         if write_header:
@@ -208,7 +396,15 @@ def collect_round():
                 print(f"  {corridor['name']:38s} already collected for this round — skipping (dedupe).")
                 continue
 
+            if budget_guard:
+                used = budget_requests_used_today() + tomtom_requests_made
+                if used >= daily_cap:
+                    print(f"  [BUDGET GUARD] daily cap ({daily_cap}) reached mid-round; "
+                          f"stopping early, {corridor['name']} onward skipped.")
+                    break
+
             summary = fetch_corridor_summary(corridor, api_key)
+            tomtom_requests_made += 1
             if summary is None:
                 continue  # already logged in fetch_corridor_summary
 
@@ -239,6 +435,7 @@ def collect_round():
                 "congestion_idx": congestion_idx,
                 "source": "observed",
                 "collected_at": collected_at,
+                **weather_and_events,
             }
             writer.writerow(row)
             f.flush()
@@ -247,19 +444,108 @@ def collect_round():
                   f"historic={historic_s}s delay={delay_s}s congestion_idx={congestion_idx:.3f}")
             time.sleep(INTER_REQUEST_SLEEP_S)
 
+    if budget_guard and tomtom_requests_made:
+        budget_record_requests(tomtom_requests_made)
+
     print(f"Round complete: {rows_written}/{len(CORRIDORS)} corridors written to {OUTPUT_CSV}")
     return rows_written
 
 
-def loop_forever():
+def loop_forever(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
     print(f"collect_live.py --loop : one round every {ROUND_MINUTES} minutes. Ctrl+C to stop.")
     while True:
         try:
-            collect_round()
+            collect_round(budget_guard=budget_guard, daily_cap=daily_cap)
         except Exception as e:
             # Never let one bad round kill the whole loop.
             print(f"[ERROR] round raised an unexpected exception: {e}")
         time.sleep(ROUND_MINUTES * 60)
+
+
+# ─────────────────────────────────────────────
+# BACKFILL (one-time migration for rows collected before weather/calendar cols existed)
+# ─────────────────────────────────────────────
+def backfill_weather():
+    """Rewrite gurugram_observed.csv in place, filling in weather/calendar
+    columns for any existing row that predates this feature (or has them
+    blank for any other reason). Uses weather.get_weather_range to bulk-fetch
+    the whole date span covered by the file in as few HTTP requests as
+    possible, rather than one request per row.
+
+    Idempotent: rows that already have weather populated are left untouched
+    (and cost no extra network calls). Safe to run repeatedly."""
+    if not os.path.exists(OUTPUT_CSV):
+        print(f"[INFO] {OUTPUT_CSV} does not exist yet — nothing to backfill.")
+        return 0
+
+    ensure_csv_schema()
+
+    with open(OUTPUT_CSV, newline="") as f:
+        rows = list(csv.DictReader(f))
+
+    if not rows:
+        print("[INFO] observed CSV is empty — nothing to backfill.")
+        return 0
+
+    dates = []
+    for r in rows:
+        ts = r.get("collected_at")
+        if ts:
+            try:
+                dates.append(datetime.date.fromisoformat(ts[:10]))
+            except ValueError:
+                pass
+    if not dates:
+        print("[WARN] no parseable collected_at timestamps found — nothing to backfill.")
+        return 0
+
+    min_date, max_date = min(dates), max(dates)
+    print(f"Backfilling weather/calendar features for {len(rows)} rows spanning "
+          f"{min_date} .. {max_date}...")
+    wx.get_weather_range(min_date, max_date)  # bulk-prefetch into weather.py's cache
+
+    updated = 0
+    event_cache = {}
+    for r in rows:
+        # Skip rows that already have weather (idempotent re-runs, no extra work).
+        if r.get("precipitation_mm") not in (None, ""):
+            continue
+        ts = r.get("collected_at")
+        if not ts:
+            continue
+        try:
+            date = datetime.date.fromisoformat(ts[:10])
+            hour = int(r["hour"])
+        except (ValueError, KeyError):
+            continue
+
+        w = wx.get_hourly_weather(date, hour) or {}
+        if date not in event_cache:
+            event_cache[date] = wx.get_event_features(date)
+        e = event_cache[date]
+
+        r["temperature_c"] = w.get("temperature_c")
+        r["precipitation_mm"] = w.get("precipitation_mm")
+        r["is_raining"] = w.get("is_raining")
+        r["rain_intensity"] = w.get("rain_intensity")
+        r["rain_last_3h"] = w.get("rain_last_3h")
+        r["visibility_m"] = w.get("visibility_m")
+        r["low_visibility"] = w.get("low_visibility")
+        r["is_holiday"] = e.get("is_holiday")
+        r["holiday_name"] = e.get("holiday_name")
+        r["is_festival_period"] = e.get("is_festival_period")
+        r["is_month_end"] = e.get("is_month_end")
+        r["days_to_nearest_holiday"] = e.get("days_to_nearest_holiday")
+        updated += 1
+
+    with open(OUTPUT_CSV, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+        writer.writeheader()
+        for r in rows:
+            writer.writerow({k: r.get(k, "") for k in CSV_COLUMNS})
+
+    print(f"Backfill complete: {updated}/{len(rows)} rows updated, {OUTPUT_CSV} rewritten.")
+    return updated
 
 
 def main():
@@ -268,14 +554,23 @@ def main():
     )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--once", action="store_true", help="Run a single collection round and exit (for CI).")
-    mode.add_argument("--loop", action="store_true", help="Run forever, one round every 30 minutes (for a VM).")
+    mode.add_argument("--loop", action="store_true", help="Run forever, one round every 15 minutes (for a VM).")
+    mode.add_argument("--backfill-weather", action="store_true",
+                       help="One-time migration: attach weather/calendar columns to existing rows, then exit.")
+    parser.add_argument("--budget-guard", action="store_true",
+                         help="Track TomTom requests used today and refuse to exceed --daily-cap.")
+    parser.add_argument("--daily-cap", type=int, default=DEFAULT_DAILY_CAP,
+                         help=f"Max TomTom requests/day when --budget-guard is set (default {DEFAULT_DAILY_CAP}).")
     args = parser.parse_args()
 
-    if args.once:
-        n = collect_round()
+    if args.backfill_weather:
+        backfill_weather()
+        sys.exit(0)
+    elif args.once:
+        n = collect_round(budget_guard=args.budget_guard, daily_cap=args.daily_cap)
         sys.exit(1 if n < 0 else 0)
     else:
-        loop_forever()
+        loop_forever(budget_guard=args.budget_guard, daily_cap=args.daily_cap)
 
 
 if __name__ == "__main__":

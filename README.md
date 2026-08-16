@@ -260,6 +260,62 @@ For a portfolio/demo project this is a fine trade for "free and zero-maintenance
 
 ---
 
+## 🌦️ Forecasting: the residual model (added 2026-08-17)
+
+> **This section is clearly-marked, self-contained, and owned by the forecasting workstream** (`weather.py`, `model/forecast_model.py`, the weather/calendar columns in `collect_live.py`). It documents the actual intellectual core of the project: predicting how weather and the calendar change Gurugram traffic, not just looking up the historical average.
+
+### Why model the residual, not absolute congestion
+
+`data/gurugram_bootstrap.csv` is a complete, noise-free grid of Gurugram's day-of-week x hour rhythm (1344 rows = 8 corridors x 7 days x 24 hours, exactly one row per combination) — but it has **zero** weather or date signal (TomTom's historical model returns byte-identical numbers for six different future Fridays at 18:00, including Diwali week; it's a pure averaging model). `data/gurugram_observed.csv` is the opposite: small, but the only place time-varying conditions show up.
+
+So the model doesn't try to relearn the whole diurnal curve from a handful of observed rows — it only learns the *deviation* from the baseline:
+
+```
+baseline(corridor, day_of_week, hour) = bootstrap grid value        # complete, all 1344 cells
+residual = observed_congestion - baseline
+forecast = clip(baseline + predicted_residual(weather, events, time), 0, 1)
+```
+
+### Weather + calendar features (`weather.py`)
+
+Backed by [Open-Meteo](https://open-meteo.com/) (free, no API key). Derived features: `precipitation_mm`, `is_raining`, `rain_intensity`, **`rain_last_3h`** (trailing cumulative rain — roads stay slick/slow after rain stops, hypothesized to matter more than the instantaneous reading), `visibility_m`, `low_visibility`, `temperature_c`; plus calendar features from the `holidays` package (`holidays.India(subdiv="HR")`): `is_holiday`, `holiday_name`, `is_festival_period`, `is_month_end` (salary-day traffic), `days_to_nearest_holiday`.
+
+One empirical finding worth noting: Open-Meteo's true historical **archive** endpoint does not carry a `visibility` field at all (confirmed — every value comes back `null`), while the **forecast** endpoint's `past_days` parameter serves the same precipitation/temperature history *plus real visibility*, for up to 92 days back. `weather.py` prefers the forecast+`past_days` path for anything inside that window and only falls back to the true archive endpoint (visibility left honestly `None`, not imputed) beyond it.
+
+### Collection cadence: 15 minutes, not 30
+
+`collect_live.py` now polls every 15 minutes (768 TomTom requests/day against the 2,500/day free-tier cap, vs. 384/day before). Consecutive 15-minute samples are strongly autocorrelated — this is **not** 2x the information — but it materially improves the odds of catching a monsoon rain event's onset/offset, which is exactly the signal the residual model needs and which a 30-minute cadence can straddle entirely.
+
+### Honest gating — training refuses to run on insufficient data
+
+`model/forecast_model.py train` will not emit a model artifact unless the data clears real thresholds:
+
+| Gate | Threshold | Why |
+|---|---|---|
+| Distinct days | >= 14 | Gurugram's weekly rhythm needs to repeat >= 2x; NCR monsoon rain is intermittent, not continuous — 14 days is the minimum window in which "we saw more than one rain event" is credible rather than luck. This is a **calendar floor**; no request budget can shortcut it. |
+| Total rows | >= 1500 | Conservative floor given ~14 features and strong autocorrelation between consecutive samples (raw row count overstates independent information). |
+| Rainy rows | >= 50 | The model must have actually seen rain to claim it can predict rain's effect. |
+| Dry rows | >= 200 | Same logic for the majority class. |
+| Corridors covered | >= 6/8 | Tolerates a couple of corridors having API trouble without blocking training on the rest. |
+
+Run `python model/forecast_model.py readiness` any time to see exactly where collection stands against these gates, plus a realistic earliest-possible-ready date (the calendar floor, assuming continuous collection and at least a few rain events in that window — not guaranteed).
+
+### Evaluation: skill score against the baseline, time-based holdout
+
+The benchmark is "just use the historical average" (the bootstrap grid alone). `model/forecast_model.py train`, once unlocked, reports:
+
+```
+skill = 1 - (MAE_model / MAE_baseline)
+```
+
+Positive means the model adds value; zero or negative means it does not, and that is reported as such — this project will not hide a losing result. Evaluation uses a **time-based holdout** (train on the earliest ~80% of collection days, test on the most recent ~20%) rather than a random split, because a random split lets the model "cheat" on near-identical 15-minutes-apart samples. `cv_r2` / leave-one-corridor-out from `model/traffic_model.py` is deliberately **not** reused here — it was shown to be the wrong metric for this project.
+
+### Current status (honest, as of 2026-08-17)
+
+Data collection restarted with weather/calendar attached on 2026-08-17. `forecast_readiness()` today reports **not ready** — 2 distinct days, 16 rows, 8 rainy / 8 dry rows — which is the correct, expected state on day one, not a failure. See the Report / viva writeup for the full readiness output and the reasoning behind each threshold above.
+
+---
+
 ## 🔮 Roadmap
 
 - [ ] Weather integration (IMD API — rain reduces NH-48 speeds ~30%)

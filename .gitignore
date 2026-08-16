@@ -230,3 +230,11 @@ data/*.csv
 
 # agent-created virtualenvs (.venv only matches exactly; these do not)
 .venv*/
+
+.DS_Store
+
+# weather.py's on-disk cache and collect_live.py's --budget-guard state —
+# both are rebuildable local run state, not data assets, so they're kept out
+# of git (avoids noisy diffs / merge conflicts from every collection round).
+data/weather_cache.json
+data/.tomtom_budget.json
