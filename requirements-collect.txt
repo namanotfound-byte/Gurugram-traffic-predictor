@@ -1,0 +1,5 @@
+# Dependencies for collect_live.py only.
+# Deliberately kept separate from requirements.txt (which pulls in
+# scikit-learn/pandas/numpy/joblib for training) so the collect.yml
+# workflow — which runs every 30 minutes — installs as little as possible.
+requests>=2.31

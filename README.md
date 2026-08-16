@@ -200,6 +200,66 @@ The Flask API (`backend/app.py`) already checks for a trained model file and use
 
 ---
 
+## 📡 Live data collection (rescued, 2026-08-16)
+
+> **This section documents `collect_live.py` and the collection workflows specifically. It supersedes the collection instructions in "Getting real data flowing" above where they conflict — that section still describes the original (currently non-functional) collector.**
+
+### What was broken
+
+The original collector (`model/traffic_model.py: collect_once`) polls TomTom's **Flow Segment Data API**. Tested against this project's real TomTom key on 2026-08-16:
+
+| Endpoint | Result |
+|---|---|
+| Flow Segment Data (`/traffic/services/4/flowSegmentData/...`) | **403 Forbidden** |
+| Search / Geocoding | **403 Forbidden** |
+| Routing (`/routing/1/calculateRoute/...`) | **200 OK** |
+
+This key's plan simply cannot reach the Flow API. Every scheduled run of the old `collect.yml` hit the `[WARN] TomTom fetch failed` branch and collected nothing — silently — for as long as the workflow existed. That's the real reason the dataset stayed empty.
+
+### The fix: `collect_live.py`
+
+`collect_live.py` (repo root) gets equivalent signal from the **Routing API**, which this key *can* reach. It calls `calculateRoute` for each of the 8 corridors from `corridors.py` with `traffic=true&computeTravelTimeFor=all`, and derives an **observed** congestion index from the live travel time:
+
+```
+congestion_idx = 1 - (noTrafficTravelTimeInSeconds / travelTimeInSeconds)
+```
+
+This lands on the same 0–1 scale as the bootstrap sweep's index, but it is computed differently (bootstrap divides by *historic* time; this divides by *live* time) — so every row is tagged `source="observed"` to keep the two distinguishable downstream. Output goes to `data/gurugram_observed.csv`, columns:
+
+```
+corridor_id, corridor_name, road_class, day_of_week, hour, minute,
+length_m, free_flow_s, live_s, historic_s, traffic_delay_s,
+congestion_idx, source, collected_at
+```
+
+Run it with `python collect_live.py --once` (single round, used by CI) or `python collect_live.py --loop` (runs forever, one round every 30 minutes — for a VM). It retries individual corridors on 429/5xx with backoff, skips and logs a corridor rather than losing the whole round to one bad request, and dedupes against rows already written for the same (corridor, 30-minute bucket) so re-running never produces duplicates.
+
+**Verified working end-to-end on 2026-08-16**: `python collect_live.py --once` returned live data for all 8/8 corridors in one round (e.g. NH-48: live=2195s vs free-flow=1989s → congestion_idx=0.094; Golf Course Extension Road: live=1874s vs free-flow=1587s, delay=13s → congestion_idx=0.153).
+
+### Quota
+
+8 requests/round × 48 rounds/day = **384 requests/day** against TomTom's 2,500/day free tier — leaving headroom for the one-off bootstrap sweep and manual testing, as long as they share the same key's quota consciously.
+
+### Workflow fixes (`.github/workflows/collect.yml`, `retrain.yml`)
+
+1. **Wrong endpoint** — `collect.yml` called `model/traffic_model.py collect-once` (the dead Flow API path). It now calls `collect_live.py --once`.
+2. **Unprotected `git push`** — both workflows did a bare `git push` with no pull/rebase first. Since `collect.yml` runs every 30 minutes and `retrain.yml` pushes to the same branch, the first conflict would fail the push and it would **stay broken forever** (nothing ever re-pulled). Both workflows now fetch + rebase + retry (up to 5 attempts, jittered backoff) on push rejection.
+3. **Ad hoc deps** — `collect.yml` used to `pip install pandas numpy requests` inline for a script that never actually needed pandas/numpy. It now installs from a dedicated `requirements-collect.txt` (just `requests`), keeping the every-30-minutes job's install step small.
+4. **Concurrency** — both workflows now declare a `concurrency:` group (`cancel-in-progress: false`) so overlapping runs (e.g. a manual `workflow_dispatch` landing mid-schedule) queue instead of racing each other's commits.
+5. `data/gurugram_observed.csv` is explicitly un-ignored in `.gitignore` (which otherwise blanket-ignores `data/*.csv`) — otherwise CI's `git add` would silently have nothing to commit, every round, forever.
+
+### Honest caveat: GitHub Actions schedules are not a clock
+
+`schedule: cron: "*/30 * * * *"` is **best-effort, not exact**. In practice:
+
+- Runs are frequently delayed — GitHub's own docs warn scheduled workflows "may be delayed during periods of high loads," and delays of 15–60+ minutes on a `*/30` cron are common, not rare.
+- **GitHub disables scheduled workflows on repositories with 60 days of no other activity.** If nobody pushes a commit or opens a PR for two months, the 30-minute collector just stops, silently, until someone re-enables it or pushes something.
+- There's no SLA and no guaranteed catch-up for missed runs.
+
+For a portfolio/demo project this is a fine trade for "free and zero-maintenance." If you actually need reliable, true 30-minute cadence (e.g. for a real forecasting product), run `python collect_live.py --loop` on a small always-on VM (a $4–6/mo box is plenty) or a proper cron job instead — that gives you an exact, monotonic clock instead of GitHub's best-effort scheduler.
+
+---
+
 ## 🔮 Roadmap
 
 - [ ] Weather integration (IMD API — rain reduces NH-48 speeds ~30%)

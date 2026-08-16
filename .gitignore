@@ -219,3 +219,7 @@ __marimo__/
 
 # project data
 data/*.csv
+# ...except the live-observed collector's output: the whole point of
+# collect.yml / collect_live.py is for CI to commit new rows here every
+# round, so it must not be gitignored (see README: "Live data collection").
+!data/gurugram_observed.csv

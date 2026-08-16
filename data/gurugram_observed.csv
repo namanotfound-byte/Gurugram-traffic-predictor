@@ -1,0 +1,9 @@
+corridor_id,corridor_name,road_class,day_of_week,hour,minute,length_m,free_flow_s,live_s,historic_s,traffic_delay_s,congestion_idx,source,collected_at
+0,NH-48 Delhi-Gurgaon Expressway,highway,6,20,0,21899,1989,2195,2093,0,0.0938,observed,2026-08-16T20:00:00
+1,MG Road,arterial,6,20,0,3850,408,479,468,0,0.1482,observed,2026-08-16T20:00:00
+2,Golf Course Road,arterial,6,20,0,7725,799,925,909,0,0.1362,observed,2026-08-16T20:00:00
+3,Sohna Road,arterial,6,20,0,7155,670,789,774,0,0.1508,observed,2026-08-16T20:00:00
+4,Dwarka Expressway,expressway,6,20,0,24298,1343,1406,1371,0,0.0448,observed,2026-08-16T20:00:00
+5,Golf Course Extension Road,arterial,6,20,0,9931,1587,1874,1829,13,0.1531,observed,2026-08-16T20:00:00
+6,Mehrauli-Gurgaon Road,arterial,6,20,0,9408,978,1125,1109,0,0.1307,observed,2026-08-16T20:00:00
+7,Southern Peripheral Road,arterial,6,20,0,8020,893,1031,1005,0,0.1339,observed,2026-08-16T20:00:00

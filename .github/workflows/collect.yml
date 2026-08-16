@@ -1,7 +1,20 @@
-name: Collect Gurugram Traffic Data
+name: Collect Gurugram Traffic Data (live, observed)
 
-# Runs every 30 minutes, forever, on GitHub's free servers.
-# This is what actually builds your real dataset over the next few weeks.
+# Runs every 30 minutes, best-effort, on GitHub's free servers.
+#
+# IMPORTANT — read the "Live data collection" section of README.md before
+# relying on this. GitHub Actions `schedule:` triggers are NOT a reliable
+# timekeeper: under platform load runs are frequently delayed by anywhere
+# from a few minutes to over an hour, and GitHub disables scheduled
+# workflows entirely on repos with 60 days of no activity. Treat this as
+# "roughly every 30 minutes, whenever GitHub gets around to it" rather than
+# a guaranteed cadence. If you need true 30-minute cadence, run
+# `python collect_live.py --loop` on a small always-on VM instead.
+#
+# This calls collect_live.py, which uses TomTom's Routing API — NOT the
+# Flow Segment Data API that model/traffic_model.py's collect-once used.
+# That endpoint returns 403 on this project's key; see collect_live.py's
+# module docstring for the full story.
 on:
   schedule:
     - cron: "*/30 * * * *"
@@ -9,6 +22,14 @@ on:
 
 permissions:
   contents: write
+
+# Prevent overlapping collect runs (e.g. a manual dispatch landing while a
+# scheduled run is still finishing) from racing each other on the git push
+# below. Runs queue instead of running concurrently; none are cancelled
+# mid-flight since that could lose an in-progress commit.
+concurrency:
+  group: collect-live-traffic-data
+  cancel-in-progress: false
 
 jobs:
   collect:
@@ -19,19 +40,47 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
-        run: pip install pandas numpy requests
+        run: pip install -r requirements-collect.txt
 
-      - name: Collect one round of traffic data
+      - name: Collect one round of live traffic data
         env:
           TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
-        run: python model/traffic_model.py collect-once
+        run: python collect_live.py --once
 
-      - name: Commit new data
+      - name: Commit new data (retries on push conflicts)
         run: |
+          set -e
           git config user.name "traffic-collector-bot"
           git config user.email "actions@github.com"
-          git add data/gurugram_traffic_raw.csv
-          git diff --staged --quiet || git commit -m "data: automated collection round"
-          git push
+
+          git add data/gurugram_observed.csv
+          if git diff --staged --quiet; then
+            echo "No new rows this round (all corridors deduped or failed) — nothing to commit."
+            exit 0
+          fi
+          git commit -m "data: automated live-observed collection round"
+
+          # A plain `git push` here fails outright the moment retrain.yml
+          # (or an overlapping collect run) has pushed since we checked out,
+          # and then STAYS failing on every subsequent run forever, since
+          # nothing ever pulls the remote change back in. Instead: try to
+          # push, and on rejection fetch + rebase our one commit on top of
+          # whatever is now on the remote and try again, a few times with a
+          # jittered backoff so two racing runs don't retry in lockstep.
+          branch="${GITHUB_REF_NAME}"
+          attempt=1
+          max_attempts=5
+          until git push origin "HEAD:${branch}"; do
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "::error::git push failed after ${max_attempts} attempts; giving up this round."
+              exit 1
+            fi
+            echo "Push rejected (concurrent write from another run) — fetch/rebase retry ${attempt}/${max_attempts}..."
+            git fetch origin "${branch}"
+            git rebase "origin/${branch}"
+            sleep $(( (RANDOM % 10) + attempt * 3 ))
+            attempt=$((attempt + 1))
+          done
