@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GTP — Gurugram Traffic Intelligence</title>
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -129,19 +130,45 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .tool-btn:hover{background:var(--cyan-glow)}
 .tool-result{margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.6}
 
-/* MAP (custom SVG, no external tiles/libs) */
+/* MAP — real MapLibre tiles, with the schematic SVG kept as an offline fallback */
 .map-zone{position:relative;min-height:360px;background:
   linear-gradient(var(--border) 1px,transparent 1px) 0 0/40px 40px,
   linear-gradient(90deg,var(--border) 1px,transparent 1px) 0 0/40px 40px,
   var(--void)}
-#road-svg{position:absolute;inset:0;width:100%;height:100%}
-.map-hud{position:absolute;top:14px;left:14px;z-index:10;font-family:var(--mono);font-size:9px;color:var(--cyan);pointer-events:none;line-height:1.8}
+#glMap{position:absolute;inset:0;width:100%;height:100%}
+#road-svg{position:absolute;inset:0;width:100%;height:100%;display:none}
+.map-hud{position:absolute;top:14px;left:14px;z-index:10;font-family:var(--mono);font-size:9px;color:var(--cyan);pointer-events:none;line-height:1.8;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 .map-hud-br{position:absolute;bottom:14px;right:14px;z-index:10;text-align:right;font-family:var(--mono);font-size:8px;color:var(--muted);pointer-events:none}
-.map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--muted);z-index:12;background:var(--void);pointer-events:none}
+.map-offline-notice{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:16;display:none;align-items:center;gap:6px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.map-legend{position:absolute;left:14px;bottom:14px;z-index:15;display:flex;flex-direction:column;gap:5px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:var(--mono);font-size:9px;color:var(--sub);pointer-events:none}
+.map-legend-title{font-size:8px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:1px}
+.map-legend-row{display:flex;align-items:center;gap:7px}
+.map-legend-swatch{width:10px;height:10px;border-radius:3px;flex:none}
 
 .corridor-line{cursor:pointer;transition:opacity .2s}
 .corridor-line-glow{pointer-events:none}
 .corridor-label{font-family:var(--mono);font-size:9px;pointer-events:none}
+
+/* MapLibre popup theming (vendored CSS ships a light-only default box).
+   The vendored .maplibregl-popup rule has no z-index, so without this it
+   paints below our own z-indexed map overlays (.map-legend:15, .detail-float:20)
+   and can end up invisible behind them — give it the highest z-index in the zone. */
+.maplibregl-popup{z-index:25}
+.maplibregl-popup-content{background:var(--panel)!important;color:var(--text);border-radius:10px;padding:13px 15px;box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid var(--card-border)}
+.maplibregl-popup-close-button{color:var(--sub);font-size:16px;padding:2px 6px}
+.maplibregl-popup-close-button:hover{color:var(--text);background:transparent}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{border-bottom-color:var(--panel)}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{border-top-color:var(--panel)}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--panel)}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--panel)}
+.gl-popup-title{font-size:13px;font-weight:700;color:var(--cyan)}
+.gl-popup-sub{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:1px;margin-bottom:9px}
+.gl-popup-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.gl-popup-pct{font-family:var(--mono);font-size:19px;font-weight:600}
+.gl-popup-label{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:4px;letter-spacing:.06em;font-weight:700}
+.gl-popup-window{font-family:var(--mono);font-size:10px;color:var(--ok-text);margin-bottom:3px}
+.gl-popup-muted{color:var(--muted);font-family:var(--mono);font-size:10px}
 
 /* DETAIL FLOAT */
 .detail-float{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--neu-border);border-radius:10px;padding:14px 16px;min-width:300px;max-width:92%;z-index:20;box-shadow:0 20px 60px rgba(0,0,0,0.35);display:none}
@@ -279,11 +306,21 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       </div>
     </div>
 
-    <!-- MAP -->
+    <!-- MAP: real MapLibre tiles (#glMap); falls back to the schematic SVG
+         (#road-svg, kept fully intact) when tiles/style can't be reached -->
     <div class="map-zone" id="mapZone">
+      <div id="glMap"></div>
       <svg id="road-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="map-offline-notice" id="mapOfflineNotice">&#128225; offline — showing schematic view</div>
       <div class="map-hud" id="mapHud"></div>
-      <div class="map-hud-br">GTP Schematic Corridor Map · Gurugram NCR</div>
+      <div class="map-hud-br" id="mapAttribution">GTP Schematic Corridor Map · Gurugram NCR</div>
+      <div class="map-legend" id="mapLegend">
+        <div class="map-legend-title">Congestion</div>
+        <div class="map-legend-row"><div class="map-legend-swatch" style="background:var(--green)"></div>Free</div>
+        <div class="map-legend-row"><div class="map-legend-swatch" style="background:var(--amber)"></div>Moderate</div>
+        <div class="map-legend-row"><div class="map-legend-swatch" style="background:var(--orange)"></div>Heavy</div>
+        <div class="map-legend-row"><div class="map-legend-swatch" style="background:var(--magenta)"></div>Severe</div>
+      </div>
       <div class="detail-float" id="detailFloat"></div>
       <div class="map-empty" id="mapEmpty" style="display:none">Waiting for corridor data…</div>
     </div>
@@ -324,6 +361,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- Vendored locally (frontend/vendor/) — no CDN, so this keeps working fully offline -->
+<script src="vendor/maplibre-gl.js"></script>
 <script>
 'use strict';
 // ─────────────────────────────────────────────────────────────────────────
@@ -350,6 +389,16 @@ const adviceCache = {};       // `${corridorId}_${day}` -> /advice response
 let nowData = null;           // GET /now
 let apiReachable = null;      // null=unknown, true/false
 let corridorsFailed = false;
+
+// MapLibre real-map state (see "MAPLIBRE REAL MAP" section below for setup)
+const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+const MAP_LOAD_TIMEOUT_MS = 7000;
+let glMap = null;             // maplibregl.Map instance, or null
+let glMapReady = false;       // true once style+source+layers are up
+let glMapFailed = false;      // true once we've fallen back to the schematic
+let corridorGeoJSON = null;   // frontend/corridors.geojson, fetched once
+let glPopup = null;           // single reusable maplibregl.Popup
+let lastFlownCorridor = undefined; // avoid re-flying the camera on every render
 
 // ─────────────────────────────────────────────────────────────────────────
 // LABEL / COLOR — derived from the documented thresholds in api_contract.md.
@@ -660,6 +709,223 @@ function drawMap(){
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// MAPLIBRE REAL MAP — real road geometry (frontend/corridors.geojson, built
+// offline by tools/build_corridor_geojson.py) styled with a data-driven
+// line-color expression keyed to the SAME thresholds/colors as colorFor()/
+// labelFor() above (read live off the CSS custom properties so the map can
+// never drift from the sidebar). Falls back to the schematic SVG (#road-svg,
+// left fully intact) if the tile/style network is unreachable.
+// ─────────────────────────────────────────────────────────────────────────
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// Mirrors labelFor/colorFor's exact breakpoints (0.091 / 0.200 / 0.310) from
+// docs/api_contract.md. `step` semantics: output_0 applies below stop_1, so
+// a sentinel of -1 (no data loaded yet) falls into the muted "no data" color.
+function glLineColorExpr(){
+  return ['step', ['to-number', ['feature-state','congestion'], -1],
+    cssVar('--muted'),
+    0,     cssVar('--green'),
+    0.091, cssVar('--amber'),
+    0.200, cssVar('--orange'),
+    0.310, cssVar('--magenta')
+  ];
+}
+const glSelectedExpr = ['boolean', ['feature-state','selected'], false];
+function glBaseWidthExpr(){ return ['match', ['get','road_class'], 'highway', 6, 'expressway', 5.5, 4]; }
+function glLineWidthExpr(){ return ['case', glSelectedExpr, ['+', glBaseWidthExpr(), 2.5], glBaseWidthExpr()]; }
+function glGlowWidthExpr(){ return ['+', glBaseWidthExpr(), 14]; }
+
+function fallbackToSchematic(reason){
+  if(glMapFailed) return; // already handled
+  glMapFailed = true;
+  glMapReady = false;
+  console.warn('[map] falling back to schematic view:', reason);
+  try{ if(glMap) glMap.remove(); }catch(e){}
+  glMap = null;
+  document.getElementById('glMap').style.display = 'none';
+  document.getElementById('road-svg').style.display = 'block';
+  document.getElementById('mapOfflineNotice').style.display = 'flex';
+  document.getElementById('mapAttribution').style.display = '';
+  document.getElementById('mapAttribution').textContent = 'GTP Schematic Corridor Map · Gurugram NCR (offline fallback)';
+  render();
+}
+
+function showGlMap(){
+  document.getElementById('glMap').style.display = '';
+  document.getElementById('road-svg').style.display = 'none';
+  document.getElementById('mapOfflineNotice').style.display = 'none';
+  document.getElementById('mapAttribution').style.display = 'none'; // MapLibre's own AttributionControl covers this
+}
+
+async function setupCorridorLayers(){
+  if(!corridorGeoJSON){
+    const res = await fetch('corridors.geojson');
+    if(!res.ok) throw new Error('corridors.geojson HTTP ' + res.status);
+    corridorGeoJSON = await res.json();
+  }
+  glMap.addSource('corridors', {type:'geojson', data: corridorGeoJSON, promoteId: 'corridor_id'});
+
+  // Wider, blurred glow underneath — preserves the glow effect from the old schematic
+  glMap.addLayer({
+    id: 'corridor-glow', type: 'line', source: 'corridors',
+    layout: {'line-cap':'round','line-join':'round'},
+    paint: {
+      'line-color': glLineColorExpr(),
+      'line-width': glGlowWidthExpr(),
+      'line-blur': 10,
+      'line-opacity': ['case', glSelectedExpr, 0.38, 0.16]
+    }
+  });
+  glMap.addLayer({
+    id: 'corridor-line', type: 'line', source: 'corridors',
+    layout: {'line-cap':'round','line-join':'round'},
+    paint: {
+      'line-color': glLineColorExpr(),
+      'line-width': glLineWidthExpr(),
+      'line-opacity': ['case', glSelectedExpr, 1, 0.88]
+    }
+  });
+
+  glMap.on('mouseenter', 'corridor-line', ()=>{ glMap.getCanvas().style.cursor = 'pointer'; });
+  glMap.on('mouseleave', 'corridor-line', ()=>{ glMap.getCanvas().style.cursor = ''; });
+  glMap.on('click', 'corridor-line', (e)=>{
+    if(!e.features.length) return;
+    const cid = e.features[0].properties.corridor_id;
+    selCorridor = (selCorridor === cid ? null : cid);
+    onSelectionChanged();
+  });
+
+  const bounds = new maplibregl.LngLatBounds();
+  corridorGeoJSON.features.forEach(f=> f.geometry.coordinates.forEach(c=> bounds.extend(c)));
+  if(!bounds.isEmpty()) glMap.fitBounds(bounds, {padding: 36, duration: 0});
+}
+
+function refreshGlMapColors(){
+  if(!glMapReady) return;
+  glMap.setPaintProperty('corridor-glow', 'line-color', glLineColorExpr());
+  glMap.setPaintProperty('corridor-line', 'line-color', glLineColorExpr());
+}
+
+function updateGlFeatureStates(){
+  if(!glMapReady) return;
+  CORRIDORS.forEach(c=>{
+    const info = currentValueFor(c.id, curDay, curHour);
+    glMap.setFeatureState({source:'corridors', id: c.id}, {
+      congestion: info ? info.v : -1,
+      selected: selCorridor === c.id
+    });
+  });
+}
+
+function getCorridorFeature(cid){
+  if(!corridorGeoJSON) return null;
+  return corridorGeoJSON.features.find(f=>f.properties.corridor_id===cid) || null;
+}
+function getCorridorMidpoint(cid){
+  const f = getCorridorFeature(cid);
+  if(!f) return null;
+  const coords = f.geometry.coordinates;
+  return coords[Math.floor(coords.length/2)]; // [lon,lat] == maplibre LngLat order
+}
+function getCorridorBounds(cid){
+  const f = getCorridorFeature(cid);
+  if(!f) return null;
+  const b = new maplibregl.LngLatBounds();
+  f.geometry.coordinates.forEach(c=> b.extend(c));
+  return b;
+}
+
+function glPopupHtml(cid){
+  const c = CORRIDORS.find(x=>x.id===cid);
+  if(!c) return '';
+  const info = currentValueFor(cid, curDay, curHour);
+  const a = adviceCache[cid+'_'+curDay];
+  const bestWin = a && (a.best_windows||[])[0];
+  let html = `<div class="gl-popup-title">${c.name}</div><div class="gl-popup-sub">${c.sub}</div>`;
+  if(info){
+    const col = colorFor(info.v);
+    html += `<div class="gl-popup-row"><span class="gl-popup-pct" style="color:${col}">${Math.round(info.v*100)}%</span>
+      <span class="gl-popup-label" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</span></div>`;
+  } else {
+    html += `<div class="gl-popup-muted">Loading congestion…</div>`;
+  }
+  if(bestWin) html += `<div class="gl-popup-window">&#10003; Best window: ${windowText(bestWin)}</div>`;
+  if(a) html += `<div style="margin-top:6px">${provBadgeHtml(a.provenance, a.confidence)}</div>`;
+  return html;
+}
+
+// Keeps the popup + camera in sync with selCorridor, from *any* selection
+// source (map click, sidebar click) — this is what makes the selected
+// corridor visually obvious on both the map and the sidebar simultaneously.
+function syncGlSelection(){
+  if(!glMapReady) return;
+  if(selCorridor === null){
+    if(glPopup){ glPopup.remove(); }
+    lastFlownCorridor = null;
+    return;
+  }
+  const mid = getCorridorMidpoint(selCorridor);
+  if(!mid) return;
+  if(!glPopup){
+    glPopup = new maplibregl.Popup({closeButton:true, closeOnClick:false, maxWidth:'280px'});
+    glPopup.on('close', ()=>{ if(selCorridor!==null){ selCorridor = null; onSelectionChanged(); } });
+  }
+  glPopup.setLngLat(mid).setHTML(glPopupHtml(selCorridor));
+  if(!glPopup.isOpen()) glPopup.addTo(glMap);
+  if(lastFlownCorridor !== selCorridor){
+    const b = getCorridorBounds(selCorridor);
+    if(b) glMap.fitBounds(b, {padding: 90, duration: 700, maxZoom: 14});
+    lastFlownCorridor = selCorridor;
+  }
+}
+
+function initGlMap(){
+  if(typeof maplibregl === 'undefined'){ fallbackToSchematic('vendor/maplibre-gl.js did not load'); return; }
+  let settled = false;
+  const timeoutId = setTimeout(()=>{
+    if(!settled){ settled = true; fallbackToSchematic('map load timed out after ' + MAP_LOAD_TIMEOUT_MS + 'ms (offline?)'); }
+  }, MAP_LOAD_TIMEOUT_MS);
+
+  try{
+    glMap = new maplibregl.Map({
+      container: 'glMap',
+      style: MAP_STYLE_URL,
+      center: [77.05, 28.45],
+      zoom: 11
+    });
+  }catch(e){
+    clearTimeout(timeoutId);
+    fallbackToSchematic('maplibregl.Map threw: ' + e.message);
+    return;
+  }
+  glMap.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+  glMap.on('error', (e)=>{
+    if(settled) return; // ignore transient errors once we've successfully loaded
+    settled = true;
+    clearTimeout(timeoutId);
+    const msg = (e && e.error && e.error.message) || 'unknown map error';
+    fallbackToSchematic('map error before first load: ' + msg);
+  });
+
+  glMap.on('load', async ()=>{
+    if(settled) return; // timeout (or an error) already resolved this
+    try{
+      await setupCorridorLayers();
+      settled = true;
+      clearTimeout(timeoutId);
+      glMapReady = true;
+      showGlMap();
+      render();
+    }catch(e){
+      settled = true;
+      clearTimeout(timeoutId);
+      fallbackToSchematic('failed to load corridor geometry: ' + e.message);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // RENDER: SIDEBAR CORRIDOR LIST
 // ─────────────────────────────────────────────────────────────────────────
 function renderCorridorList(){
@@ -738,6 +1004,12 @@ function renderAdvice(){
 // ─────────────────────────────────────────────────────────────────────────
 function renderDetail(){
   const el = document.getElementById('detailFloat');
+  // When the real MapLibre map is live, the corridor popup (glPopupHtml) already
+  // shows name/congestion/label/confidence/provenance/best-window anchored on the
+  // corridor itself — this bottom-centered float is redundant screen space and,
+  // worse, visually overlaps the popup (very visible at mobile widths). Only the
+  // schematic SVG fallback (no per-corridor popup) needs this panel.
+  if(glMapReady){ el.style.display='none'; return; }
   if(selCorridor===null){ el.style.display='none'; return; }
   const c = CORRIDORS.find(x=>x.id===selCorridor);
   const a = adviceCache[selCorridor+'_'+curDay];
@@ -843,7 +1115,8 @@ function updateTimeDesc(){
 // MASTER RENDER
 // ─────────────────────────────────────────────────────────────────────────
 function render(){
-  drawMap();
+  document.getElementById('mapEmpty').style.display = CORRIDORS.length ? 'none' : 'flex';
+  if(glMapReady){ updateGlFeatureStates(); syncGlSelection(); } else if(!glMapFailed){ /* still connecting */ } else { drawMap(); }
   renderCorridorList();
   renderAdvice();
   renderDetail();
@@ -1058,6 +1331,7 @@ document.getElementById('themeBtn').onclick = function(){
   document.documentElement.setAttribute('data-theme', next);
   this.textContent = next==='light' ? '◑' : '◐';
   try{ localStorage.setItem('gtp-theme', next); }catch(e){}
+  refreshGlMapColors(); // congestion colors are read live off CSS vars, which just changed
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1111,6 +1385,7 @@ setInterval(loadNow, 60000);
   document.getElementById('sliderVal').textContent = fmtHour(curHour);
   updateSliderTrack();
   render();
+  initGlMap();
   refreshAll();
 })();
 </script>
