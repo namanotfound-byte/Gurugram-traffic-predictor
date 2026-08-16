@@ -262,7 +262,7 @@ For a portfolio/demo project this is a fine trade for "free and zero-maintenance
 
 ## 🌦️ Forecasting: the residual model (added 2026-08-17)
 
-> **This section is clearly-marked, self-contained, and owned by the forecasting workstream** (`weather.py`, `model/forecast_model.py`, the weather/calendar columns in `collect_live.py`). It documents the actual intellectual core of the project: predicting how weather and the calendar change Gurugram traffic, not just looking up the historical average.
+> **This section is clearly-marked, self-contained, and owned by the forecasting workstream** (`weather.py`, `incidents.py`, `model/forecast_model.py`, the weather/calendar/incident columns in `collect_live.py`). It documents the actual intellectual core of the project: predicting how weather, the calendar, and live incidents change Gurugram traffic, not just looking up the historical average.
 
 ### Why model the residual, not absolute congestion
 
@@ -282,6 +282,22 @@ Backed by [Open-Meteo](https://open-meteo.com/) (free, no API key). Derived feat
 
 One empirical finding worth noting: Open-Meteo's true historical **archive** endpoint does not carry a `visibility` field at all (confirmed — every value comes back `null`), while the **forecast** endpoint's `past_days` parameter serves the same precipitation/temperature history *plus real visibility*, for up to 92 days back. `weather.py` prefers the forecast+`past_days` path for anything inside that window and only falls back to the true archive endpoint (visibility left honestly `None`, not imputed) beyond it.
 
+### Incident features (`incidents.py`, added 2026-08-17)
+
+TomTom's Traffic Incidents API was 403 on this project's key for most of the project, then was enabled mid-project on the TomTom portal — re-tested live and confirmed working. Incidents matter more than weather for the residual: a crash or closure is exactly the congestion weather/calendar features can never explain.
+
+**One bbox request per round covers all 8 corridors** (not one per corridor — the marginal cost is ~+96 requests/day, still comfortably inside the 2,500/day free tier shared with the routing calls).
+
+Incidents are matched to corridors by distance from the incident's own geometry to the corridor's real digitized polyline (`frontend/corridors.geojson`, read-only — owned by another workstream). **Buffer: 300 m**, chosen empirically by pulling 77 real Gurugram incidents and measuring distance-to-nearest-corridor: results split cleanly into a small cluster under a few hundred metres and the large majority (65/77, ~84%) beyond 500 m on unrelated roads. 300 m sits inside that gap.
+
+Honest characterization of the real feed (tested live, not assumed): it's dominated by `iconCategory=8` ("road closed") entries, 70/77 in one pull, mostly with **no numeric delay value** (72/77 null) — `magnitudeOfDelay` (never null) is used as the reliable severity signal instead. Several matched closures cluster around Dwarka Expressway specifically, consistent with real, ongoing construction there rather than a single fresh incident — so `has_road_closure`/`incident_count` should be read as "a closure or worksite is currently active nearby," which can be a slower-changing signal for some corridors, not purely a minute-to-minute one.
+
+**Incidents cannot be backfilled** — there is no historical incident-replay endpoint on this key, so rows collected before this feature (or any collection gap) simply have unknown incident status. `model/forecast_model.py` never assumes "blank" means "confirmed clear": it adds an `incident_data_known` flag alongside the imputed defaults, and readiness gating (`incident-affected ROWS >= 30`, `incident-clear ROWS >= 150`) only counts rows where incident status is actually known.
+
+### Route-stability filter and free_flow consistency
+
+TomTom's routing engine occasionally reroutes a corridor onto a physically different road at different times (previously identified: Golf Course Extension Road, Mehrauli-Gurgaon Road, Southern Peripheral Road). `model/forecast_model.py` filters BOTH the bootstrap baseline and the observed rows to `route_stable` measurements only (mirroring `model/traffic_model.py`'s existing convention), and runs `check_free_flow_consistency()` every readiness/train run, flagging any corridor whose mean `free_flow_s` drifted more than 5% between the bootstrap sweep and live collection — that drift, not the live-vs-historic denominator difference, is the real risk to a clean residual.
+
 ### Collection cadence: 15 minutes, not 30
 
 `collect_live.py` now polls every 15 minutes (768 TomTom requests/day against the 2,500/day free-tier cap, vs. 384/day before). Consecutive 15-minute samples are strongly autocorrelated — this is **not** 2x the information — but it materially improves the odds of catching a monsoon rain event's onset/offset, which is exactly the signal the residual model needs and which a 30-minute cadence can straddle entirely.
@@ -296,6 +312,8 @@ One empirical finding worth noting: Open-Meteo's true historical **archive** end
 | Total rows | >= 1500 | Conservative floor given ~14 features and strong autocorrelation between consecutive samples (raw row count overstates independent information). |
 | Rainy rows | >= 50 | The model must have actually seen rain to claim it can predict rain's effect. |
 | Dry rows | >= 200 | Same logic for the majority class. |
+| Incident-affected rows (known status) | >= 30 | Same logic for incidents — but restricted to rows where incident status is actually known, since incidents can't be backfilled (see above). |
+| Incident-clear rows (known status) | >= 150 | Same logic for the majority class. |
 | Corridors covered | >= 6/8 | Tolerates a couple of corridors having API trouble without blocking training on the rest. |
 
 Run `python model/forecast_model.py readiness` any time to see exactly where collection stands against these gates, plus a realistic earliest-possible-ready date (the calendar floor, assuming continuous collection and at least a few rain events in that window — not guaranteed).
@@ -312,7 +330,7 @@ Positive means the model adds value; zero or negative means it does not, and tha
 
 ### Current status (honest, as of 2026-08-17)
 
-Data collection restarted with weather/calendar attached on 2026-08-17. `forecast_readiness()` today reports **not ready** — 2 distinct days, 16 rows, 8 rainy / 8 dry rows — which is the correct, expected state on day one, not a failure. See the Report / viva writeup for the full readiness output and the reasoning behind each threshold above.
+Data collection restarted with weather/calendar/incident features attached on 2026-08-17. `forecast_readiness()` today reports **not ready** — 2 distinct days, 22 rows (1 dropped by the route-stability filter), 6 rainy / 16 dry rows, 7 incident-affected / 1 incident-clear rows (of 8 rows with known incident status) — which is the correct, expected state on day one, not a failure. See the Report / viva writeup for the full readiness output and the reasoning behind each threshold above.
 
 ---
 

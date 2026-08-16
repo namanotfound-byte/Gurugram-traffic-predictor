@@ -81,6 +81,33 @@ the CI workflow runs on a schedule — collect.yml is deliberately left alone
 (see .github/workflows/collect.yml) and only gets weather on rows collected
 after this change via the normal --once path.
 
+INCIDENT FEATURES (added 2026-08-17, same day)
+--------------------------------------------------
+TomTom's Traffic Incidents API, previously 403 on this project's key, was
+enabled on the TomTom portal partway through this project and is now live
+(re-verified: 200 OK, real incidents returned for the Gurugram bbox). This
+matters more than weather for the residual model — a crash or closure is
+exactly the congestion that weather/calendar features can never explain.
+See incidents.py's module docstring for the full design: incidents are
+matched to corridors by distance from the incident's own geometry to the
+corridor's real digitized polyline (frontend/corridors.geojson, read-only),
+with a 300 m buffer chosen empirically from a real pull of Gurugram
+incidents (not guessed).
+
+ONE bbox request per round covers all 8 corridors (not one request per
+corridor — see incidents.py's QUOTA section), so this adds only ~1
+request/round (~+96/day) on top of the 768/day the routing calls already
+use — still well inside the 2,500/day free tier.
+
+UNLIKE WEATHER, INCIDENTS CANNOT BE BACKFILLED. There is no historical
+incident-replay endpoint on this key (only current, live incidents were
+ever confirmed reachable) — a closure that happened yesterday and has
+since cleared is gone, there is no record to backfill onto yesterday's
+rows. Rows collected before this feature existed (and any future gap in
+collection) will have blank incident columns; model/forecast_model.py
+documents exactly how it treats that gap (see its FEATURE IMPUTATION
+section) rather than silently pretending "blank" means "confirmed clear."
+
 BUDGET GUARD
 ------------
 `--budget-guard` (optional) tracks TomTom requests made today in
@@ -118,6 +145,7 @@ import requests
 
 from corridors import CORRIDORS
 import weather as wx
+import incidents as inc
 
 # ─────────────────────────────────────────────
 # CONFIG
@@ -139,6 +167,10 @@ CSV_COLUMNS = [
     # calendar (weather.py / holidays package) — see module docstring
     "is_holiday", "holiday_name", "is_festival_period", "is_month_end",
     "days_to_nearest_holiday",
+    # incidents (incidents.py / TomTom Incidents API) — see module docstring.
+    # NOT backfillable onto pre-existing rows (no historical incident feed).
+    "incident_count", "incident_total_delay_s", "incident_known_delay_count",
+    "incident_max_magnitude", "has_road_closure", "has_jam", "nearest_incident_m",
 ]
 
 ROUND_MINUTES = 15      # target collection cadence (also the dedupe bucket size —
@@ -345,6 +377,26 @@ def _fetch_weather_and_events(rounded):
     }
 
 
+def _fetch_incident_features(api_key):
+    """One TomTom bbox request per round, covering all 8 corridors (see
+    incidents.py's QUOTA section) — NOT one request per corridor. Never
+    raises: an incidents-API hiccup should not lose a round of routing data,
+    so failures are logged and every corridor gets the all-zero/None default
+    feature set for this round instead (see incidents.match_and_aggregate).
+    Returns (per_corridor_features, tomtom_requests_used) — used is 1 on a
+    real attempt (success or failure both cost the request) so the budget
+    guard accounts for it; 0 if skipped outright (no key)."""
+    if not api_key:
+        return inc.match_and_aggregate([]), 0
+    try:
+        features, n_raw = inc.get_corridor_incident_features(api_key=api_key)
+        print(f"  incidents: {n_raw} raw in bbox")
+        return features, 1
+    except Exception as e:
+        print(f"  [WARN] incident fetch failed ({e}); incident columns left at defaults for this round.")
+        return inc.match_and_aggregate([]), 1
+
+
 def collect_round(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
     """Run one round (up to len(CORRIDORS) requests). Returns rows written (>=0),
     or -1 if the round could not start at all (no API key configured, or the
@@ -356,9 +408,12 @@ def collect_round(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
 
     if budget_guard:
         used = budget_requests_used_today()
-        if used + len(CORRIDORS) > daily_cap:
+        # +1 for the single incidents bbox request, on top of one routing
+        # request per corridor (see _fetch_incident_features / incidents.py).
+        needed = len(CORRIDORS) + 1
+        if used + needed > daily_cap:
             print(f"[BUDGET GUARD] {used} TomTom requests already used today; this round needs up to "
-                  f"{len(CORRIDORS)} more, which would exceed --daily-cap={daily_cap}. Refusing to start.")
+                  f"{needed} more, which would exceed --daily-cap={daily_cap}. Refusing to start.")
             return -1
 
     ensure_csv_schema()
@@ -383,8 +438,21 @@ def collect_round(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
           f"festival_period={weather_and_events['is_festival_period']} "
           f"month_end={weather_and_events['is_month_end']}")
 
+    all_deduped = all(
+        (str(c["id"]), collected_at[:16]) in existing for c in CORRIDORS
+    )
+    if all_deduped:
+        # Every corridor already has a row for this bucket (e.g. a re-run
+        # moments later) — nothing will be written, so skip the incidents
+        # bbox request rather than spending real TomTom quota on a round
+        # that writes 0 rows.
+        print("  (all corridors already collected for this round — skipping incidents fetch too)")
+        incident_features, incident_requests_used = inc.match_and_aggregate([]), 0
+    else:
+        incident_features, incident_requests_used = _fetch_incident_features(api_key)
+
     rows_written = 0
-    tomtom_requests_made = 0
+    tomtom_requests_made = incident_requests_used
     with open(OUTPUT_CSV, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
         if write_header:
@@ -419,6 +487,7 @@ def collect_round(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
                 continue
 
             congestion_idx = round(1 - (free_flow_s / live_s), 4)
+            inc_feat = incident_features.get(corridor["id"], {})
 
             row = {
                 "corridor_id": corridor["id"],
@@ -436,12 +505,22 @@ def collect_round(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
                 "source": "observed",
                 "collected_at": collected_at,
                 **weather_and_events,
+                "incident_count": inc_feat.get("incident_count"),
+                "incident_total_delay_s": inc_feat.get("incident_total_delay_s"),
+                "incident_known_delay_count": inc_feat.get("incident_known_delay_count"),
+                "incident_max_magnitude": inc_feat.get("incident_max_magnitude"),
+                "has_road_closure": inc_feat.get("has_road_closure"),
+                "has_jam": inc_feat.get("has_jam"),
+                "nearest_incident_m": inc_feat.get("nearest_incident_m"),
             }
             writer.writerow(row)
             f.flush()
             rows_written += 1
             print(f"  {corridor['name']:38s} OK  live={live_s}s free_flow={free_flow_s}s "
-                  f"historic={historic_s}s delay={delay_s}s congestion_idx={congestion_idx:.3f}")
+                  f"historic={historic_s}s delay={delay_s}s congestion_idx={congestion_idx:.3f} "
+                  f"| incidents={inc_feat.get('incident_count')} "
+                  f"closure={inc_feat.get('has_road_closure')} "
+                  f"nearest_m={inc_feat.get('nearest_incident_m')}")
             time.sleep(INTER_REQUEST_SLEEP_S)
 
     if budget_guard and tomtom_requests_made:

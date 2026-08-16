@@ -68,6 +68,73 @@ below for the specific numbers and the reasoning behind each one. A model
 trained on 300 dry rows cannot predict rain, and shipping one anyway would
 be dishonest.
 
+INCIDENTS (added 2026-08-17, same day as this file, once TomTom's Incidents
+API was enabled on the project key mid-project)
+------------------------------------------------------------------------------
+Incidents matter more than weather for this residual — a crash or closure is
+exactly the congestion weather/calendar features can never explain. See
+incidents.py's module docstring for how incidents are matched to corridors
+(spatial buffer, chosen empirically) and what the raw feed actually looks
+like (dominated by "road closed" entries, many with no numeric delay value).
+
+Incidents CANNOT be backfilled (no historical incident-replay endpoint
+exists on this key) — rows collected before incident tracking existed (or
+any future gap where the incidents fetch failed) have no ground truth for
+"was there an incident nearby at that moment." Those rows are NOT assumed
+incident-free: build_training_table() imputes the incident FEATURE values to
+"no incident" defaults for the model (0 counts, no closure/jam, max
+magnitude 0, nearest_incident_m at a large sentinel) but also adds
+`incident_data_known` (1/0) alongside them, so the model can itself learn
+to discount incident features on rows where they're actually unknown rather
+than silently treating "unknown" as "confirmed clear." See FEATURE COLUMNS
+below.
+
+ROUTE-STABILITY FILTER (mirrors model/traffic_model.py / bootstrap_collect.py)
+--------------------------------------------------------------------------------
+TomTom's routing engine occasionally reroutes a corridor onto a physically
+different road at different times (previously identified for this project:
+Golf Course Extension Road, Mehrauli-Gurgaon Road, Southern Peripheral Road
+all show >9% length_m swings). bootstrap_collect.py already flags this per
+row as `route_stable` (length_m within 2% of corridors.py's verified_km) and
+model/traffic_model.py already excludes route_stable=False rows before
+training. This file does the same for BOTH datasets — bootstrap (using its
+existing route_stable column) and observed (recomputed from length_m, since
+collect_live.py doesn't currently write the column, but it's fully derivable
+from a value every row already has). Mixing congestion_idx values that
+describe two different physical roads into one baseline/residual would
+silently corrupt exactly the signal this file exists to model.
+
+FREE_FLOW CONSISTENCY CHECK
+------------------------------
+The residual is `observed_congestion - baseline_congestion`. Expanded out
+(observed uses `1 - free_flow/live`, baseline uses `1 - free_flow/historic`,
+same free_flow numerator so it cancels): residual = free_flow * (1/historic
+- 1/live) — "how much worse right now is than typical," which is exactly
+the quantity weather/incidents should explain. The denominator difference
+itself is NOT the risk. The real risk is free_flow drifting BETWEEN the two
+datasets for a corridor that reroutes (a different road has a different
+free-flow time) — that would look like a large constant residual which
+weather/incidents obviously can't explain, and would silently bias training.
+check_free_flow_consistency() compares mean free_flow_s per corridor
+between the two datasets (route_stable rows only, since unstable rows are
+already excluded first — comparing free_flow across mismatched roads on
+BOTH sides would be meaningless) and flags any corridor whose free_flow
+moved more than FREE_FLOW_CONSISTENCY_TOL_PCT between the bootstrap sweep
+and live collection. Called every readiness/train run; printed, not hidden.
+
+SIGN CONVENTION: congestion_idx CAN legitimately be negative (observed
+here: NH-48 at 00:45 IST, live=1942s vs free_flow=1991s -> -0.025). TomTom's
+free-flow estimate is not a hard physical floor, and at low-traffic hours
+the "live" time can come in faster than it. This is real signal, not a bug,
+and it is NOT clipped on the input side — clipping the ground truth would
+bias what the model is asked to learn. Only the model's own FORECAST output
+is clipped to [0, 1] (`forecast = clip(baseline + predicted_residual, 0,
+1)`), because a forecast promising negative congestion is not a meaningful
+statement to hand to a user, even though a negative MEASUREMENT is. MAE and
+GradientBoostingRegressor both handle negative real-valued targets natively
+— nothing downstream breaks on this, verified by running the full pipeline
+against real data containing negative congestion_idx rows.
+
 USAGE
 -----
     python model/forecast_model.py readiness   # report current data status
@@ -127,7 +194,32 @@ MIN_DRY_ROWS = 200
 # effectively only been covering one or two roads.
 MIN_CORRIDORS = 6
 
+# Incidents cannot be backfilled (see module docstring), so unlike rain,
+# rows with UNKNOWN incident status must not silently count as "no
+# incident" for gating purposes — only rows collected after incident
+# tracking existed (incident_data_known=1) count towards these two. Same
+# logic as the rain gate: the model must have actually seen both an
+# incident-affected corridor-round AND a confirmed-clear one.
+MIN_INCIDENT_AFFECTED_ROWS = 30
+MIN_INCIDENT_CLEAR_ROWS = 150
+
 TEST_HOLDOUT_FRACTION = 0.2  # last 20% of distinct days, by date, held out
+
+# See module docstring's ROUTE-STABILITY FILTER section. Mirrors
+# bootstrap_collect.py's ROUTE_STABLE_TOL_PCT exactly (not imported —
+# bootstrap_collect.py is another workstream's file and off-limits to
+# depend on for an import that would break this file if it's ever
+# refactored there — the constant is small enough to just mirror).
+ROUTE_STABLE_TOL_PCT = 2.0
+
+# See module docstring's FREE_FLOW CONSISTENCY CHECK section.
+FREE_FLOW_CONSISTENCY_TOL_PCT = 5.0
+
+# A large sentinel (metres) for nearest_incident_m when no incident data is
+# known at all for a row (imputation, not a real measurement) — far beyond
+# incidents.py's 300 m match buffer, so it reads to the model as "nothing
+# nearby" without claiming a specific false distance.
+NEAREST_INCIDENT_SENTINEL_M = 5000.0
 
 FEATURE_COLS = [
     "temperature_c", "precipitation_mm", "is_raining_i", "rain_last_3h",
@@ -135,22 +227,96 @@ FEATURE_COLS = [
     "is_holiday_i", "is_festival_period_i", "is_month_end_i",
     "days_to_nearest_holiday",
     "road_class_enc", "hour_sin", "hour_cos", "is_weekend",
+    "incident_count", "incident_total_delay_s", "incident_max_magnitude",
+    "has_road_closure_i", "has_jam_i", "nearest_incident_m",
+    "incident_data_known",
 ]
+
+
+# ─────────────────────────────────────────────
+# ROUTE STABILITY (see module docstring)
+# ─────────────────────────────────────────────
+def _route_stable_mask(corridor_ids, length_ms):
+    """Vectorised route-stability check: True where length_m is within
+    ROUTE_STABLE_TOL_PCT of that corridor's corridors.py verified_km
+    reference. Missing length_m is treated as stable (nothing to contradict
+    it with) rather than dropped, matching bootstrap_collect.py's
+    is_route_stable() behaviour for a zero/absent reference length."""
+    ref_m = corridor_ids.map(lambda cid: corridors.by_id(int(cid))["verified_km"] * 1000)
+    length_ms = pd.to_numeric(length_ms, errors="coerce")
+    deviation_pct = (length_ms - ref_m).abs() / ref_m * 100
+    stable = deviation_pct <= ROUTE_STABLE_TOL_PCT
+    return stable.fillna(True) | ref_m.le(0)
+
+
+def _apply_route_stability_filter(df, label):
+    if "length_m" not in df.columns or df.empty:
+        return df
+    stable = _route_stable_mask(df["corridor_id"], df["length_m"])
+    n_unstable = int((~stable).sum())
+    if n_unstable:
+        per_corridor = df.loc[~stable].groupby(["corridor_id", "corridor_name"]).size()
+        print(f"[INFO] {label}: excluding {n_unstable}/{len(df)} row(s) where the routing "
+              f"engine measured a different physical road (length_m outside "
+              f"{ROUTE_STABLE_TOL_PCT}% of corridors.py's verified_km):")
+        for (cid, name), n in per_corridor.items():
+            print(f"         corridor {cid} ({name}): {n} row(s) excluded")
+    return df[stable].copy()
+
+
+def check_free_flow_consistency(bootstrap_stable, observed_stable):
+    """Compares mean free_flow_s per corridor between the (route-stable-only)
+    bootstrap sweep and the (route-stable-only) live observed data. A
+    corridor whose free_flow moved more than FREE_FLOW_CONSISTENCY_TOL_PCT
+    between the two is flagged — that would mean the residual for that
+    corridor is contaminated by a free_flow drift the weather/incident
+    features can't explain, not a genuine conditions effect. See module
+    docstring's FREE_FLOW CONSISTENCY CHECK section for why the denominator
+    difference itself (live vs historic) is NOT the risk here."""
+    flagged = []
+    if observed_stable.empty:
+        return flagged
+    boot_ff = bootstrap_stable.groupby("corridor_id")["free_flow_s"].mean()
+    obs_ff = observed_stable.groupby("corridor_id")["free_flow_s"].mean()
+    print("  free_flow_s consistency (bootstrap vs observed, route-stable rows only):")
+    for cid in sorted(set(boot_ff.index) & set(obs_ff.index)):
+        b, o = boot_ff[cid], obs_ff[cid]
+        pct = abs(o - b) / b * 100 if b else 0.0
+        name = corridors.by_id(int(cid))["name"]
+        flag = " <-- FLAGGED" if pct > FREE_FLOW_CONSISTENCY_TOL_PCT else ""
+        print(f"    [{cid}] {name:38s} bootstrap={b:8.1f}s  observed={o:8.1f}s  diff={pct:5.2f}%{flag}")
+        if pct > FREE_FLOW_CONSISTENCY_TOL_PCT:
+            flagged.append((cid, name, pct))
+    missing = set(boot_ff.index) - set(obs_ff.index)
+    if missing:
+        print(f"    (no observed data yet for corridor id(s) {sorted(missing)} — cannot check)")
+    return flagged
 
 
 # ─────────────────────────────────────────────
 # DATA LOADING / FEATURE JOIN
 # ─────────────────────────────────────────────
-def load_baseline():
+def load_baseline(route_stable_only=True):
     """The bootstrap grid, collapsed to one baseline congestion_idx per
     (corridor_id, day_of_week, hour). Uses a groupby-mean rather than assuming
     uniqueness so this stays correct even if the bootstrap file is ever
-    re-swept with duplicate combinations."""
+    re-swept with duplicate combinations. Filters to route_stable=True rows
+    first (see module docstring) — mixing two different physical roads'
+    congestion_idx into one averaged baseline cell would be meaningless."""
     if not os.path.exists(BOOTSTRAP_FILE):
         print(f"[FATAL] {BOOTSTRAP_FILE} not found — the residual model has no baseline to "
               f"measure against without it.")
         sys.exit(1)
     df = pd.read_csv(BOOTSTRAP_FILE)
+    if route_stable_only and "route_stable" in df.columns:
+        def _to_bool(v):
+            return v if isinstance(v, bool) else str(v).strip().lower() in ("true", "1")
+        stable = df["route_stable"].map(_to_bool)
+        n_unstable = int((~stable).sum())
+        if n_unstable:
+            print(f"[INFO] load_baseline: excluding {n_unstable}/{len(df)} bootstrap row(s) "
+                  f"flagged route_stable=False before computing the baseline grid.")
+        df = df[stable]
     base = (
         df.groupby(["corridor_id", "day_of_week", "hour"])["congestion_idx"]
         .mean()
@@ -158,6 +324,18 @@ def load_baseline():
         .rename(columns={"congestion_idx": "baseline_idx"})
     )
     return base
+
+
+def load_bootstrap_raw_stable():
+    """Bootstrap rows, route_stable=True only — used by
+    check_free_flow_consistency (kept separate from load_baseline so the
+    latter can stay focused on producing the baseline lookup table)."""
+    df = pd.read_csv(BOOTSTRAP_FILE)
+    if "route_stable" in df.columns:
+        def _to_bool(v):
+            return v if isinstance(v, bool) else str(v).strip().lower() in ("true", "1")
+        df = df[df["route_stable"].map(_to_bool)]
+    return df
 
 
 def load_observed_raw():
@@ -168,6 +346,7 @@ def load_observed_raw():
         return df
     df["collected_at"] = pd.to_datetime(df["collected_at"])
     df["date"] = df["collected_at"].dt.date
+    df = _apply_route_stability_filter(df, label="load_observed_raw")
     return df
 
 
@@ -210,11 +389,23 @@ def attach_weather_and_events(df):
 
 
 def build_training_table():
-    """Observed rows, joined to their baseline, with the residual target and
-    all engineered features computed. One row per (corridor, round)."""
-    obs = load_observed_raw()
+    """Observed rows (route-stable only), joined to their baseline
+    (route-stable only), with the residual target and all engineered
+    features computed. One row per (corridor, round)."""
+    obs = load_observed_raw()  # already route-stability filtered
     if obs.empty:
         return obs
+
+    # Free_flow consistency check — see module docstring. Run before
+    # anything else so a corridor-level data-quality problem is visible
+    # even if training later refuses to run for other reasons.
+    flagged = check_free_flow_consistency(load_bootstrap_raw_stable(), obs)
+    if flagged:
+        print(f"  [WARN] {len(flagged)} corridor(s) show free_flow drift beyond "
+              f"{FREE_FLOW_CONSISTENCY_TOL_PCT}% between bootstrap and observed — "
+              f"their residuals may partly reflect this drift rather than "
+              f"weather/incident conditions. Investigate before trusting their "
+              f"feature importances specifically.")
 
     obs = attach_weather_and_events(obs)
     base = load_baseline()
@@ -226,6 +417,8 @@ def build_training_table():
               f"cell (corridor/day/hour not in the grid) — dropped from training.")
         df = df.dropna(subset=["baseline_idx"])
 
+    # residual target — see module docstring's SIGN CONVENTION section:
+    # can legitimately be negative, and is intentionally NOT clipped here.
     df["residual"] = df["congestion_idx"] - df["baseline_idx"]
 
     # engineered features (self-contained here — NOT imported from
@@ -258,6 +451,36 @@ def build_training_table():
     df["temperature_c"] = df["temperature_c"].fillna(df["temperature_c"].median() if df["temperature_c"].notna().any() else 28.0)
     df["rain_last_3h"] = df["rain_last_3h"].fillna(0.0)
     df["precipitation_mm"] = df["precipitation_mm"].fillna(0.0)
+
+    # ---- incident features (see module docstring: NOT backfillable) ----
+    # incident_data_known: 1 iff this row was collected after incident
+    # tracking existed (i.e. incident_count is present, even if it's a
+    # genuine 0). Rows before that get imputed "no incident" defaults for
+    # the model but are flagged unknown rather than presented as confirmed
+    # clear — the feature importance of incident_data_known itself is worth
+    # checking once trained: if the model leans on it, that's a sign it's
+    # partly learning "old rows vs new rows" rather than a true incident
+    # effect, which would be an honest caveat to report.
+    if "incident_count" in df.columns:
+        df["incident_data_known"] = df["incident_count"].notna().astype(int)
+    else:
+        df["incident_count"] = np.nan
+        df["incident_data_known"] = 0
+
+    for col in ["incident_total_delay_s", "incident_known_delay_count", "incident_max_magnitude"]:
+        if col not in df.columns:
+            df[col] = np.nan
+    for col in ["has_road_closure", "has_jam"]:
+        if col not in df.columns:
+            df[col] = np.nan
+        df[col + "_i"] = df[col].astype(str).str.lower().map({"true": 1, "false": 0}).fillna(0).astype(int)
+    if "nearest_incident_m" not in df.columns:
+        df["nearest_incident_m"] = np.nan
+
+    df["incident_count"] = df["incident_count"].fillna(0).astype(int)
+    df["incident_total_delay_s"] = df["incident_total_delay_s"].fillna(0.0)
+    df["incident_max_magnitude"] = df["incident_max_magnitude"].fillna(0).astype(int)
+    df["nearest_incident_m"] = df["nearest_incident_m"].fillna(NEAREST_INCIDENT_SENTINEL_M)
 
     return df
 
@@ -316,6 +539,15 @@ def forecast_readiness(df=None, verbose=True):
     rainy_rows = int(df["is_raining_i"].sum())
     dry_rows = int((1 - df["is_raining_i"]).sum())
 
+    # Incident presence gate — same logic as rain, but restricted to rows
+    # where incident status is actually KNOWN (see build_training_table's
+    # incident_data_known), since incidents can't be backfilled onto older
+    # rows the way weather can (see module docstring). A row with unknown
+    # incident status counts toward neither bucket below.
+    known = df[df["incident_data_known"] == 1]
+    incident_affected_rows = int((known["incident_count"] > 0).sum())
+    incident_clear_rows = int((known["incident_count"] == 0).sum())
+
     missing = []
     if report["distinct_days"] < MIN_DISTINCT_DAYS:
         missing.append(
@@ -330,6 +562,17 @@ def forecast_readiness(df=None, verbose=True):
         )
     if dry_rows < MIN_DRY_ROWS:
         missing.append(f"only {dry_rows}/{MIN_DRY_ROWS} dry rows seen.")
+    if incident_affected_rows < MIN_INCIDENT_AFFECTED_ROWS:
+        missing.append(
+            f"only {incident_affected_rows}/{MIN_INCIDENT_AFFECTED_ROWS} rows with a KNOWN "
+            f"nearby incident seen — cannot honestly claim to predict incident effects without this "
+            f"(incidents can't be backfilled, so this can only grow from here forward)."
+        )
+    if incident_clear_rows < MIN_INCIDENT_CLEAR_ROWS:
+        missing.append(
+            f"only {incident_clear_rows}/{MIN_INCIDENT_CLEAR_ROWS} rows with KNOWN incident-clear "
+            f"status seen."
+        )
     if report["corridors_covered"] < MIN_CORRIDORS:
         missing.append(
             f"only {report['corridors_covered']}/{MIN_CORRIDORS} corridors have any data."
@@ -337,6 +580,9 @@ def forecast_readiness(df=None, verbose=True):
 
     report["rainy_rows"] = rainy_rows
     report["dry_rows"] = dry_rows
+    report["incident_affected_rows"] = incident_affected_rows
+    report["incident_clear_rows"] = incident_clear_rows
+    report["incident_data_known_rows"] = len(known)
     report["missing"] = missing
     report["unlocked"] = len(missing) == 0
 
@@ -375,6 +621,11 @@ def _print_readiness(r):
     if "rainy_rows" in r:
         print(f"  rainy ROWS (gating value):  {r['rainy_rows']} (need >= {MIN_RAINY_ROWS})")
         print(f"  dry ROWS (gating value):    {r['dry_rows']} (need >= {MIN_DRY_ROWS})")
+    if "incident_affected_rows" in r:
+        print(f"  rows w/ known incident status: {r['incident_data_known_rows']}/{r['rows']} "
+              f"(incidents cannot be backfilled — older rows are unknown, not 'clear')")
+        print(f"  incident-affected ROWS:      {r['incident_affected_rows']} (need >= {MIN_INCIDENT_AFFECTED_ROWS})")
+        print(f"  incident-clear ROWS:         {r['incident_clear_rows']} (need >= {MIN_INCIDENT_CLEAR_ROWS})")
     print(f"  holidays covered:            {r['holidays_covered']}")
     print(f"  TRAINING UNLOCKED:            {r['unlocked']}")
     if r["missing"]:
