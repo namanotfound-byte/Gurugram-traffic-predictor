@@ -219,7 +219,14 @@ __marimo__/
 
 # project data
 data/*.csv
+# ...except the bootstrap training set: it is the reproducible foundation the
+# model is trained on (1344 rows, ~150KB) and retrain.yml checks out the repo
+# and runs training in CI, which fails outright if this file is absent.
+!data/gurugram_bootstrap.csv
 # ...except the live-observed collector's output: the whole point of
 # collect.yml / collect_live.py is for CI to commit new rows here every
 # round, so it must not be gitignored (see README: "Live data collection").
 !data/gurugram_observed.csv
+
+# agent-created virtualenvs (.venv only matches exactly; these do not)
+.venv*/

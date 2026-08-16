@@ -13,7 +13,31 @@ Base URL: `http://localhost:5000` (dev)
   `1 - (free_flow_travel_time / expected_travel_time)`.
   0.0 = free flowing, 1.0 = standstill.
 - `label` — one of `"Free"`, `"Moderate"`, `"Heavy"`, `"Severe"`.
-  Thresholds: `<0.35` Free, `<0.60` Moderate, `<0.80` Heavy, else Severe.
+
+  **Thresholds (RECALIBRATED 2026-08-16 — the earlier values are dead):**
+
+  | label | congestion_index | means |
+  |---|---|---|
+  | `Free`     | `< 0.091` | under 1.10x free-flow travel time |
+  | `Moderate` | `< 0.200` | 1.10x - 1.25x |
+  | `Heavy`    | `< 0.310` | 1.25x - 1.45x |
+  | `Severe`   | `>= 0.310` | over 1.45x |
+
+  The old thresholds (`0.35/0.60/0.80`) were inherited from the synthetic data
+  generator, whose values ranged up to 0.92. **Real TomTom data for Gurugram
+  peaks at 0.435**, so under the old scale 98.5% of all 1344 measured cells
+  labelled `Free` and `Heavy`/`Severe` were unreachable — the worst cell in the
+  city (MG Road, Friday 19:00, a 7-minute trip taking 12) would have displayed
+  as `Free`.
+
+  The new boundaries are anchored on round travel-time multipliers rather than
+  percentiles of one week's data, so they stay meaningful as more data arrives.
+  Observed distribution across the bootstrap set: Free 52.5%, Moderate 25.4%,
+  Heavy 18.2%, Severe 3.9%.
+
+  **Both the API and the frontend must use these exact numbers.** The frontend
+  derives per-hour labels client-side from the `profile` array, so any drift
+  between the two shows up as a visible contradiction on screen.
 - `provenance` — one of:
   - `"observed"`  — trained on live data we measured ourselves
   - `"bootstrap"` — trained on TomTom historical-model data
@@ -68,6 +92,21 @@ Single cell.
 ```
 Windows are contiguous hour runs. `end_hour` is inclusive and may wrap past
 midnight (`start_hour > end_hour` means the window wraps).
+
+### `GET /advice/all?day=<0-6>`
+**Added 2026-08-16** after the frontend build showed the map + sidebar for a
+chosen day otherwise needs 8 parallel `/advice` calls. Additive — `/advice`
+is unchanged.
+
+Returns the same object as `/advice` for every corridor in one response:
+```json
+{ "day": 1,
+  "corridors": [ { "corridor_id": 0, "profile": [...], "best_windows": [...],
+                   "worst_windows": [...], "best_hour": 2, "peak_hour": 18,
+                   "summary": "...", "confidence": 0.9 } ],
+  "provenance": "bootstrap", "model_version": "gbt-2026-08-16" }
+```
+Cheap to serve — the 8×7×24 grid is already precomputed in memory.
 
 ### `GET /best-time?corridor=<id>&day=<0-6>&earliest=<0-23>&latest=<0-23>`
 Best departure inside the user's own constraint.
