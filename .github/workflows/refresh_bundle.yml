@@ -1,0 +1,91 @@
+name: Refresh Static Bundle
+
+# Regenerates frontend/data/bundle.json once a day so the static GitHub
+# Pages site picks up new live-observed rows that collect.yml lands every
+# ~15 minutes (backend/app.py's /predict prefers data/gurugram_observed.csv
+# over the bootstrap CSV wherever both exist, so fresh observations really
+# can change served congestion_index values between weekly retrains).
+#
+# Deliberately NOT folded into collect.yml's every-15-minute cron. The
+# bundle is ~100KB of near-fully-different floats each time any measured
+# cell changes (JSON, so git can't diff it down to a small delta the way it
+# can a text CSV) — committing that every 15 minutes would add up to ~96
+# such commits/day, bloating repository history fast for a freshness gain
+# most viewers will never notice within a single day. Once a day is a
+# deliberate middle ground: keeps the live site's numbers within a day of
+# whatever collect.yml has observed, without churning history 96x more
+# than that. retrain.yml (weekly) separately regenerates the bundle
+# immediately after every model retrain, in the same commit as the model
+# — see that workflow.
+#
+# Same caveat as collect.yml/retrain.yml: `schedule:` triggers are
+# best-effort, not exact — see README's "Live data collection" section.
+on:
+  schedule:
+    - cron: "10 4 * * *"   # once daily, 04:10 UTC — off-hours, decoupled
+                            # from collect.yml's :00/:15/:30/:45 cadence
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+# collect.yml, retrain.yml, and this workflow all push to the same branch;
+# same guard pattern as those two so overlapping runs queue instead of
+# racing each other's git push below.
+concurrency:
+  group: refresh-static-bundle
+  cancel-in-progress: false
+
+jobs:
+  refresh-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        # tools/build_static_bundle.py imports backend/app.py as a module
+        # (reusing its precomputed grid rather than reimplementing it), so
+        # it needs backend/app.py's full dependency set: flask/flask-cors
+        # to import the module, numpy/pandas/scikit-learn/joblib to load
+        # the model and CSVs.
+        run: pip install -r backend/requirements.txt
+
+      - name: Build static bundle
+        run: python tools/build_static_bundle.py
+
+      - name: Commit updated bundle (retries on push conflicts)
+        run: |
+          set -e
+          git config user.name "traffic-collector-bot"
+          git config user.email "actions@github.com"
+
+          git add frontend/data/bundle.json
+          if git diff --staged --quiet; then
+            echo "Bundle unchanged since last refresh — nothing to commit."
+            exit 0
+          fi
+          git commit -m "data: daily static bundle refresh (picks up new observed rows)"
+
+          # Same rebase-and-retry as collect.yml/retrain.yml: this workflow
+          # pushes to the same branch they do, so a plain `git push` here
+          # can lose to either of them pushing in between our checkout and
+          # now, and would otherwise fail this job for good.
+          branch="${GITHUB_REF_NAME}"
+          attempt=1
+          max_attempts=5
+          until git push origin "HEAD:${branch}"; do
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "::error::git push failed after ${max_attempts} attempts; giving up."
+              exit 1
+            fi
+            echo "Push rejected (concurrent write from another run) — fetch/rebase retry ${attempt}/${max_attempts}..."
+            git fetch origin "${branch}"
+            git rebase "origin/${branch}"
+            sleep $(( (RANDOM % 10) + attempt * 3 ))
+            attempt=$((attempt + 1))
+          done

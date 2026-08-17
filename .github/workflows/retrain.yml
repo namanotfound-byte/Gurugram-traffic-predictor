@@ -34,23 +34,35 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        # backend/requirements.txt is a superset of requirements.txt (same
+        # numpy/pandas/scikit-learn/joblib pins) plus flask/flask-cors,
+        # which tools/build_static_bundle.py needs because it imports
+        # backend/app.py as a module (see that script's docstring for why:
+        # it reuses app.py's precomputed grid instead of reimplementing it).
+        run: pip install -r requirements.txt -r backend/requirements.txt
 
       - name: Train model
         run: python model/traffic_model.py train
 
-      - name: Commit updated model (retries on push conflicts)
+      - name: Build static bundle
+        # Regenerate frontend/data/bundle.json from the freshly retrained
+        # model so the static GitHub Pages site (which has no server to
+        # call) picks up the new predictions in the same commit as the
+        # model that produced them. See tools/build_static_bundle.py.
+        run: python tools/build_static_bundle.py
+
+      - name: Commit updated model + bundle (retries on push conflicts)
         run: |
           set -e
           git config user.name "traffic-collector-bot"
           git config user.email "actions@github.com"
 
-          git add models/traffic_gbt.joblib
+          git add models/traffic_gbt.joblib frontend/data/bundle.json
           if git diff --staged --quiet; then
             echo "Model output unchanged — nothing to commit."
             exit 0
           fi
-          git commit -m "model: weekly retrain on accumulated real data"
+          git commit -m "model: weekly retrain on accumulated real data + refresh static bundle"
 
           # Same rebase-and-retry as collect.yml: retrain.yml and
           # collect.yml both push to the same branch, so a plain `git push`
