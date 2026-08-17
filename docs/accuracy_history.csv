@@ -1,0 +1,2 @@
+date,n_observed_rows,covered_cells,coverage_pct,point_n,mae,rmse,bias,label_n,label_agreement_pct,understate_pct,overstate_pct,advice_n_groups,advice_pairwise_concordance
+2026-08-17 12:39 UTC,115,76,0.0348,115,0.0569,0.075,-0.0171,115,0.5826,0.287,0.1304,13,0.8944
