@@ -1,440 +1,308 @@
-# 🚦 Gurugram Traffic Congestion Predictor
+# Gurugram Traffic Congestion Predictor
 
-> A machine learning pipeline that predicts road congestion on Gurugram's key corridors using temporal features and real-time TomTom traffic data.
+> Predicts road congestion on 13 of Gurugram's key corridors, by day of week and hour, from a
+> grid of real TomTom traffic measurements — and tells you the best time to leave. Built as a
+> CS portfolio project; the whole pipeline runs on real, measured data, not synthetic samples.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-GBT-orange?style=flat-square)
 ![Data](https://img.shields.io/badge/Data-TomTom%20API-red?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
+For the full line-by-line technical writeup (every file, every import, every historical bug
+and how it was found) see [`PROJECT_EXPLAINER.md`](PROJECT_EXPLAINER.md) — this README is the
+short version.
+
 ---
 
-## ▶️ How to run this
+## Live demo
 
-The fastest way to see it: **[open the live site](#-deploying--viewing-the-live-site)** — it's a
-static GitHub Pages deployment, no install required.
+**[namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html](https://namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html)**
 
-To run it locally with the real Flask backend instead:
+Runs entirely as a static site — no backend, just a precomputed JSON snapshot of the same grid
+the API serves (see "Deploying" below). If that link 404s, GitHub Pages hasn't been switched on
+yet for this repo (**Settings → Pages → Deploy from a branch → `main` / `/root`**); everything
+else in this README works regardless.
+
+---
+
+## How to run it locally
 
 ```bash
-git clone <this-repo-url>
-cd gurugram-traffic-predictor
+git clone https://github.com/namanotfound-byte/Gurugram-traffic-predictor.git
+cd Gurugram-traffic-predictor
 ./run.sh
 ```
 
-That's it. `run.sh` starts the backend, serves the frontend over HTTP on its own port, and opens
-it in your browser automatically — you should land on a live map with an advice banner, sidebar,
-and popups. Press `Ctrl-C` in that terminal to stop both servers when you're done.
+That's it. `run.sh` starts the Flask backend, serves `frontend/` over HTTP on its own port, and
+opens it in your browser — you land on a live map with an advice banner, sidebar, and popups.
+Press `Ctrl-C` to stop both servers.
 
-**Do not open `frontend/index.html` directly (double-clicking it, or a `file://` URL).** Browsers
-block a `file://` page from reaching the API, the static data bundle, or the map's road geometry,
-so it can't work that way — the page itself will tell you this if you try it anyway. Serve it over
-HTTP instead: `./run.sh`, or any plain static server (`python3 -m http.server`) pointed at
+**Don't open `frontend/index.html` directly** (double-clicking it, or a `file://` URL) — browsers
+block a `file://` page from reaching the API, the static bundle, or the map's road geometry. Serve
+it over HTTP instead: `./run.sh`, or any static server (`python3 -m http.server`) pointed at
 `frontend/`.
 
-Requirements: Python 3 and a `.venv_backend` virtualenv with the backend's dependencies installed
-(see `backend/requirements.txt`). If `run.sh` can't find that virtualenv it prints the exact
-`python3 -m venv` / `pip install` commands to create it — run those once, then `./run.sh` again.
-
-If port 5000 or 8000 is already taken (common on macOS: AirPlay Receiver uses 5000), `run.sh`
-detects it and automatically uses the next free port instead — no manual configuration needed.
+Requirements: Python 3 and a `.venv_backend` virtualenv with `backend/requirements.txt`
+installed. If `run.sh` can't find it, it prints the exact `python3 -m venv` / `pip install`
+commands to create it — run those once, then `./run.sh` again. If port 5000 or 8000 is already
+taken (common on macOS: AirPlay Receiver uses 5000), `run.sh` finds the next free port
+automatically.
 
 ---
 
-## 🌐 Deploying / viewing the live site
+## Deploying / viewing the live site
 
-The frontend runs entirely without a backend — GitHub Pages serves static files only, so
-`frontend/index.html` reads `frontend/data/bundle.json` instead of calling the Flask API.
-That bundle is a precomputed snapshot of the same 13-corridor × 7-day × 24-hour grid the backend
-serves live (built by `tools/build_static_bundle.py`, refreshed automatically by
+The frontend can run entirely without a backend — GitHub Pages serves static files only, so
+`frontend/index.html` reads `frontend/data/bundle.json` instead of calling the Flask API. That
+bundle is a precomputed snapshot of the same 13-corridor × 7-day × 24-hour grid the backend
+serves live (built by `tools/build_static_bundle.py`, refreshed automatically once a day by
 `.github/workflows/refresh_bundle.yml`) — same thresholds, same `label`/`typical_minutes` math,
-same advice text, just baked into a file instead of computed per-request.
-
-**Live site:** `https://<github-username>.github.io/<repo-name>/frontend/index.html`
-(for this repo: `https://namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html`)
-— once GitHub Pages is enabled for this repo under **Settings → Pages → Build and deployment →
-Deploy from a branch → `main` / `/ (root)`**. Pages then serves the whole repository as static
-files, so `frontend/` (and its `data/bundle.json`, `corridors.geojson`, `vendor/`) is reachable
-at that path with zero extra configuration — no workflow file needed for this.
+same advice text, just baked into a file.
 
 The page always tells you which data source it's using:
-- The header pill reads **`DATA: static bundle`** when serving from the bundle (the default —
-  this is what the public site uses), or **`API: <url>`** when talking to a live backend.
-- A **`data as of <date> IST`** pill/row shows the bundle's `generated_at` timestamp, so a stale
+- The header pill reads **`DATA: static bundle`** by default, or **`API: <url>`** when talking to
+  a live backend.
+- A **`data as of <date> IST`** pill shows the bundle's `generated_at` timestamp, so a stale
   bundle is never mistaken for live data.
 - `?api=<backend-url>` (what `./run.sh` passes automatically) skips the bundle and talks to that
-  backend directly instead — useful for local development against a running Flask server.
-- `?mock=1` skips both and renders offline fixture data behind a violet "DEMONSTRATION DATA"
-  banner, for UI work with no data dependency at all.
-- If the bundle can't be loaded and no `?api=` was given, the page falls back to trying
-  `http://localhost:5000` and shows an honest "can't reach the API" message if that fails too —
-  it never silently shows nothing or fabricates numbers.
+  backend directly — for local development.
+- `?mock=1` renders offline fixture data behind a "DEMONSTRATION DATA" banner, for UI work with no
+  data dependency.
+- If the bundle can't be loaded and no `?api=` was given, the page falls back to
+  `http://localhost:5000` and shows an honest "can't reach the API" message if that fails too — it
+  never silently shows nothing or fabricates numbers.
 
 ---
 
-## ⚠️ Current status (read this first)
+## What it predicts
 
-This repo is a **working pipeline with no real traffic data in it yet**. The model, API, and frontend numbers below are all trained/generated on **synthetic data** until you let the collector run for a while. See "Getting real data flowing" below — that's the one thing that actually matters right now.
+```
+congestion_index = 1 − (free-flow travel time / expected travel time)
+```
+`0.0` = free flowing, `1.0` = standstill. Collected via the **TomTom Routing API**: a request with
+a future `departAt` and `computeTravelTimeFor=all` returns TomTom's own historical traffic model
+for that road at that time of week, even though this project's API key is not entitled to the
+Flow Segment Data API (see "How the data is collected" below for why that mattered).
 
----
-
-## 📌 Why this project?
-
-Gurugram generates **2.5 million+ daily vehicle trips** across 8 key corridors. Despite world-class expressways, the city ranks among India's worst for peak-hour congestion — NH-48 regularly grinds to a halt between 7–10 AM and 5–8 PM.
-
-This project asks: *can we predict when and where congestion will hit, using only time and road structure as inputs?*
-
-**Answer: Yes, with R² = 0.83.**
-
----
-
-## 🗺️ Corridors Covered
-
-| Corridor | Type | Key Bottleneck |
+| label | `congestion_index` | means |
 |---|---|---|
-| NH-48 Delhi–Gurgaon Expressway | Highway | Rajiv Chowk merge |
-| MG Road | Arterial | IFFCO Chowk intersection |
-| Golf Course Road | Arterial | DLF Phase 5 signal |
-| Sohna Road | Arterial | Badshahpur chowk |
-| Dwarka Expressway | Expressway | Sheetla Mata flyover |
-| Golf Course Extension Rd | Arterial | Sector 58–66 stretch |
-| Mehrauli–Gurgaon Road | Arterial | Ghitorni–Iffco segment |
-| Southern Peripheral Road | Arterial | SPR–NH-48 junction |
+| `Free`     | `< 0.091`  | under 1.10x free-flow travel time |
+| `Moderate` | `< 0.200`  | 1.10x – 1.25x |
+| `Heavy`    | `< 0.310`  | 1.25x – 1.45x |
+| `Severe`   | `>= 0.310` | over 1.45x |
+
+These boundaries are anchored on round travel-time multipliers, not percentiles of one week's
+data, so they stay meaningful as more data arrives. Real Gurugram data currently peaks around
+0.44 — under the project's original thresholds (inherited from a now-deleted synthetic data
+generator, which ranged up to 0.92), the worst cell in the city would have displayed as `Free`.
+
+## Corridors covered
+
+13 corridors — 6 arterial, 3 expressway, 4 highway — each geocoded and validated end-to-end
+against TomTom's Routing API (returned road length checked against a plausible range for that
+road). The single source of truth is [`corridors.py`](corridors.py); every collector, the
+trainer, and the API import from it rather than redefining coordinates.
+
+| Corridor | Type | Route |
+|---|---|---|
+| NH-48 Delhi-Gurgaon Expressway | Highway | Rajiv Chowk → Manesar |
+| MG Road | Arterial | IFFCO Chowk → Sikandarpur |
+| Golf Course Road | Arterial | Sikandarpur → Sector 56 |
+| Sohna Road | Arterial | Rajiv Chowk → Badshahpur |
+| Dwarka Expressway | Expressway | Dwarka Sector 21 → Kherki Daula |
+| Golf Course Extension Road | Arterial | Sector 56 → Vatika Chowk |
+| Mehrauli-Gurgaon Road | Arterial | Ghitorni → IFFCO Chowk |
+| Southern Peripheral Road | Arterial | Vatika Chowk → Kherki Daula |
+| KMP Expressway (Western Peripheral Expressway) | Expressway | Sidhrawali → Pataudi Chowk |
+| Delhi-Mumbai Expressway | Expressway | Sohna Interchange → Nuh |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Highway | Sohna → Taoru |
+| Old Delhi-Gurgaon Road | Highway | Kapashera Border → Hero Honda Chowk |
+| Pataudi Road | Highway | Basai Chowk → Pataudi Chowk |
+
+The last 5 were added specifically to fix a class-imbalance problem in cross-validation — see
+"Model evaluation" below.
 
 ---
 
-## 🧠 How it works
+## How it works
 
-### Target variable
-```
-congestion_index = 1 − (current_speed / free_flow_speed)
-```
-- `0.0` = completely free  
-- `1.0` = complete standstill
+### 1. The measured grid
 
-### Features (7 total)
+`data/gurugram_bootstrap.csv` is a **complete, zero-gap grid**: 13 corridors × 7 days × 24 hours
+= 2,184 rows, one per (corridor, day-of-week, hour) combination, swept once via `bootstrap_collect.py`.
+This is TomTom's own historical-average model for each cell — real, but date-insensitive (it
+returns identical numbers for six different future Fridays at 18:00, including a festival week).
 
-| Feature | Why it matters |
-|---|---|
-| `hour` | Gurugram's commuter-city pattern creates sharp 7–10 AM and 5–8 PM peaks |
-| `hour_sin`, `hour_cos` | Cyclical encoding — treats 23:00 and 00:00 as adjacent (they are) |
-| `day_of_week` | Weekdays vs Saturday leisure traffic vs Sunday quiet are structurally different |
-| `is_weekend` | Binary collapse of day_of_week; boosts signal on smaller datasets |
-| `is_peak_morning` | Domain flag for 7–10 AM DLF / Cyber City rush |
-| `is_peak_evening` | Domain flag for 5–8 PM NH-48 return congestion |
-| `road_class` | Highways saturate differently to arterials — capacity curves are non-linear |
+### 2. Live collection on top of it
 
-### Model: Gradient Boosting Regressor
+`collect_live.py` polls the same Routing API in real time and derives an **observed**
+congestion index from the live travel time (`congestion_idx = 1 − noTraffic/live`, tagged
+`source="observed"` since it's computed from live time rather than TomTom's historical average).
+Each row also carries:
+- **Weather** (`weather.py`, via [Open-Meteo](https://open-meteo.com/), free/no key) — rain,
+  trailing 3-hour rainfall, visibility, temperature.
+- **Calendar** — Indian holidays (`holidays.India(subdiv="HR")`), festival periods, month-end.
+- **Incidents** (`incidents.py`, TomTom Traffic Incidents API) — matched to a corridor if within
+  300 m of its real digitized polyline (`frontend/corridors.geojson`), a buffer chosen empirically
+  from real incident-distance data.
 
-Chosen over Random Forest, Linear Regression, and MLP after cross-validated comparison:
+This runs autonomously on **GitHub Actions**: an hourly scheduled job (`.github/workflows/collect.yml`)
+that internally loops ~4 rounds, 15 minutes apart, before exiting — because GitHub's own scheduler
+is unreliable at short (15-minute) cron intervals but reliable at hourly ones, so the fine-grained
+timing is done inside the job instead of relying on the outer trigger. That's ~96 rounds/day ×
+14 requests/round (13 routing + 1 incidents bbox call) ≈ **1,344 requests/day**, against TomTom's
+2,500/day free-tier cap. Scheduled workflows are still best-effort (GitHub can delay them, and
+disables them after 60 days of repo inactivity) — for a guaranteed cadence, run
+`python collect_live.py --loop` on a small always-on machine instead.
 
-```
-R²  (test set)    0.83
-MAE (test set)    0.031   (~3% congestion error)
-R²  (5-fold CV)   0.84 ± 0.003
-```
+### 3. The API
+
+`backend/app.py` (Flask) precomputes the full 13×7×24 grid once at startup and serves it from
+memory. Critically, it serves **measured** values first — the observed CSV overwrites a cell if
+a real observation exists for it — and only calls the trained model to fill cells that have never
+been measured at all (currently zero of 2,184). If no model is loaded, model-backed endpoints
+return HTTP 503 rather than inventing a number; there is no hand-typed fallback table. 79 tests
+in `backend/test_api.py` currently pass. Full endpoint contract: [`docs/api_contract.md`](docs/api_contract.md).
+
+### 4. The static bundle
+
+`tools/build_static_bundle.py` imports `backend/app.py` as a module and dumps its precomputed
+grid to `frontend/data/bundle.json`, so the exact same numbers the live API would serve are
+available with zero server — this is what the GitHub Pages deployment reads.
+
+### 5. The forecasting model (gated)
+
+`model/forecast_model.py` is the more ambitious layer: instead of relearning the whole diurnal
+curve, it predicts the **residual** — how far actual conditions deviate from the measured-grid
+baseline — as a function of weather, calendar, and incidents. It **deliberately refuses to
+train** until the data clears real thresholds (distinct days, rainy/dry row counts, incident
+coverage — see `model/forecast_model.py`'s own readiness gates). This is a designed safeguard,
+not a bug: a model trained on a handful of dry days has no business claiming it can predict rain.
+Run `python model/forecast_model.py readiness` to see exactly where collection stands.
 
 ---
 
-## 📁 Project structure
+## Accuracy — measured against real observations
+
+`docs/accuracy_report.md` (regenerated by `tools/evaluate_accuracy.py`) compares every served
+value against a real TomTom observation collected for that same cell. As of the last run:
+**115 observed rows, covering 76 of 2,184 cells (3.5%)** — small, and every figure below is
+reported with that caveat built in.
+
+**The headline number is ranking accuracy, because ranking is the product.** The site's actual
+promise is comparative — "leave at this hour, not that one" — not "the congestion index will be
+exactly 0.237."
+
+- **Hour-ranking concordance: 89.4%** (n=142 comparable hour-pairs across 13 corridor/day
+  groups). When the site says hour A is better than hour B, it agrees with what was actually
+  observed 89.4% of the time.
+- **Best-hour / worst-hour hit rate: 76.9%** each.
+- **Exact label match: 58.3%** (n=115, 95% CI 49.1%–66.9%) — this is the weaker, more
+  honest number. The site's `Free`/`Moderate`/`Heavy`/`Severe` label matches the observed label
+  a little over half the time.
+- **Point error:** MAE 0.057, bias **−0.017** — a small systematic tendency to *understate*
+  congestion (28.7% of mismatches show a better label than reality; 13.0% show worse).
+
+In plain terms: the site is reliably good at telling you *which hour is better than which*, and
+noticeably less reliable at telling you *exactly how bad* a given hour will be. Both numbers are
+served to the frontend (`GET /health`'s `accuracy` block) rather than hidden, and every
+`/now`/`/advice` summary is worded "Typically …" rather than as an unqualified fact.
+
+**Model cross-validation.** Leave-one-corridor-out R² improved from **−2.52 to −0.35** after
+expanding from 8 to 13 corridors (the original set was 6 arterial / 1 expressway / 1 highway, so
+holding out the sole expressway or highway corridor left the model with zero same-class training
+examples). Dwarka Expressway remains a poor fold at **R² = −12.4** even after the fix — real
+under-construction, real-estate-corridor traffic that doesn't resemble any other corridor in the
+set, not a bug to be fixed by more averaging.
+
+---
+
+## Limitations
+
+- **Coverage is thin.** 3.5% of the 2,184-cell grid has ever been directly observed; per-corridor
+  and per-hour breakdowns in `docs/accuracy_report.md` are mostly below even the "low confidence"
+  sample-size threshold. Most days of the week (all but Monday and one Sunday evening hour, as of
+  the last report) have zero direct observation.
+- **A served value is a typical value, not a live reading.** `congestion_index` for a
+  (corridor, day, hour) cell describes what that slot has looked like historically — it is not a
+  forecast for one specific date and does not know about a specific event happening today unless
+  a matching incident was picked up within the last hour.
+- **Exact severity is the weak point, not ranking.** Expect the label to be right about half the
+  time and the relative ordering of hours to be right the large majority of the time — see
+  "Accuracy" above.
+- **The forecasting (residual) model isn't live yet.** It refuses to train until it has enough
+  distinct days and enough rainy/dry/incident-affected rows — by design, not oversight.
+- **GitHub Actions scheduling is best-effort.** Collection can lag or, after 60 days of repo
+  inactivity, stop until someone pushes a commit.
+- **Dwarka Expressway is a known hard case** for the underlying model (see cross-validation above)
+  — real ongoing construction traffic that doesn't generalize from the other corridors.
+
+---
+
+## Project structure
 
 ```
-gurugram-traffic-predictor/
+Gurugram-traffic-predictor/
+├── corridors.py                 # single source of truth: 13 corridors, coordinates, road class
+├── bootstrap_collect.py         # one-time sweep: builds the 2,184-cell measured grid
+├── collect_live.py              # ongoing live collector (routing + weather + incidents)
+├── weather.py                   # Open-Meteo weather + Indian holiday/calendar features
+├── incidents.py                 # TomTom Traffic Incidents, matched to corridor geometry
+├── run.sh                       # one-command local launcher (backend + frontend)
+├── requirements.txt             # training pipeline deps
+├── requirements-collect.txt     # collect_live.py-only deps (kept minimal for CI)
+│
+├── backend/
+│   ├── app.py                   # Flask API v2 — precomputed grid, measured-first serving
+│   ├── requirements.txt
+│   └── test_api.py              # 79 tests
 │
 ├── model/
-│   └── traffic_model.py       # Data collection, feature engineering, training, prediction
-│
-├── frontend/
-│   └── index.html             # Interactive congestion map (vanilla JS + Canvas)
-│
-├── data/
-│   └── gurugram_traffic_raw.csv   # Collected via TomTom API (gitignored if large)
+│   ├── traffic_model.py         # feature engineering, training, GroupKFold CV
+│   └── forecast_model.py        # gated residual (weather/calendar/incident) model
 │
 ├── models/
-│   └── traffic_gbt.joblib     # Trained model artifact
+│   └── traffic_gbt.joblib       # trained model artifact
+│
+├── data/
+│   ├── gurugram_bootstrap.csv   # the complete 2,184-cell measured grid
+│   └── gurugram_observed.csv    # ongoing live observations (weather/incident columns attached)
+│
+├── docs/
+│   ├── api_contract.md          # frozen API contract
+│   ├── accuracy_report.md       # served-vs-observed accuracy, regenerated from real data
+│   └── accuracy_history.csv
+│
+├── tools/
+│   ├── build_static_bundle.py   # builds frontend/data/bundle.json from the live grid
+│   ├── build_corridor_geojson.py
+│   └── evaluate_accuracy.py     # generates docs/accuracy_report.md
+│
+├── frontend/
+│   ├── index.html               # MapLibre map + dashboard
+│   ├── corridors.geojson        # real digitized corridor polylines
+│   ├── data/bundle.json         # static snapshot served on GitHub Pages
+│   └── vendor/                  # vendored MapLibre GL JS/CSS
+│
+├── .github/workflows/
+│   ├── collect.yml              # hourly live-collection job
+│   ├── refresh_bundle.yml       # daily static-bundle rebuild
+│   └── retrain.yml              # weekly model retrain
 │
 ├── report/
-│   └── feature_engineering_report.docx
+│   └── traffic_predictor_report.docx
 │
-├── requirements.txt
+├── PROJECT_EXPLAINER.md         # full technical writeup, file-by-file
 └── README.md
 ```
 
 ---
 
-## 🚀 Quickstart
+## License
 
-### 1. Clone & install
-
-```bash
-git clone https://github.com/yourusername/gurugram-traffic-predictor.git
-cd gurugram-traffic-predictor
-pip install -r requirements.txt
-```
-
-### 2. (Optional) Add your TomTom API key
-
-Get a free key at [developer.tomtom.com](https://developer.tomtom.com). Add it to your environment:
-
-```bash
-export TOMTOM_API_KEY="your_key_here"
-```
-
-Without it, the pipeline uses a realistic synthetic dataset for demo purposes.
-
-### 3. Run the pipeline
-
-```bash
-python model/traffic_model.py
-```
-
-Output:
-```
-Dataset: 5000 rows, 9 columns
-
-── Model Performance ──────────────────
-  R²  (test set)   : 0.8304
-  MAE (test set)   : 0.0306
-  R²  (5-fold CV)  : 0.8419 ± 0.0035
-───────────────────────────────────────
-
-── Sample predictions ─────────────────
-  Monday 8 AM, NH-48              → Heavy      (0.71)  best: 23:00
-  Friday 6 PM, Dwarka Expressway  → Moderate   (0.39)  best: 00:00
-  Sunday 11 AM, Sohna Road        → Free flow  (0.06)  best: 00:00
-```
-
-### 4. Make a prediction
-
-```python
-from model.traffic_model import predict
-
-result = predict(hour=8, day_of_week=0, road_class="highway")
-# → {'congestion_index': 0.71, 'label': 'Heavy', 'best_travel_hour': 23}
-```
-
-### 5. Open the frontend
-
-Use `./run.sh` from the repo root (see "How to run this" at the top) — it starts the backend,
-serves the frontend over HTTP, and opens it for you against the live API. Or just visit the
-[live static site](#-deploying--viewing-the-live-site), which needs no backend at all. Opening
-`frontend/index.html` directly as a `file://` URL does not work either way: browsers block that
-page from reaching the API, the static data bundle, or the map.
+MIT — use freely, attribution appreciated. See [`LICENSE`](LICENSE).
 
 ---
 
-## 📊 Feature importances
-
-```
-hour_sin           0.509   ← Time of day (cyclical) dominates
-is_peak_morning    0.322   ← 7–10 AM flag is very strong
-day_of_week        0.055
-is_weekend         0.051
-hour               0.027
-hour_cos           0.023
-road_class_enc     0.011
-```
-
-The cyclical hour encoding (`hour_sin`) outperforms raw `hour` because it correctly represents that 11 PM and midnight are close in congestion pattern terms.
-
----
-
-## 🔧 Requirements
-
-```
-scikit-learn>=1.3
-pandas>=2.0
-numpy>=1.24
-joblib>=1.3
-requests>=2.31
-```
-
-Install: `pip install -r requirements.txt`
-
----
-
-## 📡 Getting real data flowing
-
-The collector needs to run **every 30 minutes, continuously, for at least 2-3 weeks** to see enough hour/day combinations to matter. Your laptop being asleep half the time won't cut it — so this repo now includes a GitHub Actions workflow (`.github/workflows/collect.yml`) that does it for free on GitHub's servers instead:
-
-1. Get a TomTom key at [developer.tomtom.com](https://developer.tomtom.com) (free tier is enough).
-2. In your GitHub repo: **Settings → Secrets and variables → Actions → New repository secret**, name it `TOMTOM_API_KEY`, paste the key.
-3. Push this repo to GitHub. The workflow starts running automatically every 30 minutes and commits new rows to `data/gurugram_traffic_raw.csv` each time.
-4. A second workflow (`retrain.yml`) retrains the model every Monday on whatever real data has piled up, and commits the updated `models/traffic_gbt.joblib`.
-5. Once `data/gurugram_traffic_raw.csv` has a few thousand real rows, delete the "mixing with synthetic data" fallback in `train_model()` — you won't need it anymore.
-
-The Flask API (`backend/app.py`) already checks for a trained model file and uses it automatically if present, falling back to a hand-tuned table only if no model has been trained yet — so nothing else needs to change as real data comes in.
-
----
-
-## 📡 Live data collection (rescued, 2026-08-16)
-
-> **This section documents `collect_live.py` and the collection workflows specifically. It supersedes the collection instructions in "Getting real data flowing" above where they conflict — that section still describes the original (currently non-functional) collector.**
-
-### What was broken
-
-The original collector (`model/traffic_model.py: collect_once`) polls TomTom's **Flow Segment Data API**. Tested against this project's real TomTom key on 2026-08-16:
-
-| Endpoint | Result |
-|---|---|
-| Flow Segment Data (`/traffic/services/4/flowSegmentData/...`) | **403 Forbidden** |
-| Search / Geocoding | **403 Forbidden** |
-| Routing (`/routing/1/calculateRoute/...`) | **200 OK** |
-
-This key's plan simply cannot reach the Flow API. Every scheduled run of the old `collect.yml` hit the `[WARN] TomTom fetch failed` branch and collected nothing — silently — for as long as the workflow existed. That's the real reason the dataset stayed empty.
-
-### The fix: `collect_live.py`
-
-`collect_live.py` (repo root) gets equivalent signal from the **Routing API**, which this key *can* reach. It calls `calculateRoute` for each of the 8 corridors from `corridors.py` with `traffic=true&computeTravelTimeFor=all`, and derives an **observed** congestion index from the live travel time:
-
-```
-congestion_idx = 1 - (noTrafficTravelTimeInSeconds / travelTimeInSeconds)
-```
-
-This lands on the same 0–1 scale as the bootstrap sweep's index, but it is computed differently (bootstrap divides by *historic* time; this divides by *live* time) — so every row is tagged `source="observed"` to keep the two distinguishable downstream. Output goes to `data/gurugram_observed.csv`, columns:
-
-```
-corridor_id, corridor_name, road_class, day_of_week, hour, minute,
-length_m, free_flow_s, live_s, historic_s, traffic_delay_s,
-congestion_idx, source, collected_at
-```
-
-Run it with `python collect_live.py --once` (single round, used by CI) or `python collect_live.py --loop` (runs forever, one round every 30 minutes — for a VM). It retries individual corridors on 429/5xx with backoff, skips and logs a corridor rather than losing the whole round to one bad request, and dedupes against rows already written for the same (corridor, 30-minute bucket) so re-running never produces duplicates.
-
-**Verified working end-to-end on 2026-08-16**: `python collect_live.py --once` returned live data for all 8/8 corridors in one round (e.g. NH-48: live=2195s vs free-flow=1989s → congestion_idx=0.094; Golf Course Extension Road: live=1874s vs free-flow=1587s, delay=13s → congestion_idx=0.153).
-
-### Quota
-
-8 requests/round × 48 rounds/day = **384 requests/day** against TomTom's 2,500/day free tier — leaving headroom for the one-off bootstrap sweep and manual testing, as long as they share the same key's quota consciously.
-
-### Workflow fixes (`.github/workflows/collect.yml`, `retrain.yml`)
-
-1. **Wrong endpoint** — `collect.yml` called `model/traffic_model.py collect-once` (the dead Flow API path). It now calls `collect_live.py --once`.
-2. **Unprotected `git push`** — both workflows did a bare `git push` with no pull/rebase first. Since `collect.yml` runs every 30 minutes and `retrain.yml` pushes to the same branch, the first conflict would fail the push and it would **stay broken forever** (nothing ever re-pulled). Both workflows now fetch + rebase + retry (up to 5 attempts, jittered backoff) on push rejection.
-3. **Ad hoc deps** — `collect.yml` used to `pip install pandas numpy requests` inline for a script that never actually needed pandas/numpy. It now installs from a dedicated `requirements-collect.txt` (just `requests`), keeping the every-30-minutes job's install step small.
-4. **Concurrency** — both workflows now declare a `concurrency:` group (`cancel-in-progress: false`) so overlapping runs (e.g. a manual `workflow_dispatch` landing mid-schedule) queue instead of racing each other's commits.
-5. `data/gurugram_observed.csv` is explicitly un-ignored in `.gitignore` (which otherwise blanket-ignores `data/*.csv`) — otherwise CI's `git add` would silently have nothing to commit, every round, forever.
-
-### Honest caveat: GitHub Actions schedules are not a clock
-
-`schedule: cron: "*/30 * * * *"` is **best-effort, not exact**. In practice:
-
-- Runs are frequently delayed — GitHub's own docs warn scheduled workflows "may be delayed during periods of high loads," and delays of 15–60+ minutes on a `*/30` cron are common, not rare.
-- **GitHub disables scheduled workflows on repositories with 60 days of no other activity.** If nobody pushes a commit or opens a PR for two months, the 30-minute collector just stops, silently, until someone re-enables it or pushes something.
-- There's no SLA and no guaranteed catch-up for missed runs.
-
-For a portfolio/demo project this is a fine trade for "free and zero-maintenance." If you actually need reliable, true 30-minute cadence (e.g. for a real forecasting product), run `python collect_live.py --loop` on a small always-on VM (a $4–6/mo box is plenty) or a proper cron job instead — that gives you an exact, monotonic clock instead of GitHub's best-effort scheduler.
-
-### Hourly job + internal 15-minute loop (2026-08-17 — owned section, see `.github/workflows/collect.yml` and `collect_live.py`)
-
-> This subsection is self-contained and owned by the collection-cadence workstream. Everything above it in "Live data collection" predates it and is left as-is (some numbers there, e.g. 8 corridors / 30-minute cadence, are historical and superseded — see "Collection cadence: 15 minutes, not 30" under Forecasting below for the current corridor count and per-round quota).
-
-**The problem, measured, not assumed**: `collect.yml` was scheduled `*/15 * * * *` on the theory that asking GitHub for a run every 15 minutes yields ~96 rounds/day. It doesn't — GitHub's cron scheduler is documented best-effort for short intervals, and the actual observed gaps between CI rounds were 30-45 minutes, i.e. **~36 rounds/day (~37% of nominal)**. This did not hurt row counts or the 14-distinct-days training gate, but it did hurt exactly the thing 15-minute sampling exists for: catching short-lived (15-45 minute) monsoon rain onset/offset before it's over. Gurugram's monsoon is active now and winds down around September, so this resolution loss was costing the residual model real signal while it's still available to collect.
-
-**The fix**: stop fighting GitHub's scheduler and work with it. `collect.yml` now fires **hourly** (`cron: "0 * * * *"` — an interval GitHub reliably honors close to on-time) and runs `python collect_live.py --loop --max-rounds 4 --max-minutes 50`. `collect_live.py`'s own `--loop` mode does the 15-minute spacing internally: up to 4 rounds, ~45 minutes wall-clock, with `--max-minutes 50` as a safety cap so a slow round (retries/backoff on a flaky corridor) can't push the job into the next hour's scheduled run. Every job that fires at all now delivers ~4 evenly-15-minutes-spaced rounds, regardless of scheduler lag on the outer hourly trigger — the throttling problem above is specific to *short* cron intervals, so moving the ask to hourly sidesteps it rather than fighting it.
-
-**Commit strategy**: the workflow still commits exactly **once per job**, after the internal loop finishes (or is interrupted), not once per round — a per-round commit would 4x the repo's commit churn for no benefit. Because `collect_round()` flushes every row to disk as it's written, a round that fails partway through (or a job that gets cut off by `--max-minutes`) still leaves every earlier round's rows on disk to be picked up by that one commit — no successful round is ever lost to a later failure. The existing fetch/rebase/retry push logic in `collect.yml` (needed because `data/gurugram_observed.csv` is appended by both this workflow and any manual runs) is untouched.
-
-**Request math** (13 corridors × 1 routing request + 1 incidents bbox request = 14 requests/round): 4 rounds/hour × 24 hours = 96 rounds/day × 14 = **~1,344 requests/day**, against TomTom's 2,500/day free-tier cap — leaving ~1,150/day of headroom for the bootstrap sweep / manual experimentation sharing the same key. This is the same *nominal* daily total the old `*/15` cron was aiming for; the difference is this design actually delivers it, because it no longer depends on GitHub firing a fresh workflow run every 15 minutes.
-
-**Honest caveat — what this does NOT fix**: the hourly `schedule:` trigger is still not a guaranteed clock. It can still be delayed (GitHub's own docs make no SLA promise at any interval, just less severely than a 15-minute one tends to be in practice), and GitHub disables scheduled workflows outright on repos with 60 days of no other activity. If an hourly run is skipped or badly delayed, that hour's ~4 rounds are simply not collected — there is no catch-up mechanism. `collect_live.py --loop` (called with no `--max-rounds`/`--max-minutes`, i.e. unbounded) on a small always-on VM remains the only way to get a true, guaranteed 15-minute cadence.
-
----
-
-## 🌦️ Forecasting: the residual model (added 2026-08-17)
-
-> **This section is clearly-marked, self-contained, and owned by the forecasting workstream** (`weather.py`, `incidents.py`, `model/forecast_model.py`, the weather/calendar/incident columns in `collect_live.py`). It documents the actual intellectual core of the project: predicting how weather, the calendar, and live incidents change Gurugram traffic, not just looking up the historical average.
-
-### Why model the residual, not absolute congestion
-
-`data/gurugram_bootstrap.csv` is a complete, noise-free grid of Gurugram's day-of-week x hour rhythm (1344 rows = 8 corridors x 7 days x 24 hours, exactly one row per combination) — but it has **zero** weather or date signal (TomTom's historical model returns byte-identical numbers for six different future Fridays at 18:00, including Diwali week; it's a pure averaging model). `data/gurugram_observed.csv` is the opposite: small, but the only place time-varying conditions show up.
-
-So the model doesn't try to relearn the whole diurnal curve from a handful of observed rows — it only learns the *deviation* from the baseline:
-
-```
-baseline(corridor, day_of_week, hour) = bootstrap grid value        # complete, all 1344 cells
-residual = observed_congestion - baseline
-forecast = clip(baseline + predicted_residual(weather, events, time), 0, 1)
-```
-
-### Weather + calendar features (`weather.py`)
-
-Backed by [Open-Meteo](https://open-meteo.com/) (free, no API key). Derived features: `precipitation_mm`, `is_raining`, `rain_intensity`, **`rain_last_3h`** (trailing cumulative rain — roads stay slick/slow after rain stops, hypothesized to matter more than the instantaneous reading), `visibility_m`, `low_visibility`, `temperature_c`; plus calendar features from the `holidays` package (`holidays.India(subdiv="HR")`): `is_holiday`, `holiday_name`, `is_festival_period`, `is_month_end` (salary-day traffic), `days_to_nearest_holiday`.
-
-One empirical finding worth noting: Open-Meteo's true historical **archive** endpoint does not carry a `visibility` field at all (confirmed — every value comes back `null`), while the **forecast** endpoint's `past_days` parameter serves the same precipitation/temperature history *plus real visibility*, for up to 92 days back. `weather.py` prefers the forecast+`past_days` path for anything inside that window and only falls back to the true archive endpoint (visibility left honestly `None`, not imputed) beyond it.
-
-### Incident features (`incidents.py`, added 2026-08-17)
-
-TomTom's Traffic Incidents API was 403 on this project's key for most of the project, then was enabled mid-project on the TomTom portal — re-tested live and confirmed working. Incidents matter more than weather for the residual: a crash or closure is exactly the congestion weather/calendar features can never explain.
-
-**One bbox request per round covers all 8 corridors** (not one per corridor — the marginal cost is ~+96 requests/day, still comfortably inside the 2,500/day free tier shared with the routing calls).
-
-Incidents are matched to corridors by distance from the incident's own geometry to the corridor's real digitized polyline (`frontend/corridors.geojson`, read-only — owned by another workstream). **Buffer: 300 m**, chosen empirically by pulling 77 real Gurugram incidents and measuring distance-to-nearest-corridor: results split cleanly into a small cluster under a few hundred metres and the large majority (65/77, ~84%) beyond 500 m on unrelated roads. 300 m sits inside that gap.
-
-Honest characterization of the real feed (tested live, not assumed): it's dominated by `iconCategory=8` ("road closed") entries, 70/77 in one pull, mostly with **no numeric delay value** (72/77 null) — `magnitudeOfDelay` (never null) is used as the reliable severity signal instead. Several matched closures cluster around Dwarka Expressway specifically, consistent with real, ongoing construction there rather than a single fresh incident — so `has_road_closure`/`incident_count` should be read as "a closure or worksite is currently active nearby," which can be a slower-changing signal for some corridors, not purely a minute-to-minute one.
-
-**Incidents cannot be backfilled** — there is no historical incident-replay endpoint on this key, so rows collected before this feature (or any collection gap) simply have unknown incident status. `model/forecast_model.py` never assumes "blank" means "confirmed clear": it adds an `incident_data_known` flag alongside the imputed defaults, and readiness gating (`incident-affected ROWS >= 30`, `incident-clear ROWS >= 150`) only counts rows where incident status is actually known.
-
-### Route-stability filter and free_flow consistency
-
-TomTom's routing engine occasionally reroutes a corridor onto a physically different road at different times (previously identified: Golf Course Extension Road, Mehrauli-Gurgaon Road, Southern Peripheral Road). `model/forecast_model.py` filters BOTH the bootstrap baseline and the observed rows to `route_stable` measurements only (mirroring `model/traffic_model.py`'s existing convention), and runs `check_free_flow_consistency()` every readiness/train run, flagging any corridor whose mean `free_flow_s` drifted more than 5% between the bootstrap sweep and live collection — that drift, not the live-vs-historic denominator difference, is the real risk to a clean residual.
-
-### Collection cadence: 15 minutes, not 30
-
-`collect_live.py` now polls every 15 minutes (768 TomTom requests/day against the 2,500/day free-tier cap, vs. 384/day before). Consecutive 15-minute samples are strongly autocorrelated — this is **not** 2x the information — but it materially improves the odds of catching a monsoon rain event's onset/offset, which is exactly the signal the residual model needs and which a 30-minute cadence can straddle entirely.
-
-### Honest gating — training refuses to run on insufficient data
-
-`model/forecast_model.py train` will not emit a model artifact unless the data clears real thresholds:
-
-| Gate | Threshold | Why |
-|---|---|---|
-| Distinct days | >= 14 | Gurugram's weekly rhythm needs to repeat >= 2x; NCR monsoon rain is intermittent, not continuous — 14 days is the minimum window in which "we saw more than one rain event" is credible rather than luck. This is a **calendar floor**; no request budget can shortcut it. |
-| Total rows | >= 1500 | Conservative floor given ~14 features and strong autocorrelation between consecutive samples (raw row count overstates independent information). |
-| Rainy rows | >= 50 | The model must have actually seen rain to claim it can predict rain's effect. |
-| Dry rows | >= 200 | Same logic for the majority class. |
-| Incident-affected rows (known status) | >= 30 | Same logic for incidents — but restricted to rows where incident status is actually known, since incidents can't be backfilled (see above). |
-| Incident-clear rows (known status) | >= 150 | Same logic for the majority class. |
-| Corridors covered | >= 6/8 | Tolerates a couple of corridors having API trouble without blocking training on the rest. |
-
-Run `python model/forecast_model.py readiness` any time to see exactly where collection stands against these gates, plus a realistic earliest-possible-ready date (the calendar floor, assuming continuous collection and at least a few rain events in that window — not guaranteed).
-
-### Evaluation: skill score against the baseline, time-based holdout
-
-The benchmark is "just use the historical average" (the bootstrap grid alone). `model/forecast_model.py train`, once unlocked, reports:
-
-```
-skill = 1 - (MAE_model / MAE_baseline)
-```
-
-Positive means the model adds value; zero or negative means it does not, and that is reported as such — this project will not hide a losing result. Evaluation uses a **time-based holdout** (train on the earliest ~80% of collection days, test on the most recent ~20%) rather than a random split, because a random split lets the model "cheat" on near-identical 15-minutes-apart samples. `cv_r2` / leave-one-corridor-out from `model/traffic_model.py` is deliberately **not** reused here — it was shown to be the wrong metric for this project.
-
-### Current status (honest, as of 2026-08-17)
-
-Data collection restarted with weather/calendar/incident features attached on 2026-08-17. `forecast_readiness()` today reports **not ready** — 2 distinct days, 22 rows (1 dropped by the route-stability filter), 6 rainy / 16 dry rows, 7 incident-affected / 1 incident-clear rows (of 8 rows with known incident status) — which is the correct, expected state on day one, not a failure. See the Report / viva writeup for the full readiness output and the reasoning behind each threshold above.
-
----
-
-## 🔮 Roadmap
-
-- [ ] Weather integration (IMD API — rain reduces NH-48 speeds ~30%)
-- [ ] Event-based anomaly detection (IPL matches, concerts near DLF Avenue)
-- [ ] LSTM model for 30-minute rolling congestion forecasts
-- [ ] Live TomTom data polling + real-time dashboard updates
-- [ ] Extend to Faridabad and Noida corridors
-
----
-
-## 📄 Report
-
-Full feature engineering rationale, model selection comparison, and results analysis in [`report/feature_engineering_report.docx`](report/feature_engineering_report.docx).
-
----
-
-## 📜 License
-
-MIT — use freely, attribution appreciated.
-
----
-
-*Built as part of a CS + AI portfolio project exploring urban mobility prediction in the NCR region.*
+*Built as a CS + AI portfolio project exploring urban mobility prediction in the NCR region.*
