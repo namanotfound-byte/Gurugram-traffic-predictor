@@ -41,28 +41,56 @@ filter to only real, present-moment observations.
 
 QUOTA
 -----
-TomTom's free tier is 2,500 requests/day. One round here is exactly
-len(CORRIDORS) == 8 requests (one calculateRoute call per corridor).
+TomTom's free tier is 2,500 requests/day. One round here is
+len(CORRIDORS) == 13 routing requests (one calculateRoute call per
+corridor) + 1 incidents bbox request (see incidents.py) = 14 requests/round.
 
-Cadence was moved from every 30 minutes to every 15 minutes (2026-08-17):
+Cadence target is every 15 minutes:
 
-    8 requests/round * 96 rounds/day = 768 requests/day
+    14 requests/round * 96 rounds/day = 1,344 requests/day
 
-against the 2,500/day cap — the 30-minute cadence used only 384/day, i.e.
-~85% of the daily budget was sitting idle. 768/day still leaves ~1,700/day
-of headroom for the bootstrap sweep / manual experimentation sharing the
-same key.
+against the 2,500/day cap — leaving ~1,150/day of headroom for the
+bootstrap sweep / manual experimentation sharing the same key.
 
-HONEST CAVEAT on what doubling the sampling rate actually buys: consecutive
+HONEST CAVEAT on what a 15-minute cadence actually buys: consecutive
 15-minute samples of the same corridor are strongly autocorrelated (traffic
-15 minutes from now looks a lot like traffic now), so 2x the rows is far
-less than 2x the *information* for a model that predicts the diurnal curve.
-The real payoff is temporal resolution on RAIN ONSET/OFFSET, which are
-short-lived (often 15-45 minutes) — at 30-minute cadence a rain event can
-start and finish between two samples and look like it never happened; at
-15-minute cadence it's far more likely to be caught mid-transition, which is
-exactly the regime the residual model most needs to see (see
-model/forecast_model.py and weather.py's rain_last_3h feature).
+15 minutes from now looks a lot like traffic now), so more rows is far
+less than proportionally more *information* for a model that predicts the
+diurnal curve. The real payoff is temporal resolution on RAIN ONSET/OFFSET,
+which are short-lived (often 15-45 minutes) — at 30-minute cadence a rain
+event can start and finish between two samples and look like it never
+happened; at 15-minute cadence it's far more likely to be caught
+mid-transition, which is exactly the regime the residual model most needs
+to see (see model/forecast_model.py and weather.py's rain_last_3h feature).
+
+GITHUB CRON THROTTLING AND THE HOURLY-JOB / INTERNAL-LOOP FIX (2026-08-17)
+---------------------------------------------------------------------------
+Scheduling `collect.yml` at `*/15 * * * *` does NOT get you 96 rounds/day.
+GitHub's scheduler is documented best-effort for short intervals; observed
+real gaps between CI rounds were 30-45 minutes, i.e. ~36 rounds/day (~37%
+of nominal) instead of 96. Row counts and the 14-distinct-days gate were
+unaffected by this, but temporal RESOLUTION during weather events — the
+signal above says is the actual payoff of 15-minute sampling — was being
+lost to the exact degree the schedule was being throttled.
+
+The fix is not to fight GitHub's scheduler with a tighter cron (that makes
+the throttling worse, not better — GitHub best-effort-schedules more
+generously at longer intervals). Instead `collect.yml` now fires HOURLY
+(`0 * * * *`, an interval GitHub reliably honors close to on-time) and
+calls `--loop --max-rounds 4` here: this process itself loops internally,
+firing one round every ROUND_MINUTES (15) minutes for up to 4 rounds
+(~45 minutes wall-clock) before exiting, so every job that runs at all
+delivers ~4 evenly-spaced-by-15-minutes rounds regardless of scheduler lag
+on the outer hourly trigger. `--max-minutes` is also accepted as a safety
+cap (used by CI as a belt-and-suspenders bound) so a slow round (retries/
+backoff) can't push the job past the ~1-hour window before the next
+scheduled run, which would risk overlapping jobs.
+
+This does NOT change the daily request math above (still ~14 req/round,
+now reliably ~4 rounds/hour * 24h = 96 rounds/day -> ~1,344 req/day) — it
+changes how reliably that nominal rate is actually delivered, since the
+job no longer depends on GitHub firing a fresh workflow run every 15
+minutes to hit it.
 
 WEATHER + CALENDAR FEATURES (2026-08-17)
 ------------------------------------------
@@ -119,10 +147,16 @@ exactly as before.
 
 USAGE
 -----
-    python collect_live.py --once               # single round, then exit (used by CI)
-    python collect_live.py --loop                # loop forever, one round / 15 min (VM)
-    python collect_live.py --backfill-weather     # attach weather/calendar cols to old rows
+    python collect_live.py --once                         # single round, then exit (used by CI)
+    python collect_live.py --loop                          # loop forever, one round / 15 min (VM)
+    python collect_live.py --loop --max-rounds 4           # loop 4 rounds (~45 min) then exit (CI, hourly job)
+    python collect_live.py --loop --max-rounds 4 --max-minutes 50   # + safety time cap
+    python collect_live.py --backfill-weather              # attach weather/calendar cols to old rows
     python collect_live.py --once --budget-guard --daily-cap 2000
+
+`--max-rounds` / `--max-minutes` only apply with `--loop` (error otherwise).
+`--once` behaviour is completely unchanged by their existence — it still
+runs exactly one round and exits, same as before this flag was added.
 
 The TomTom key is read from the TOMTOM_API_KEY environment variable, or
 else from a .env file (KEY=VALUE lines) in this file's directory. The key
@@ -530,14 +564,49 @@ def collect_round(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
     return rows_written
 
 
-def loop_forever(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP):
-    print(f"collect_live.py --loop : one round every {ROUND_MINUTES} minutes. Ctrl+C to stop.")
+def loop_forever(budget_guard=False, daily_cap=DEFAULT_DAILY_CAP, max_rounds=None, max_minutes=None):
+    """One round every ROUND_MINUTES minutes.
+
+    With max_rounds and/or max_minutes both None (the original VM usage:
+    `--loop` with nothing else), this runs forever exactly as before —
+    unchanged behaviour, unchanged signature-compatible default.
+
+    With either bound set (CI's hourly-job usage: `--loop --max-rounds 4`),
+    this instead runs a BOUNDED number of evenly-15-minutes-spaced rounds
+    and then returns, so the calling workflow can do one commit covering
+    every round collected in this invocation. See the GITHUB CRON
+    THROTTLING section of this file's module docstring for why CI wants
+    this instead of a tighter cron.
+
+    A round that raises is logged and skipped, same as always — it does
+    NOT stop the loop and does NOT lose rows already written by earlier
+    rounds in this same invocation (collect_round flushes each row to disk
+    as it's written, so a crash mid-round only loses that round's
+    not-yet-written corridors, never previously completed rounds).
+    """
+    bound_desc = (f"bounded: max_rounds={max_rounds}, max_minutes={max_minutes}"
+                  if (max_rounds is not None or max_minutes is not None)
+                  else "unbounded — Ctrl+C to stop")
+    print(f"collect_live.py --loop : one round every {ROUND_MINUTES} minutes ({bound_desc}).")
+
+    start = time.monotonic()
+    round_num = 0
     while True:
+        round_num += 1
         try:
             collect_round(budget_guard=budget_guard, daily_cap=daily_cap)
         except Exception as e:
-            # Never let one bad round kill the whole loop.
+            # Never let one bad round kill the whole loop, and never let it
+            # take down rounds already written earlier in this invocation.
             print(f"[ERROR] round raised an unexpected exception: {e}")
+
+        if max_rounds is not None and round_num >= max_rounds:
+            print(f"[LOOP] max_rounds={max_rounds} reached after round {round_num}; exiting.")
+            return
+        if max_minutes is not None and (time.monotonic() - start) >= max_minutes * 60:
+            print(f"[LOOP] max_minutes={max_minutes} elapsed after round {round_num}; exiting.")
+            return
+
         time.sleep(ROUND_MINUTES * 60)
 
 
@@ -633,14 +702,27 @@ def main():
     )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--once", action="store_true", help="Run a single collection round and exit (for CI).")
-    mode.add_argument("--loop", action="store_true", help="Run forever, one round every 15 minutes (for a VM).")
+    mode.add_argument("--loop", action="store_true",
+                       help="Run one round every 15 minutes. Forever by default (for a VM); pass "
+                            "--max-rounds and/or --max-minutes to stop after a bound instead (CI).")
     mode.add_argument("--backfill-weather", action="store_true",
                        help="One-time migration: attach weather/calendar columns to existing rows, then exit.")
     parser.add_argument("--budget-guard", action="store_true",
                          help="Track TomTom requests used today and refuse to exceed --daily-cap.")
     parser.add_argument("--daily-cap", type=int, default=DEFAULT_DAILY_CAP,
                          help=f"Max TomTom requests/day when --budget-guard is set (default {DEFAULT_DAILY_CAP}).")
+    parser.add_argument("--max-rounds", type=int, default=None,
+                         help="With --loop, stop after this many rounds instead of looping forever "
+                              "(e.g. CI's hourly job uses --max-rounds 4 to collect ~45 minutes of "
+                              "15-minute-spaced rounds per invocation). Ignored/invalid without --loop.")
+    parser.add_argument("--max-minutes", type=int, default=None,
+                         help="With --loop, stop after this many minutes elapsed, even if --max-rounds "
+                              "hasn't been reached yet — a safety cap so a slow round can't push the "
+                              "job past the next scheduled invocation. Ignored/invalid without --loop.")
     args = parser.parse_args()
+
+    if (args.max_rounds is not None or args.max_minutes is not None) and not args.loop:
+        parser.error("--max-rounds/--max-minutes only apply with --loop.")
 
     if args.backfill_weather:
         backfill_weather()
@@ -649,7 +731,8 @@ def main():
         n = collect_round(budget_guard=args.budget_guard, daily_cap=args.daily_cap)
         sys.exit(1 if n < 0 else 0)
     else:
-        loop_forever(budget_guard=args.budget_guard, daily_cap=args.daily_cap)
+        loop_forever(budget_guard=args.budget_guard, daily_cap=args.daily_cap,
+                      max_rounds=args.max_rounds, max_minutes=args.max_minutes)
 
 
 if __name__ == "__main__":

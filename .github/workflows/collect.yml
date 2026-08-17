@@ -1,23 +1,37 @@
 name: Collect Gurugram Traffic Data (live, observed)
 
-# Runs every 15 minutes, best-effort, on GitHub's free servers.
+# Runs HOURLY on GitHub's free servers; each run internally loops 4 rounds,
+# 15 minutes apart (~45 min wall-clock), via `collect_live.py --loop
+# --max-rounds 4 --max-minutes 50`.
 #
-# Cadence was moved from 30 -> 15 minutes on 2026-08-17 (see collect_live.py's
-# module docstring for the quota math and the honest tradeoff: consecutive
-# 15-minute samples are strongly autocorrelated, so this is not "2x the
-# information" — the real payoff is catching short-lived monsoon rain
-# onset/offset transitions that a 30-minute cadence can straddle entirely).
+# WHY HOURLY-TRIGGER + INTERNAL-LOOP INSTEAD OF A `*/15` CRON (2026-08-17):
+# this workflow used to be scheduled `*/15 * * * *` on the theory that
+# asking GitHub for a run every 15 minutes gets ~96 rounds/day. It doesn't.
+# GitHub's scheduler is documented best-effort for short intervals, and the
+# REAL observed gaps between CI rounds were 30-45 minutes — ~36 rounds/day
+# (~37% of nominal), not 96. Row counts and the 14-distinct-days training
+# gate were unaffected, but the actual point of a 15-minute cadence —
+# resolution on short-lived monsoon rain onset/offset — was being lost in
+# proportion to that throttling.
 #
-# IMPORTANT — read the "Live data collection" section of README.md before
-# relying on this. GitHub Actions `schedule:` triggers are NOT a reliable
-# timekeeper: under platform load runs are frequently delayed by anywhere
-# from a few minutes to over an hour, and GitHub disables scheduled
-# workflows entirely on repos with 60 days of no activity. Treat this as
-# "roughly every 15 minutes, whenever GitHub gets around to it" rather than
-# a guaranteed cadence — in practice this cron will land noticeably fewer
-# than the nominal 96 rounds/day. If you need true 15-minute cadence, run
-# `python collect_live.py --loop` on a small always-on VM instead (a
-# $4-6/mo box is plenty; see README).
+# The fix: stop asking GitHub to fire often (it won't honor it), and instead
+# ask it to fire hourly — an interval GitHub reliably honors close to
+# on-time — and have collect_live.py's own `--loop` mode do the 15-minute
+# spacing internally, capped at 4 rounds (~45 min) with a --max-minutes 50
+# safety bound so a slow round can't push the job into the next hour's run.
+# Every job that fires at all now reliably delivers ~4 evenly-15-minutes-
+# spaced rounds, regardless of scheduler lag on the outer hourly trigger.
+# See collect_live.py's module docstring ("GITHUB CRON THROTTLING...") for
+# the full request-math and design writeup.
+#
+# HONEST CAVEAT this does NOT fix: GitHub Actions `schedule:` triggers are
+# still not a guaranteed clock. The hourly trigger itself can still be
+# delayed (just less severely than a 15-minute one in practice), and GitHub
+# disables scheduled workflows entirely on repos with 60 days of no other
+# activity. If a scheduled hourly run is skipped or badly delayed, that
+# hour's ~4 rounds are simply not collected — there is no catch-up. If you
+# need a true, guaranteed 15-minute cadence, run `python collect_live.py
+# --loop` (unbounded) on a small always-on VM instead (see README).
 #
 # This calls collect_live.py, which uses TomTom's Routing API — NOT the
 # Flow Segment Data API that model/traffic_model.py's collect-once used.
@@ -26,7 +40,7 @@ name: Collect Gurugram Traffic Data (live, observed)
 # weather + Indian-holiday calendar features (weather.py) to every row.
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab
 
 permissions:
@@ -36,6 +50,14 @@ permissions:
 # scheduled run is still finishing) from racing each other on the git push
 # below. Runs queue instead of running concurrently; none are cancelled
 # mid-flight since that could lose an in-progress commit.
+#
+# This still protects correctly now that each job runs ~45-50 minutes
+# instead of a few seconds: --max-minutes 50 (see below) keeps a single
+# job's wall-clock time safely under the hourly trigger interval, so
+# back-to-back scheduled runs shouldn't normally overlap in the first
+# place — but if GitHub's scheduler lag ever does land a new run while the
+# previous one is still finishing, this group makes it queue behind it
+# rather than race its commit/push, same as before.
 concurrency:
   group: collect-live-traffic-data
   cancel-in-progress: false
@@ -54,9 +76,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-collect.txt
 
-      - name: Collect one round of live traffic data
+      - name: Collect up to 4 rounds of live traffic data (~45 min, 15 min apart)
         env:
           TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+        # --loop --max-rounds 4: run up to 4 rounds, 15 minutes apart
+        # (ROUND_MINUTES in collect_live.py), inside this ONE job — see the
+        # top-of-file comment for why (GitHub throttles a `*/15` cron badly;
+        # an hourly trigger + internal loop reliably delivers ~4 rounds/hour
+        # regardless of that throttling). --max-minutes 50 is a safety cap:
+        # even if a round runs long (retries/backoff on a flaky corridor),
+        # the job still exits with time to spare before the next hourly run.
+        #
         # NOTE: --budget-guard is intentionally NOT used here. Its state file
         # (data/.tomtom_budget.json) is git-ignored local run state, and each
         # CI run checks out a fresh ephemeral runner with no prior state — so
@@ -64,11 +94,21 @@ jobs:
         # real cross-run protection, only false confidence. It's meant for
         # `collect_live.py --loop` on a persistent VM, where the state file
         # (and the process) actually survive between rounds. Quota safety
-        # here instead comes from the request math itself: 8 req/round x the
-        # 15-minute cron's nominal 96 rounds/day = 768/day, well under
-        # TomTom's 2,500/day free-tier cap even before accounting for
-        # GitHub's scheduler typically delivering fewer than 96 rounds/day.
-        run: python collect_live.py --once
+        # here instead comes from the request math itself: 13 corridors x 1
+        # routing request + 1 incidents bbox request = 14 req/round; 4
+        # rounds/hour x 24h = 96 rounds/day (now reliably delivered, unlike
+        # the old */15 cron) -> ~1,344 req/day, well under TomTom's 2,500/day
+        # free-tier cap, leaving ~1,150/day headroom for other consumers of
+        # the same key.
+        #
+        # Any round that fails mid-loop is logged and skipped (see
+        # loop_forever's docstring in collect_live.py) — it does not stop
+        # the remaining rounds and does not lose rows already written by
+        # earlier rounds in this same job, since every row is flushed to
+        # disk as it's written. The commit step below runs exactly once,
+        # after this whole loop exits, and commits whatever was collected
+        # even if the loop stopped early.
+        run: python collect_live.py --loop --max-rounds 4 --max-minutes 50
 
       - name: Commit new data (retries on push conflicts)
         run: |
@@ -81,7 +121,7 @@ jobs:
             echo "No new rows this round (all corridors deduped or failed) — nothing to commit."
             exit 0
           fi
-          git commit -m "data: automated live-observed collection round"
+          git commit -m "data: automated live-observed collection (up to 4 rounds this job)"
 
           # A plain `git push` here fails outright the moment retrain.yml
           # (or an overlapping collect run) has pushed since we checked out,
