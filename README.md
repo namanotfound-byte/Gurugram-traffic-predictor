@@ -9,6 +9,31 @@
 
 ---
 
+## ▶️ How to run this
+
+```bash
+git clone <this-repo-url>
+cd gurugram-traffic-predictor
+./run.sh
+```
+
+That's it. `run.sh` starts the backend, serves the frontend over HTTP on its own port, and opens
+it in your browser automatically — you should land on a live map with an advice banner, sidebar,
+and popups. Press `Ctrl-C` in that terminal to stop both servers when you're done.
+
+**Do not open `frontend/index.html` directly (double-clicking it, or a `file://` URL).** Browsers
+block a `file://` page from reaching the API or loading the map's road geometry, so it can't work
+that way — the page itself will tell you this if you try it anyway.
+
+Requirements: Python 3 and a `.venv_backend` virtualenv with the backend's dependencies installed
+(see `backend/requirements.txt`). If `run.sh` can't find that virtualenv it prints the exact
+`python3 -m venv` / `pip install` commands to create it — run those once, then `./run.sh` again.
+
+If port 5000 or 8000 is already taken (common on macOS: AirPlay Receiver uses 5000), `run.sh`
+detects it and automatically uses the next free port instead — no manual configuration needed.
+
+---
+
 ## ⚠️ Current status (read this first)
 
 This repo is a **working pipeline with no real traffic data in it yet**. The model, API, and frontend numbers below are all trained/generated on **synthetic data** until you let the collector run for a while. See "Getting real data flowing" below — that's the one thing that actually matters right now.
@@ -152,7 +177,9 @@ result = predict(hour=8, day_of_week=0, road_class="highway")
 
 ### 5. Open the frontend
 
-Just open `frontend/index.html` in any browser. No server needed.
+Use `./run.sh` from the repo root (see "How to run this" at the top) — it starts the backend,
+serves the frontend over HTTP, and opens it for you. Opening `frontend/index.html` directly as a
+`file://` URL does not work: browsers block that page from reaching the API or loading the map.
 
 ---
 

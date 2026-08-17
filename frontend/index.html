@@ -18,6 +18,7 @@
   --warn-bg:rgba(255,45,107,0.10);--warn-border:rgba(255,45,107,0.4);--warn-text:#ff8fab;
   --ok-bg:rgba(0,255,157,0.06);--ok-border:rgba(0,255,157,0.25);--ok-text:#5ad89a;
   --neu-bg:rgba(0,229,255,0.06);--neu-border:rgba(0,229,255,0.2);--neu-text:#7ac8e0;
+  --demo-bg:rgba(167,139,250,0.12);--demo-border:rgba(167,139,250,0.45);--demo-text:#c4b5fd;
 }
 :root[data-theme="light"]{
   --void:#eef3f7;--panel:rgba(255,255,255,0.92);--glass:rgba(255,255,255,0.92);
@@ -28,6 +29,7 @@
   --warn-bg:rgba(196,30,92,0.08);--warn-border:rgba(196,30,92,0.35);--warn-text:#9c1749;
   --ok-bg:rgba(10,143,91,0.06);--ok-border:rgba(10,143,91,0.3);--ok-text:#0a8f5b;
   --neu-bg:rgba(0,134,168,0.06);--neu-border:rgba(0,134,168,0.25);--neu-text:#0086a8;
+  --demo-bg:rgba(109,40,217,0.08);--demo-border:rgba(109,40,217,0.35);--demo-text:#6d28d9;
 }
 html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--display)}
 body{overflow-x:hidden}
@@ -51,17 +53,40 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .g-banner.show{display:flex}
 .g-banner.error{background:var(--warn-bg);border-bottom:1px solid var(--warn-border);color:var(--warn-text)}
 .g-banner.warn{background:rgba(255,184,0,0.10);border-bottom:1px solid rgba(255,184,0,0.4);color:var(--amber)}
+/* Demo/fixture-data banner: deliberately its own color (violet), never
+   reusing warn's red/amber, so it reads as "this is a mode", not "this is
+   an error" — and it carries no dismiss control, unlike error/warn above,
+   because it must stay visible for the page's whole life in ?mock=1. */
+.g-banner.demo{background:var(--demo-bg);border-bottom:1px solid var(--demo-border);color:var(--demo-text);font-weight:600}
 .g-banner button{font-family:var(--mono);font-size:10px;background:transparent;border:1px solid currentColor;color:inherit;padding:5px 10px;border-radius:5px;cursor:pointer}
+.g-banner code{font-family:var(--mono);background:rgba(255,255,255,0.12);padding:1px 5px;border-radius:4px}
 
 /* PROVENANCE BADGES */
 .prov-badge{font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:20px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;border:1px solid transparent}
 .prov-observed{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok-text)}
 .prov-bootstrap{background:var(--neu-bg);border-color:var(--neu-border);color:var(--neu-text)}
 .prov-synthetic{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-text);font-weight:700}
+.prov-demo{background:var(--demo-bg);border-color:var(--demo-border);color:var(--demo-text);font-weight:700}
 .conf-badge{font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:20px;border:1px solid var(--card-border);color:var(--sub)}
 .conf-badge.low{border-color:var(--warn-border);color:var(--warn-text)}
 .low-conf-note{font-family:var(--mono);font-size:9px;color:var(--warn-text);margin-top:4px}
 .degraded{filter:saturate(.45) brightness(.85);opacity:.8}
+
+/* SELF-DIAGNOSIS OVERLAYS — shown instead of (or in addition to, for the
+   protocol case) the thin g-banner strips above, because these two failure
+   modes leave the whole app non-functional and need to be impossible to
+   miss, not just noted in a corner. */
+.proto-overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(2,5,12,0.86);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px}
+.proto-overlay.show{display:flex}
+.proto-card{max-width:min(500px, calc(100vw - 48px));width:100%;min-width:0;background:var(--panel);border:1px solid var(--warn-border);border-radius:12px;padding:28px 26px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.proto-icon{font-size:26px;margin-bottom:10px;line-height:1}
+.proto-title{font-family:var(--display);font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px}
+.proto-body{font-family:var(--display);font-size:13px;line-height:1.65;color:var(--sub);margin-bottom:18px;overflow-wrap:anywhere}
+.proto-body code{font-family:var(--mono);background:var(--card-bg);padding:1px 6px;border-radius:4px;color:var(--text);overflow-wrap:anywhere;word-break:break-all}
+.proto-fix{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:14px 16px}
+.proto-fix-label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:7px}
+.proto-cmd{display:block;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cyan);margin-bottom:7px}
+.proto-fix-sub{font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.5}
 
 /* ADVICE BANNER (the centerpiece) */
 .advice-banner{padding:16px 24px;background:linear-gradient(180deg,var(--cyan-dim),transparent);border-bottom:1px solid var(--border)}
@@ -233,6 +258,34 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     </div>
   </header>
 
+  <!-- Shown only when this file was opened directly (file://) instead of via
+       ./run.sh. Blocks nothing — the app still tries to render behind it —
+       but explains up front why the map/API will not work, instead of
+       letting the user discover a silently-broken page on their own. -->
+  <div class="proto-overlay" id="protoOverlay">
+    <div class="proto-card">
+      <div class="proto-icon">&#9888;&#65039;</div>
+      <div class="proto-title">This page needs to be served over HTTP</div>
+      <div class="proto-body">
+        You opened this file directly (<code id="protoUrl">file://</code>). Browsers block pages
+        loaded this way from reaching the API or loading the real road map, so nothing here can
+        work yet &mdash; that's not a bug in the app itself.
+      </div>
+      <div class="proto-fix">
+        <div class="proto-fix-label">Fix it</div>
+        <code class="proto-cmd">./run.sh</code>
+        <div class="proto-fix-sub">Run that from the project's root folder — it starts the backend, serves this page over HTTP, and opens it in your browser automatically.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent, non-dismissible: shown for the entire life of the page
+       whenever ?mock=1 is active (this is how the GitHub Pages demo runs,
+       since Pages can't host the Flask API). Fixture numbers must never be
+       mistaken for real measured traffic — no close button, no auto-hide. -->
+  <div class="g-banner demo" id="demoBanner">
+    <span>&#9670; DEMONSTRATION DATA &mdash; every number on this page is a fixture, not measured traffic. To see real data: run <code>./run.sh</code> locally, or open this page with <code>?api=&lt;your-backend-url&gt;</code>.</span>
+  </div>
   <div class="g-banner error" id="errBanner">
     <span id="errBannerText"></span>
     <button id="errBannerRetry">RETRY</button>
@@ -368,7 +421,11 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 // ─────────────────────────────────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────────────────────────────────
-const API_BASE = 'http://localhost:5000';
+// Overridable via ?api=http://host:port — run.sh appends this so the page
+// keeps working when it had to move the backend off its default port (e.g.
+// 5000 was already taken). Falls back to the historical default otherwise.
+const API_BASE = new URLSearchParams(location.search).get('api') || 'http://localhost:5000';
+const IS_FILE_PROTOCOL = location.protocol === 'file:';
 const MOCK = new URLSearchParams(location.search).has('mock'); // ?mock=1 for offline/demo rendering with fixture data
 // ?mock=1&synth=1 additionally simulates a deployment running on synthetic
 // data (provenance is a response-level field per the contract, not
@@ -427,18 +484,48 @@ function visualFrac(v){ return Math.max(0, Math.min(1, v / VISUAL_MAX)); }
 
 // ─────────────────────────────────────────────────────────────────────────
 // MOCK FIXTURES (only used with ?mock=1 — lets the UI be verified without a
-// running backend, and exercises the synthetic/low-confidence styling)
+// running backend, and it's also how the GitHub Pages demo runs, since
+// Pages can't host the Flask API. Every corridor-count assumption here is
+// derived, never hardcoded: loadMockCorridors() below overwrites this
+// array from frontend/corridors.geojson (the same file the real map reads,
+// kept in sync by tools/build_corridor_geojson.py) as soon as it can fetch
+// it. This literal is only the fallback for the one case that fetch can't
+// cover — ?mock=1 opened directly over file:// — snapshotted from that
+// geojson at the time of writing so it doesn't quietly drift stale.
 // ─────────────────────────────────────────────────────────────────────────
-const MOCK_CORRIDORS = [
-  {id:0,name:"NH-48 Delhi-Gurgaon Expressway",sub:"Rajiv Chowk -> Manesar",road_class:"highway",start:[28.44747,77.03284],end:[28.32471,76.92638],length_km:21.9},
-  {id:1,name:"MG Road",sub:"IFFCO Chowk -> Sikandarpur",road_class:"arterial",start:[28.47233,77.07242],end:[28.48170,77.09470],length_km:3.85},
-  {id:2,name:"Golf Course Road",sub:"Sikandarpur -> Sector 56",road_class:"arterial",start:[28.48170,77.09470],end:[28.42532,77.09852],length_km:7.13},
-  {id:3,name:"Sohna Road",sub:"Rajiv Chowk -> Badshahpur",road_class:"arterial",start:[28.44747,77.03284],end:[28.39328,77.04842],length_km:7.16},
-  {id:4,name:"Dwarka Expressway",sub:"Sheetla Mata -> Delhi Border",road_class:"expressway",start:[28.5021,77.035],end:[28.55,77.09],length_km:10.0},
-  {id:5,name:"Golf Course Ext Road",sub:"Sector 58 -> Sector 67",road_class:"arterial",start:[28.41,77.09],end:[28.38,77.06],length_km:8.0},
-  {id:6,name:"Mehrauli-Gurgaon Road",sub:"Ghitorni -> IFFCO Chowk",road_class:"arterial",start:[28.50,77.15],end:[28.47233,77.07242],length_km:9.5},
-  {id:7,name:"Southern Peripheral Road",sub:"Rajiv Chowk -> Sohna",road_class:"arterial",start:[28.39328,77.04842],end:[28.35,77.02],length_km:11.0},
+let MOCK_CORRIDORS = [
+  {id:0,name:"NH-48 Delhi-Gurgaon Expressway",sub:"Rajiv Chowk -> Manesar",road_class:"highway",start:[28.44746,77.03282],end:[28.32474,76.92608],length_km:21.93},
+  {id:1,name:"MG Road",sub:"IFFCO Chowk -> Sikandarpur",road_class:"arterial",start:[28.47233,77.07239],end:[28.48169,77.09476],length_km:3.85},
+  {id:2,name:"Golf Course Road",sub:"Sikandarpur -> Sector 56",road_class:"arterial",start:[28.48169,77.09476],end:[28.42526,77.09887],length_km:7.16},
+  {id:3,name:"Sohna Road",sub:"Rajiv Chowk -> Badshahpur",road_class:"arterial",start:[28.44746,77.03282],end:[28.39335,77.04824],length_km:7.18},
+  {id:4,name:"Dwarka Expressway",sub:"Dwarka Sector 21 -> Kherki Daula",road_class:"expressway",start:[28.55256,77.05759],end:[28.40819,76.98267],length_km:24.33},
+  {id:5,name:"Golf Course Extension Road",sub:"Sector 56 -> Vatika Chowk",road_class:"arterial",start:[28.42526,77.09887],end:[28.39060,77.04156],length_km:10.03},
+  {id:6,name:"Mehrauli-Gurgaon Road",sub:"Ghitorni -> IFFCO Chowk",road_class:"arterial",start:[28.49362,77.14926],end:[28.47233,77.07239],length_km:9.4},
+  {id:7,name:"Southern Peripheral Road",sub:"Vatika Chowk -> Kherki Daula",road_class:"arterial",start:[28.39060,77.04156],end:[28.40819,76.98267],length_km:8.01},
+  {id:8,name:"KMP Expressway (Western Peripheral Expressway)",sub:"Sidhrawali -> Pataudi Chowk",road_class:"expressway",start:[28.26347,76.83235],end:[28.32822,76.77771],length_km:13.59},
+  {id:9,name:"Delhi-Mumbai Expressway",sub:"Sohna Interchange -> Nuh",road_class:"expressway",start:[28.25651,77.10909],end:[28.10532,77.00837],length_km:33.65},
+  {id:10,name:"NH-352W (Gurugram-Sohna-Alwar Road)",sub:"Sohna -> Taoru",road_class:"highway",start:[28.24914,77.06533],end:[28.21001,76.95016],length_km:14.59},
+  {id:11,name:"Old Delhi-Gurgaon Road",sub:"Kapashera Border -> Hero Honda Chowk",road_class:"highway",start:[28.52195,77.08910],end:[28.46033,77.04983],length_km:15.28},
+  {id:12,name:"Pataudi Road",sub:"Basai Chowk -> Pataudi Chowk",road_class:"highway",start:[28.45519,76.98796],end:[28.32822,76.77771],length_km:30.05},
 ];
+// Overwrites MOCK_CORRIDORS from the real corridors.geojson so the demo
+// never silently falls behind the actual corridor set. Safe to call even
+// when it can't fetch (file://) — the literal above stays in place.
+async function loadMockCorridors(){
+  try{
+    const res = await fetch('corridors.geojson');
+    if(!res.ok) return;
+    const gj = await res.json();
+    const feats = (gj.features||[]).slice().sort((a,b)=>a.properties.corridor_id-b.properties.corridor_id);
+    if(!feats.length) return;
+    MOCK_CORRIDORS = feats.map(f=>{
+      const p = f.properties, coords = f.geometry.coordinates;
+      const [lon0,lat0] = coords[0], [lon1,lat1] = coords[coords.length-1];
+      return {id:p.corridor_id, name:p.name, sub:p.sub, road_class:p.road_class,
+              start:[lat0,lon0], end:[lat1,lon1], length_km:p.length_km};
+    });
+  }catch(e){ /* file:// or offline — keep the embedded fallback above */ }
+}
 // Realistic generator: matches the real bootstrap sweep's documented range
 // (peak 0.435). Produces visible Free/Moderate/Heavy/Severe variation across
 // the day under the recalibrated thresholds instead of clustering at "Free".
@@ -478,8 +565,13 @@ function mockProfile(cid, day){ return FORCE_SYNTHETIC ? mockProfileSynthetic(ci
 
 function mockFetch(path, params){
   const p = params || {};
-  const PROV = FORCE_SYNTHETIC ? 'synthetic' : 'bootstrap'; // response-level, per contract — never per-corridor
-  if(path==='/health') return {status:'ok',model_version:'gbt-2026-08-16-mock',provenance:PROV,corridors:8,trained_rows:1344};
+  // 'demo' is its own provenance value — fixture data must never render
+  // under 'bootstrap'/'observed' (real-data labels) or be confused with
+  // 'synthetic' (a real model trained on synthetic data — a different,
+  // narrower warning). ?mock=1&synth=1 still opts into 'synthetic' to
+  // demo that specific badge/warning, unchanged.
+  const PROV = FORCE_SYNTHETIC ? 'synthetic' : 'demo'; // response-level, per contract — never per-corridor
+  if(path==='/health') return {status:'ok',model_version:'gbt-2026-08-16-mock',provenance:PROV,corridors:MOCK_CORRIDORS.length,trained_rows:1344};
   if(path==='/corridors') return {corridors: MOCK_CORRIDORS};
   if(path==='/advice'){
     const cid=+p.corridor, day=+p.day;
@@ -562,8 +654,12 @@ async function apiGet(path, params){
   try{
     res = await fetch(API_BASE + path + qs);
   }catch(e){
-    const err = new Error('Cannot reach API at ' + API_BASE + '. Is the backend running?');
+    // The request never reached a server at all (connection refused, DNS
+    // failure, or blocked by the file:// origin) — distinct from the server
+    // responding with an error status below. Give the exact fix.
+    const err = new Error("Can't reach the API at " + API_BASE + ' — start it with ./run.sh');
     err.status = 0;
+    err.kind = 'network';
     throw err;
   }
   let body = {};
@@ -572,6 +668,7 @@ async function apiGet(path, params){
     const err = new Error(body.error || ('HTTP ' + res.status));
     err.status = res.status;
     err.body = body;
+    err.kind = res.status === 503 ? 'no-model' : 'http-error';
     throw err;
   }
   return body;
@@ -596,7 +693,7 @@ function setConnPill(ok, text){
   const dot = document.getElementById('apiDot');
   const txt = document.getElementById('apiPillText');
   dot.classList.toggle('off', !ok);
-  txt.textContent = ok ? ('API: ' + API_BASE) : (MOCK ? 'API: mock mode' : 'API: unreachable');
+  txt.textContent = ok ? ('API: ' + API_BASE) : (MOCK ? 'API: mock mode' : IS_FILE_PROTOCOL ? 'API: blocked (file://)' : 'API: unreachable');
   document.getElementById('fsSystem').textContent = ok ? 'ONLINE' : 'OFFLINE';
   document.getElementById('fsApi').textContent = MOCK ? 'MOCK FIXTURES' : API_BASE;
 }
@@ -605,9 +702,9 @@ function setConnPill(ok, text){
 // PROVENANCE / CONFIDENCE UI HELPERS
 // ─────────────────────────────────────────────────────────────────────────
 function provBadgeHtml(prov, conf){
-  const cls = prov==='synthetic' ? 'prov-synthetic' : prov==='observed' ? 'prov-observed' : 'prov-bootstrap';
-  const icon = prov==='synthetic' ? '⚠ ' : '';
-  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : 'BOOTSTRAP (TomTom history)';
+  const cls = prov==='synthetic' ? 'prov-synthetic' : prov==='observed' ? 'prov-observed' : prov==='demo' ? 'prov-demo' : 'prov-bootstrap';
+  const icon = prov==='synthetic' ? '⚠ ' : prov==='demo' ? '◆ ' : '';
+  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : 'BOOTSTRAP (TomTom history)';
   let html = `<span class="prov-badge ${cls}">${icon}${label}</span>`;
   if(typeof conf === 'number'){
     const low = conf < 0.5;
@@ -1143,10 +1240,14 @@ async function loadCorridors(){
   }catch(e){
     corridorsFailed = true;
     apiReachable = false;
-    if(e.status === 503){
+    if(e.kind === 'no-model'){
+      // Backend is up and answering, it just has nothing trained yet — a
+      // legitimate, different condition from "can't reach the API at all".
       showWarnBanner('Backend is up but no model has been trained yet (503): ' + (e.message||'no model trained yet'));
+    } else if(e.kind === 'network'){
+      showErrorBanner(e.message || ("Can't reach the API at " + API_BASE + ' — start it with ./run.sh'));
     } else {
-      showErrorBanner(e.message || 'Cannot reach API.');
+      showErrorBanner('The API at ' + API_BASE + ' returned an error: ' + (e.message || ('HTTP ' + e.status)));
     }
   }
   render();
@@ -1160,7 +1261,9 @@ async function loadHealth(){
     }
   }catch(e){
     health = null;
-    if(e.status === 503) showWarnBanner('No model trained yet (503): ' + (e.message||''));
+    if(e.kind === 'no-model') showWarnBanner('No model trained yet (503): ' + (e.message||''));
+    // network/http-error cases are already surfaced by loadCorridors' banner
+    // above (it runs first in refreshAll) — avoid a second, redundant one.
   }
   renderModelCard();
 }
@@ -1365,8 +1468,20 @@ setInterval(loadNow, 60000);
 // ─────────────────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────────────────
-(function init(){
+(async function init(){
   initTheme();
+  if(IS_FILE_PROTOCOL && !MOCK){
+    document.getElementById('protoUrl').textContent = location.href;
+    document.getElementById('protoOverlay').classList.add('show');
+  }
+  if(MOCK){
+    // Persistent for the page's whole life — never hidden, never a close
+    // button — so fixture numbers can never be mistaken for real ones.
+    document.getElementById('demoBanner').classList.add('show');
+    // Pull the real corridor set/geometry before the first render so the
+    // demo never shows a stale or hardcoded corridor count.
+    await loadMockCorridors();
+  }
   populateHourSelects();
   const hourParam = new URLSearchParams(location.search).get('hour');
   if(hourParam!==null){
