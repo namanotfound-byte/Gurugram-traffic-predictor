@@ -1343,3 +1343,843 @@ corridor_id,corridor_name,road_class,day_of_week,hour,date,length_m,route_stable
 7,Southern Peripheral Road,arterial,6,21,2026-08-23,8020,True,893,956,956,0,0.0659,bootstrap,2026-08-16T14:45:42.237198Z
 7,Southern Peripheral Road,arterial,6,22,2026-08-23,8020,True,893,893,893,0,0.0,bootstrap,2026-08-16T14:45:42.642604Z
 7,Southern Peripheral Road,arterial,6,23,2026-08-23,8020,True,893,893,893,0,0.0,bootstrap,2026-08-16T14:45:43.080084Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,0,2026-08-17,13590,True,1331,1334,1308,0,0.0022,bootstrap,2026-08-17T07:39:20.998675Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,1,2026-08-17,13590,True,1331,1334,1308,0,0.0022,bootstrap,2026-08-17T07:39:21.501596Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,2,2026-08-17,13590,True,1331,1334,1308,0,0.0022,bootstrap,2026-08-17T07:39:21.906443Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,3,2026-08-17,13590,True,1331,1334,1308,0,0.0022,bootstrap,2026-08-17T07:39:22.322716Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,4,2026-08-17,13590,True,1331,1349,1323,0,0.0133,bootstrap,2026-08-17T07:39:22.739552Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,5,2026-08-17,13590,True,1331,1358,1332,0,0.0199,bootstrap,2026-08-17T07:39:23.169682Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,6,2026-08-17,13590,True,1331,1406,1372,0,0.0533,bootstrap,2026-08-17T07:39:23.807206Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,7,2026-08-17,13590,True,1331,1617,1538,0,0.1769,bootstrap,2026-08-17T07:39:24.162286Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,8,2026-08-17,13590,True,1331,1992,1809,0,0.3318,bootstrap,2026-08-17T07:39:25.194265Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,9,2026-08-17,13590,True,1331,1847,1728,0,0.2794,bootstrap,2026-08-17T07:39:25.708372Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,10,2026-08-17,13590,True,1331,1706,1631,0,0.2198,bootstrap,2026-08-17T07:39:26.107665Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,11,2026-08-17,13590,True,1331,1696,1621,0,0.2152,bootstrap,2026-08-17T07:39:26.516077Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,12,2026-08-17,13590,True,1331,1688,1614,0,0.2115,bootstrap,2026-08-17T07:39:26.929405Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,13,2026-08-17,13590,True,1331,1662,1591,0,0.1992,bootstrap,2026-08-17T07:39:27.357471Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,14,2026-08-17,13590,True,1331,1642,1570,0,0.1894,bootstrap,2026-08-17T07:39:27.884690Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,15,2026-08-17,13590,True,1331,1656,1572,0,0.1963,bootstrap,2026-08-17T07:39:28.260446Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,16,2026-08-17,13590,True,1331,1699,1609,0,0.2166,bootstrap,2026-08-17T07:39:28.669312Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,17,2026-08-17,13590,True,1331,1774,1667,0,0.2497,bootstrap,2026-08-17T07:39:29.198032Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,18,2026-08-17,13590,True,1331,1807,1690,0,0.2634,bootstrap,2026-08-17T07:39:29.826792Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,19,2026-08-17,13590,True,1331,1750,1656,0,0.2394,bootstrap,2026-08-17T07:39:30.301745Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,20,2026-08-17,13590,True,1331,1632,1572,0,0.1844,bootstrap,2026-08-17T07:39:30.834825Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,21,2026-08-17,13590,True,1331,1471,1440,0,0.0952,bootstrap,2026-08-17T07:39:31.337832Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,22,2026-08-17,13590,True,1331,1334,1308,0,0.0022,bootstrap,2026-08-17T07:39:31.738892Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,0,23,2026-08-17,13590,True,1331,1334,1308,0,0.0022,bootstrap,2026-08-17T07:39:32.270965Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,0,2026-08-18,13590,True,1331,1331,1306,0,0.0,bootstrap,2026-08-17T07:39:32.765336Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,1,2026-08-18,13590,True,1331,1331,1306,0,0.0,bootstrap,2026-08-17T07:39:33.278608Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,2,2026-08-18,13590,True,1331,1331,1306,0,0.0,bootstrap,2026-08-17T07:39:33.690975Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,3,2026-08-18,13590,True,1331,1331,1306,0,0.0,bootstrap,2026-08-17T07:39:34.119837Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,4,2026-08-18,13590,True,1331,1345,1345,0,0.0104,bootstrap,2026-08-17T07:39:34.503478Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,5,2026-08-18,13590,True,1331,1349,1349,0,0.0133,bootstrap,2026-08-17T07:39:35.041714Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,6,2026-08-18,13590,True,1331,1382,1382,0,0.0369,bootstrap,2026-08-17T07:39:35.429055Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,7,2026-08-18,13590,True,1331,1539,1539,0,0.1352,bootstrap,2026-08-17T07:39:35.841904Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,8,2026-08-18,13590,True,1331,1725,1725,0,0.2284,bootstrap,2026-08-17T07:39:36.265632Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,9,2026-08-18,13590,True,1331,1704,1704,0,0.2189,bootstrap,2026-08-17T07:39:36.804787Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,10,2026-08-18,13590,True,1331,1670,1670,0,0.203,bootstrap,2026-08-17T07:39:37.421928Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,11,2026-08-18,13590,True,1331,1687,1687,0,0.211,bootstrap,2026-08-17T07:39:37.826208Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,12,2026-08-18,13590,True,1331,1695,1695,0,0.2147,bootstrap,2026-08-17T07:39:38.331579Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,13,2026-08-18,13590,True,1331,1676,1676,0,0.2058,bootstrap,2026-08-17T07:39:38.746911Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,14,2026-08-18,13592,True,1254,1576,1576,0,0.2043,bootstrap,2026-08-17T07:39:41.588626Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,15,2026-08-18,13592,True,1254,1591,1591,0,0.2118,bootstrap,2026-08-17T07:39:44.154842Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,16,2026-08-18,13592,True,1254,1651,1651,0,0.2405,bootstrap,2026-08-17T07:39:45.063982Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,17,2026-08-18,13592,True,1254,1769,1769,0,0.2911,bootstrap,2026-08-17T07:39:45.572065Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,18,2026-08-18,13592,True,1254,1887,1887,0,0.3355,bootstrap,2026-08-17T07:39:45.919828Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,19,2026-08-18,13592,True,1254,1846,1846,0,0.3207,bootstrap,2026-08-17T07:39:46.381698Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,20,2026-08-18,13592,True,1254,1645,1645,0,0.2377,bootstrap,2026-08-17T07:39:46.828357Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,21,2026-08-18,13592,True,1254,1418,1418,0,0.1157,bootstrap,2026-08-17T07:39:47.311883Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,22,2026-08-18,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:47.841762Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,23,2026-08-18,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:48.406817Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,0,2026-08-19,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:48.887177Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,1,2026-08-19,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:49.248446Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,2,2026-08-19,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:49.654108Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,3,2026-08-19,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:50.083669Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,4,2026-08-19,13592,True,1254,1267,1267,0,0.0103,bootstrap,2026-08-17T07:39:50.491168Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,5,2026-08-19,13592,True,1254,1272,1272,0,0.0142,bootstrap,2026-08-17T07:39:50.911151Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,6,2026-08-19,13592,True,1254,1305,1305,0,0.0391,bootstrap,2026-08-17T07:39:51.395613Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,7,2026-08-19,13592,True,1254,1456,1456,0,0.1387,bootstrap,2026-08-17T07:39:51.860617Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,8,2026-08-19,13592,True,1254,1646,1646,0,0.2382,bootstrap,2026-08-17T07:39:52.338053Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,9,2026-08-19,13592,True,1254,1626,1626,0,0.2288,bootstrap,2026-08-17T07:39:52.727190Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,10,2026-08-19,13592,True,1254,1587,1587,0,0.2098,bootstrap,2026-08-17T07:39:53.162346Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,11,2026-08-19,13592,True,1254,1602,1602,0,0.2172,bootstrap,2026-08-17T07:39:53.549739Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,12,2026-08-19,13592,True,1254,1611,1611,0,0.2216,bootstrap,2026-08-17T07:39:53.972223Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,13,2026-08-19,13592,True,1254,1592,1592,0,0.2123,bootstrap,2026-08-17T07:39:54.392424Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,14,2026-08-19,13592,True,1254,1583,1583,0,0.2078,bootstrap,2026-08-17T07:39:54.817997Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,15,2026-08-19,13592,True,1254,1612,1612,0,0.2221,bootstrap,2026-08-17T07:39:55.213349Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,16,2026-08-19,13592,True,1254,1695,1695,0,0.2602,bootstrap,2026-08-17T07:39:55.709209Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,17,2026-08-19,13592,True,1254,1866,1866,0,0.328,bootstrap,2026-08-17T07:39:56.330099Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,18,2026-08-19,15092,False,1493,1840,1840,0,0.1886,bootstrap,2026-08-17T07:39:56.791527Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,19,2026-08-19,15092,False,1493,1797,1797,0,0.1692,bootstrap,2026-08-17T07:39:57.500538Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,20,2026-08-19,13592,True,1254,1725,1725,0,0.273,bootstrap,2026-08-17T07:39:57.998984Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,21,2026-08-19,13592,True,1254,1438,1438,0,0.128,bootstrap,2026-08-17T07:39:58.790655Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,22,2026-08-19,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:59.327106Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,2,23,2026-08-19,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:39:59.709172Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,0,2026-08-20,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:00.212855Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,1,2026-08-20,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:00.630194Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,2,2026-08-20,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:01.081500Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,3,2026-08-20,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:01.647585Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,4,2026-08-20,13592,True,1254,1267,1267,0,0.0103,bootstrap,2026-08-17T07:40:02.082721Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,5,2026-08-20,13592,True,1254,1272,1272,0,0.0142,bootstrap,2026-08-17T07:40:02.477010Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,6,2026-08-20,13592,True,1254,1302,1302,0,0.0369,bootstrap,2026-08-17T07:40:02.875195Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,7,2026-08-20,13592,True,1254,1433,1433,0,0.1249,bootstrap,2026-08-17T07:40:03.277114Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,8,2026-08-20,13592,True,1254,1597,1597,0,0.2148,bootstrap,2026-08-17T07:40:03.684259Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,9,2026-08-20,13592,True,1254,1602,1602,0,0.2172,bootstrap,2026-08-17T07:40:04.103644Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,10,2026-08-20,13592,True,1254,1581,1581,0,0.2068,bootstrap,2026-08-17T07:40:04.520773Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,11,2026-08-20,13592,True,1254,1605,1605,0,0.2187,bootstrap,2026-08-17T07:40:05.075549Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,12,2026-08-20,13592,True,1254,1613,1613,0,0.2226,bootstrap,2026-08-17T07:40:05.429299Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,13,2026-08-20,13592,True,1254,1589,1589,0,0.2108,bootstrap,2026-08-17T07:40:05.851394Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,14,2026-08-20,13592,True,1254,1565,1565,0,0.1987,bootstrap,2026-08-17T07:40:06.660563Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,15,2026-08-20,13592,True,1254,1581,1581,0,0.2068,bootstrap,2026-08-17T07:40:07.143352Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,16,2026-08-20,13592,True,1254,1644,1644,0,0.2372,bootstrap,2026-08-17T07:40:07.827685Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,17,2026-08-20,13592,True,1254,1777,1777,0,0.2943,bootstrap,2026-08-17T07:40:08.417174Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,18,2026-08-20,13592,True,1254,1914,1914,0,0.3448,bootstrap,2026-08-17T07:40:08.909396Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,19,2026-08-20,13592,True,1254,1886,1886,0,0.3351,bootstrap,2026-08-17T07:40:09.297695Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,20,2026-08-20,13592,True,1254,1665,1665,0,0.2468,bootstrap,2026-08-17T07:40:09.666491Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,21,2026-08-20,13592,True,1254,1425,1425,0,0.12,bootstrap,2026-08-17T07:40:10.086045Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,22,2026-08-20,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:10.474053Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,3,23,2026-08-20,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:10.867360Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,0,2026-08-21,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:11.306851Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,1,2026-08-21,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:11.791081Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,2,2026-08-21,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:12.188027Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,3,2026-08-21,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:12.593193Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,4,2026-08-21,13592,True,1254,1266,1266,0,0.0095,bootstrap,2026-08-17T07:40:13.003686Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,5,2026-08-21,13592,True,1254,1272,1272,0,0.0142,bootstrap,2026-08-17T07:40:13.531449Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,6,2026-08-21,13592,True,1254,1307,1307,0,0.0406,bootstrap,2026-08-17T07:40:13.957132Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,7,2026-08-21,13592,True,1254,1455,1455,0,0.1381,bootstrap,2026-08-17T07:40:14.496750Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,8,2026-08-21,13592,True,1254,1653,1653,0,0.2414,bootstrap,2026-08-17T07:40:14.975838Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,9,2026-08-21,13592,True,1254,1647,1647,0,0.2386,bootstrap,2026-08-17T07:40:15.359066Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,10,2026-08-21,13592,True,1254,1616,1616,0,0.224,bootstrap,2026-08-17T07:40:15.802417Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,11,2026-08-21,13592,True,1254,1641,1641,0,0.2358,bootstrap,2026-08-17T07:40:16.256718Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,12,2026-08-21,13592,True,1254,1652,1652,0,0.2409,bootstrap,2026-08-17T07:40:16.697105Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,13,2026-08-21,13592,True,1254,1628,1628,0,0.2297,bootstrap,2026-08-17T07:40:17.112941Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,14,2026-08-21,13592,True,1254,1601,1601,0,0.2167,bootstrap,2026-08-17T07:40:17.535758Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,15,2026-08-21,13592,True,1254,1626,1626,0,0.2288,bootstrap,2026-08-17T07:40:18.154002Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,16,2026-08-21,13592,True,1254,1719,1719,0,0.2705,bootstrap,2026-08-17T07:40:18.536042Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,17,2026-08-21,13592,True,1254,1908,1908,0,0.3428,bootstrap,2026-08-17T07:40:18.941550Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,18,2026-08-21,15092,False,1493,1853,1853,0,0.1943,bootstrap,2026-08-17T07:40:19.368336Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,19,2026-08-21,15092,False,1493,1827,1827,0,0.1828,bootstrap,2026-08-17T07:40:19.773449Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,20,2026-08-21,13592,True,1254,1754,1754,0,0.2851,bootstrap,2026-08-17T07:40:20.202938Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,21,2026-08-21,13592,True,1254,1446,1446,0,0.1328,bootstrap,2026-08-17T07:40:20.612358Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,22,2026-08-21,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:21.134525Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,4,23,2026-08-21,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:21.521844Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,0,2026-08-22,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:21.964446Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,1,2026-08-22,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:22.349051Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,2,2026-08-22,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:22.795062Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,3,2026-08-22,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:23.553576Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,4,2026-08-22,13592,True,1254,1267,1267,0,0.0103,bootstrap,2026-08-17T07:40:24.375560Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,5,2026-08-22,13592,True,1254,1274,1274,0,0.0157,bootstrap,2026-08-17T07:40:25.019329Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,6,2026-08-22,13592,True,1254,1306,1306,0,0.0398,bootstrap,2026-08-17T07:40:25.410639Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,7,2026-08-22,13592,True,1254,1434,1434,0,0.1255,bootstrap,2026-08-17T07:40:25.838433Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,8,2026-08-22,13592,True,1254,1615,1615,0,0.2235,bootstrap,2026-08-17T07:40:26.463583Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,9,2026-08-22,13592,True,1254,1615,1615,0,0.2235,bootstrap,2026-08-17T07:40:27.168965Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,10,2026-08-22,13592,True,1254,1587,1587,0,0.2098,bootstrap,2026-08-17T07:40:28.212390Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,11,2026-08-22,13592,True,1254,1617,1617,0,0.2245,bootstrap,2026-08-17T07:40:28.908366Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,12,2026-08-22,13592,True,1254,1633,1633,0,0.2321,bootstrap,2026-08-17T07:40:29.612763Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,13,2026-08-22,13592,True,1254,1611,1611,0,0.2216,bootstrap,2026-08-17T07:40:30.005224Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,14,2026-08-22,13592,True,1254,1588,1588,0,0.2103,bootstrap,2026-08-17T07:40:30.531607Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,15,2026-08-22,13592,True,1254,1611,1611,0,0.2216,bootstrap,2026-08-17T07:40:31.075995Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,16,2026-08-22,13592,True,1254,1705,1705,0,0.2645,bootstrap,2026-08-17T07:40:31.491593Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,17,2026-08-22,13592,True,1254,1906,1906,0,0.3421,bootstrap,2026-08-17T07:40:32.121398Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,18,2026-08-22,14630,False,1495,1795,1795,0,0.1671,bootstrap,2026-08-17T07:40:32.588046Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,19,2026-08-22,14630,False,1495,1760,1760,0,0.1506,bootstrap,2026-08-17T07:40:33.042461Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,20,2026-08-22,13592,True,1254,1769,1769,0,0.2911,bootstrap,2026-08-17T07:40:33.483912Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,21,2026-08-22,13592,True,1254,1447,1447,0,0.1334,bootstrap,2026-08-17T07:40:34.028668Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,22,2026-08-22,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:34.406563Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,5,23,2026-08-22,13592,True,1254,1254,1254,0,0.0,bootstrap,2026-08-17T07:40:34.839991Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,0,2026-08-23,13592,True,1254,1256,1256,0,0.0016,bootstrap,2026-08-17T07:40:35.251194Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,1,2026-08-23,13592,True,1254,1256,1256,0,0.0016,bootstrap,2026-08-17T07:40:35.683600Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,2,2026-08-23,13592,True,1254,1256,1256,0,0.0016,bootstrap,2026-08-17T07:40:36.314668Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,3,2026-08-23,13592,True,1254,1256,1256,0,0.0016,bootstrap,2026-08-17T07:40:36.993691Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,4,2026-08-23,13592,True,1254,1266,1266,0,0.0095,bootstrap,2026-08-17T07:40:37.516260Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,5,2026-08-23,13592,True,1254,1275,1275,0,0.0165,bootstrap,2026-08-17T07:40:38.121684Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,6,2026-08-23,13592,True,1254,1310,1310,0,0.0427,bootstrap,2026-08-17T07:40:38.676995Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,7,2026-08-23,13592,True,1254,1416,1416,0,0.1144,bootstrap,2026-08-17T07:40:39.159533Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,8,2026-08-23,13592,True,1254,1512,1512,0,0.1706,bootstrap,2026-08-17T07:40:40.271628Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,9,2026-08-23,13592,True,1254,1519,1519,0,0.1745,bootstrap,2026-08-17T07:40:40.770907Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,10,2026-08-23,13592,True,1254,1516,1516,0,0.1728,bootstrap,2026-08-17T07:40:41.162563Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,11,2026-08-23,13592,True,1254,1541,1541,0,0.1862,bootstrap,2026-08-17T07:40:41.578350Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,12,2026-08-23,13592,True,1254,1548,1548,0,0.1899,bootstrap,2026-08-17T07:40:41.999775Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,13,2026-08-23,13592,True,1254,1524,1524,0,0.1772,bootstrap,2026-08-17T07:40:42.420100Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,14,2026-08-23,13592,True,1254,1492,1492,0,0.1595,bootstrap,2026-08-17T07:40:42.962526Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,15,2026-08-23,13592,True,1254,1492,1492,0,0.1595,bootstrap,2026-08-17T07:40:43.492576Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,16,2026-08-23,13592,True,1254,1526,1526,0,0.1782,bootstrap,2026-08-17T07:40:43.985655Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,17,2026-08-23,13592,True,1254,1599,1599,0,0.2158,bootstrap,2026-08-17T07:40:44.701864Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,18,2026-08-23,13592,True,1254,1654,1654,0,0.2418,bootstrap,2026-08-17T07:40:45.068307Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,19,2026-08-23,13592,True,1254,1632,1632,0,0.2316,bootstrap,2026-08-17T07:40:45.789566Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,20,2026-08-23,13592,True,1254,1522,1522,0,0.1761,bootstrap,2026-08-17T07:40:46.186202Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,21,2026-08-23,13592,True,1254,1370,1370,0,0.0847,bootstrap,2026-08-17T07:40:46.614355Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,22,2026-08-23,13592,True,1254,1256,1256,0,0.0016,bootstrap,2026-08-17T07:40:47.025234Z
+8,KMP Expressway (Western Peripheral Expressway),expressway,6,23,2026-08-23,13592,True,1254,1256,1256,0,0.0016,bootstrap,2026-08-17T07:40:47.467838Z
+9,Delhi-Mumbai Expressway,expressway,0,0,2026-08-17,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:40:48.166205Z
+9,Delhi-Mumbai Expressway,expressway,0,1,2026-08-17,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:40:48.666282Z
+9,Delhi-Mumbai Expressway,expressway,0,2,2026-08-17,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:40:49.079156Z
+9,Delhi-Mumbai Expressway,expressway,0,3,2026-08-17,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:40:50.443525Z
+9,Delhi-Mumbai Expressway,expressway,0,4,2026-08-17,33588,True,1974,1989,1955,0,0.0075,bootstrap,2026-08-17T07:40:51.068497Z
+9,Delhi-Mumbai Expressway,expressway,0,5,2026-08-17,33588,True,1974,1990,1956,0,0.008,bootstrap,2026-08-17T07:40:52.054705Z
+9,Delhi-Mumbai Expressway,expressway,0,6,2026-08-17,33588,True,1974,2002,1967,0,0.014,bootstrap,2026-08-17T07:40:52.560340Z
+9,Delhi-Mumbai Expressway,expressway,0,7,2026-08-17,33588,True,1974,2054,2011,0,0.0389,bootstrap,2026-08-17T07:40:53.102484Z
+9,Delhi-Mumbai Expressway,expressway,0,8,2026-08-17,33588,True,1974,2136,2077,0,0.0758,bootstrap,2026-08-17T07:40:53.552404Z
+9,Delhi-Mumbai Expressway,expressway,0,9,2026-08-17,33588,True,1974,2171,2099,0,0.0907,bootstrap,2026-08-17T07:40:54.030393Z
+9,Delhi-Mumbai Expressway,expressway,0,10,2026-08-17,33588,True,1974,2200,2123,0,0.1027,bootstrap,2026-08-17T07:40:54.475970Z
+9,Delhi-Mumbai Expressway,expressway,0,11,2026-08-17,33588,True,1974,2246,2162,0,0.1211,bootstrap,2026-08-17T07:40:55.058018Z
+9,Delhi-Mumbai Expressway,expressway,0,12,2026-08-17,33588,True,1974,2269,2169,0,0.13,bootstrap,2026-08-17T07:40:55.537739Z
+9,Delhi-Mumbai Expressway,expressway,0,13,2026-08-17,33588,True,1974,2260,2162,0,0.1265,bootstrap,2026-08-17T07:40:56.013044Z
+9,Delhi-Mumbai Expressway,expressway,0,14,2026-08-17,33588,True,1974,2263,2174,0,0.1277,bootstrap,2026-08-17T07:40:56.675974Z
+9,Delhi-Mumbai Expressway,expressway,0,15,2026-08-17,33588,True,1974,2279,2187,0,0.1338,bootstrap,2026-08-17T07:40:57.174047Z
+9,Delhi-Mumbai Expressway,expressway,0,16,2026-08-17,33588,True,1974,2296,2197,0,0.1402,bootstrap,2026-08-17T07:40:57.669981Z
+9,Delhi-Mumbai Expressway,expressway,0,17,2026-08-17,33588,True,1974,2322,2226,0,0.1499,bootstrap,2026-08-17T07:40:58.226151Z
+9,Delhi-Mumbai Expressway,expressway,0,18,2026-08-17,33588,True,1974,2306,2227,0,0.144,bootstrap,2026-08-17T07:40:59.902433Z
+9,Delhi-Mumbai Expressway,expressway,0,19,2026-08-17,33588,True,1974,2232,2156,0,0.1156,bootstrap,2026-08-17T07:41:00.385502Z
+9,Delhi-Mumbai Expressway,expressway,0,20,2026-08-17,33588,True,1974,2156,2100,0,0.0844,bootstrap,2026-08-17T07:41:00.992356Z
+9,Delhi-Mumbai Expressway,expressway,0,21,2026-08-17,33588,True,1974,2054,2017,0,0.0389,bootstrap,2026-08-17T07:41:01.544371Z
+9,Delhi-Mumbai Expressway,expressway,0,22,2026-08-17,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:41:02.208402Z
+9,Delhi-Mumbai Expressway,expressway,0,23,2026-08-17,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:41:02.592088Z
+9,Delhi-Mumbai Expressway,expressway,1,0,2026-08-18,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:41:02.990930Z
+9,Delhi-Mumbai Expressway,expressway,1,1,2026-08-18,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:41:03.411214Z
+9,Delhi-Mumbai Expressway,expressway,1,2,2026-08-18,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:41:03.929673Z
+9,Delhi-Mumbai Expressway,expressway,1,3,2026-08-18,33588,True,1974,1974,1940,0,0.0,bootstrap,2026-08-17T07:41:04.434162Z
+9,Delhi-Mumbai Expressway,expressway,1,4,2026-08-18,33588,True,1974,1992,1992,0,0.009,bootstrap,2026-08-17T07:41:04.845839Z
+9,Delhi-Mumbai Expressway,expressway,1,5,2026-08-18,33588,True,1974,1994,1994,0,0.01,bootstrap,2026-08-17T07:41:05.294868Z
+9,Delhi-Mumbai Expressway,expressway,1,6,2026-08-18,33588,True,1974,2009,2009,0,0.0174,bootstrap,2026-08-17T07:41:05.682940Z
+9,Delhi-Mumbai Expressway,expressway,1,7,2026-08-18,33588,True,1974,2060,2060,0,0.0417,bootstrap,2026-08-17T07:41:06.518829Z
+9,Delhi-Mumbai Expressway,expressway,1,8,2026-08-18,33588,True,1974,2142,2142,0,0.0784,bootstrap,2026-08-17T07:41:07.337013Z
+9,Delhi-Mumbai Expressway,expressway,1,9,2026-08-18,33588,True,1974,2172,2172,0,0.0912,bootstrap,2026-08-17T07:41:07.910270Z
+9,Delhi-Mumbai Expressway,expressway,1,10,2026-08-18,33588,True,1974,2198,2198,0,0.1019,bootstrap,2026-08-17T07:41:08.441192Z
+9,Delhi-Mumbai Expressway,expressway,1,11,2026-08-18,33588,True,1974,2242,2242,0,0.1195,bootstrap,2026-08-17T07:41:08.874543Z
+9,Delhi-Mumbai Expressway,expressway,1,12,2026-08-18,33588,True,1974,2265,2265,0,0.1285,bootstrap,2026-08-17T07:41:09.275940Z
+9,Delhi-Mumbai Expressway,expressway,1,13,2026-08-18,33588,True,1974,2261,2261,0,0.1269,bootstrap,2026-08-17T07:41:09.875541Z
+9,Delhi-Mumbai Expressway,expressway,1,14,2026-08-18,33588,True,1974,2271,2271,0,0.1308,bootstrap,2026-08-17T07:41:10.404253Z
+9,Delhi-Mumbai Expressway,expressway,1,15,2026-08-18,33588,True,1974,2290,2290,0,0.138,bootstrap,2026-08-17T07:41:11.170917Z
+9,Delhi-Mumbai Expressway,expressway,1,16,2026-08-18,33588,True,1974,2308,2308,0,0.1447,bootstrap,2026-08-17T07:41:11.679661Z
+9,Delhi-Mumbai Expressway,expressway,1,17,2026-08-18,33588,True,1974,2338,2338,0,0.1557,bootstrap,2026-08-17T07:41:12.247849Z
+9,Delhi-Mumbai Expressway,expressway,1,18,2026-08-18,33588,True,1974,2316,2316,0,0.1477,bootstrap,2026-08-17T07:41:12.639354Z
+9,Delhi-Mumbai Expressway,expressway,1,19,2026-08-18,33588,True,1974,2234,2234,0,0.1164,bootstrap,2026-08-17T07:41:13.472948Z
+9,Delhi-Mumbai Expressway,expressway,1,20,2026-08-18,33588,True,1974,2162,2162,0,0.087,bootstrap,2026-08-17T07:41:14.037439Z
+9,Delhi-Mumbai Expressway,expressway,1,21,2026-08-18,33588,True,1974,2060,2060,0,0.0417,bootstrap,2026-08-17T07:41:14.502546Z
+9,Delhi-Mumbai Expressway,expressway,1,22,2026-08-18,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:15.186555Z
+9,Delhi-Mumbai Expressway,expressway,1,23,2026-08-18,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:15.608686Z
+9,Delhi-Mumbai Expressway,expressway,2,0,2026-08-19,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:16.115633Z
+9,Delhi-Mumbai Expressway,expressway,2,1,2026-08-19,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:17.465956Z
+9,Delhi-Mumbai Expressway,expressway,2,2,2026-08-19,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:18.140215Z
+9,Delhi-Mumbai Expressway,expressway,2,3,2026-08-19,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:18.906273Z
+9,Delhi-Mumbai Expressway,expressway,2,4,2026-08-19,33588,True,1974,1988,1988,0,0.007,bootstrap,2026-08-17T07:41:19.505739Z
+9,Delhi-Mumbai Expressway,expressway,2,5,2026-08-19,33588,True,1974,1990,1990,0,0.008,bootstrap,2026-08-17T07:41:20.027308Z
+9,Delhi-Mumbai Expressway,expressway,2,6,2026-08-19,33588,True,1974,1999,1999,0,0.0125,bootstrap,2026-08-17T07:41:21.418739Z
+9,Delhi-Mumbai Expressway,expressway,2,7,2026-08-19,33588,True,1974,2049,2049,0,0.0366,bootstrap,2026-08-17T07:41:22.373718Z
+9,Delhi-Mumbai Expressway,expressway,2,8,2026-08-19,33588,True,1974,2133,2133,0,0.0745,bootstrap,2026-08-17T07:41:22.739471Z
+9,Delhi-Mumbai Expressway,expressway,2,9,2026-08-19,33588,True,1974,2167,2167,0,0.0891,bootstrap,2026-08-17T07:41:23.307925Z
+9,Delhi-Mumbai Expressway,expressway,2,10,2026-08-19,33588,True,1974,2193,2193,0,0.0999,bootstrap,2026-08-17T07:41:23.797802Z
+9,Delhi-Mumbai Expressway,expressway,2,11,2026-08-19,33588,True,1974,2238,2238,0,0.118,bootstrap,2026-08-17T07:41:24.227740Z
+9,Delhi-Mumbai Expressway,expressway,2,12,2026-08-19,33588,True,1974,2257,2257,0,0.1254,bootstrap,2026-08-17T07:41:25.414452Z
+9,Delhi-Mumbai Expressway,expressway,2,13,2026-08-19,33588,True,1974,2248,2248,0,0.1219,bootstrap,2026-08-17T07:41:25.928293Z
+9,Delhi-Mumbai Expressway,expressway,2,14,2026-08-19,33588,True,1974,2251,2251,0,0.1231,bootstrap,2026-08-17T07:41:26.484913Z
+9,Delhi-Mumbai Expressway,expressway,2,15,2026-08-19,33588,True,1974,2268,2268,0,0.1296,bootstrap,2026-08-17T07:41:26.972746Z
+9,Delhi-Mumbai Expressway,expressway,2,16,2026-08-19,33588,True,1974,2293,2293,0,0.1391,bootstrap,2026-08-17T07:41:27.359911Z
+9,Delhi-Mumbai Expressway,expressway,2,17,2026-08-19,33588,True,1974,2327,2327,0,0.1517,bootstrap,2026-08-17T07:41:28.500186Z
+9,Delhi-Mumbai Expressway,expressway,2,18,2026-08-19,33588,True,1974,2314,2314,0,0.1469,bootstrap,2026-08-17T07:41:29.321354Z
+9,Delhi-Mumbai Expressway,expressway,2,19,2026-08-19,33588,True,1974,2236,2236,0,0.1172,bootstrap,2026-08-17T07:41:31.163322Z
+9,Delhi-Mumbai Expressway,expressway,2,20,2026-08-19,33588,True,1974,2156,2156,0,0.0844,bootstrap,2026-08-17T07:41:35.595705Z
+9,Delhi-Mumbai Expressway,expressway,2,21,2026-08-19,33588,True,1974,2052,2052,0,0.038,bootstrap,2026-08-17T07:41:36.567176Z
+9,Delhi-Mumbai Expressway,expressway,2,22,2026-08-19,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:37.692778Z
+9,Delhi-Mumbai Expressway,expressway,2,23,2026-08-19,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:38.212418Z
+9,Delhi-Mumbai Expressway,expressway,3,0,2026-08-20,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:38.629532Z
+9,Delhi-Mumbai Expressway,expressway,3,1,2026-08-20,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:39.065164Z
+9,Delhi-Mumbai Expressway,expressway,3,2,2026-08-20,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:39.758595Z
+9,Delhi-Mumbai Expressway,expressway,3,3,2026-08-20,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:40.292488Z
+9,Delhi-Mumbai Expressway,expressway,3,4,2026-08-20,33588,True,1974,1992,1992,0,0.009,bootstrap,2026-08-17T07:41:40.806724Z
+9,Delhi-Mumbai Expressway,expressway,3,5,2026-08-20,33588,True,1974,1995,1995,0,0.0105,bootstrap,2026-08-17T07:41:41.195112Z
+9,Delhi-Mumbai Expressway,expressway,3,6,2026-08-20,33588,True,1974,2007,2007,0,0.0164,bootstrap,2026-08-17T07:41:42.108945Z
+9,Delhi-Mumbai Expressway,expressway,3,7,2026-08-20,33588,True,1974,2056,2056,0,0.0399,bootstrap,2026-08-17T07:41:43.030018Z
+9,Delhi-Mumbai Expressway,expressway,3,8,2026-08-20,33588,True,1974,2126,2126,0,0.0715,bootstrap,2026-08-17T07:41:43.429083Z
+9,Delhi-Mumbai Expressway,expressway,3,9,2026-08-20,33588,True,1974,2157,2157,0,0.0848,bootstrap,2026-08-17T07:41:43.987947Z
+9,Delhi-Mumbai Expressway,expressway,3,10,2026-08-20,33588,True,1974,2186,2186,0,0.097,bootstrap,2026-08-17T07:41:44.678359Z
+9,Delhi-Mumbai Expressway,expressway,3,11,2026-08-20,33588,True,1974,2231,2231,0,0.1152,bootstrap,2026-08-17T07:41:45.196671Z
+9,Delhi-Mumbai Expressway,expressway,3,12,2026-08-20,33588,True,1974,2254,2254,0,0.1242,bootstrap,2026-08-17T07:41:45.580171Z
+9,Delhi-Mumbai Expressway,expressway,3,13,2026-08-20,33588,True,1974,2251,2251,0,0.1231,bootstrap,2026-08-17T07:41:46.040648Z
+9,Delhi-Mumbai Expressway,expressway,3,14,2026-08-20,33588,True,1974,2261,2261,0,0.1269,bootstrap,2026-08-17T07:41:46.503501Z
+9,Delhi-Mumbai Expressway,expressway,3,15,2026-08-20,33588,True,1974,2282,2282,0,0.135,bootstrap,2026-08-17T07:41:47.138514Z
+9,Delhi-Mumbai Expressway,expressway,3,16,2026-08-20,33588,True,1974,2303,2303,0,0.1429,bootstrap,2026-08-17T07:41:47.966482Z
+9,Delhi-Mumbai Expressway,expressway,3,17,2026-08-20,33588,True,1974,2327,2327,0,0.1517,bootstrap,2026-08-17T07:41:48.581553Z
+9,Delhi-Mumbai Expressway,expressway,3,18,2026-08-20,33588,True,1974,2303,2303,0,0.1429,bootstrap,2026-08-17T07:41:49.080656Z
+9,Delhi-Mumbai Expressway,expressway,3,19,2026-08-20,33588,True,1974,2223,2223,0,0.112,bootstrap,2026-08-17T07:41:49.476346Z
+9,Delhi-Mumbai Expressway,expressway,3,20,2026-08-20,33588,True,1974,2155,2155,0,0.084,bootstrap,2026-08-17T07:41:50.000734Z
+9,Delhi-Mumbai Expressway,expressway,3,21,2026-08-20,33588,True,1974,2056,2056,0,0.0399,bootstrap,2026-08-17T07:41:50.473671Z
+9,Delhi-Mumbai Expressway,expressway,3,22,2026-08-20,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:50.932420Z
+9,Delhi-Mumbai Expressway,expressway,3,23,2026-08-20,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:51.357530Z
+9,Delhi-Mumbai Expressway,expressway,4,0,2026-08-21,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:51.966530Z
+9,Delhi-Mumbai Expressway,expressway,4,1,2026-08-21,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:52.461609Z
+9,Delhi-Mumbai Expressway,expressway,4,2,2026-08-21,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:52.835946Z
+9,Delhi-Mumbai Expressway,expressway,4,3,2026-08-21,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:41:53.597888Z
+9,Delhi-Mumbai Expressway,expressway,4,4,2026-08-21,33588,True,1974,1989,1989,0,0.0075,bootstrap,2026-08-17T07:41:54.408378Z
+9,Delhi-Mumbai Expressway,expressway,4,5,2026-08-21,33588,True,1974,1991,1991,0,0.0085,bootstrap,2026-08-17T07:41:55.025125Z
+9,Delhi-Mumbai Expressway,expressway,4,6,2026-08-21,33588,True,1974,2000,2000,0,0.013,bootstrap,2026-08-17T07:41:55.448993Z
+9,Delhi-Mumbai Expressway,expressway,4,7,2026-08-21,33588,True,1974,2046,2046,0,0.0352,bootstrap,2026-08-17T07:41:56.471543Z
+9,Delhi-Mumbai Expressway,expressway,4,8,2026-08-21,33588,True,1974,2128,2128,0,0.0724,bootstrap,2026-08-17T07:41:56.970493Z
+9,Delhi-Mumbai Expressway,expressway,4,9,2026-08-21,33588,True,1974,2161,2161,0,0.0865,bootstrap,2026-08-17T07:41:57.365836Z
+9,Delhi-Mumbai Expressway,expressway,4,10,2026-08-21,33588,True,1974,2188,2188,0,0.0978,bootstrap,2026-08-17T07:41:57.756390Z
+9,Delhi-Mumbai Expressway,expressway,4,11,2026-08-21,33588,True,1974,2235,2235,0,0.1168,bootstrap,2026-08-17T07:41:58.162671Z
+9,Delhi-Mumbai Expressway,expressway,4,12,2026-08-21,33588,True,1974,2259,2259,0,0.1262,bootstrap,2026-08-17T07:41:58.698464Z
+9,Delhi-Mumbai Expressway,expressway,4,13,2026-08-21,33588,True,1974,2254,2254,0,0.1242,bootstrap,2026-08-17T07:41:59.120720Z
+9,Delhi-Mumbai Expressway,expressway,4,14,2026-08-21,33588,True,1974,2262,2262,0,0.1273,bootstrap,2026-08-17T07:42:00.008697Z
+9,Delhi-Mumbai Expressway,expressway,4,15,2026-08-21,33588,True,1974,2285,2285,0,0.1361,bootstrap,2026-08-17T07:42:03.497795Z
+9,Delhi-Mumbai Expressway,expressway,4,16,2026-08-21,33588,True,1974,2307,2307,0,0.1443,bootstrap,2026-08-17T07:42:04.254038Z
+9,Delhi-Mumbai Expressway,expressway,4,17,2026-08-21,33588,True,1974,2338,2338,0,0.1557,bootstrap,2026-08-17T07:42:04.923855Z
+9,Delhi-Mumbai Expressway,expressway,4,18,2026-08-21,33588,True,1974,2319,2319,0,0.1488,bootstrap,2026-08-17T07:42:06.045330Z
+9,Delhi-Mumbai Expressway,expressway,4,19,2026-08-21,33588,True,1974,2237,2237,0,0.1176,bootstrap,2026-08-17T07:42:06.701135Z
+9,Delhi-Mumbai Expressway,expressway,4,20,2026-08-21,33588,True,1974,2155,2155,0,0.084,bootstrap,2026-08-17T07:42:07.299702Z
+9,Delhi-Mumbai Expressway,expressway,4,21,2026-08-21,33588,True,1974,2052,2052,0,0.038,bootstrap,2026-08-17T07:42:07.985412Z
+9,Delhi-Mumbai Expressway,expressway,4,22,2026-08-21,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:10.165174Z
+9,Delhi-Mumbai Expressway,expressway,4,23,2026-08-21,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:12.229824Z
+9,Delhi-Mumbai Expressway,expressway,5,0,2026-08-22,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:13.436967Z
+9,Delhi-Mumbai Expressway,expressway,5,1,2026-08-22,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:14.154731Z
+9,Delhi-Mumbai Expressway,expressway,5,2,2026-08-22,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:14.785751Z
+9,Delhi-Mumbai Expressway,expressway,5,3,2026-08-22,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:15.347349Z
+9,Delhi-Mumbai Expressway,expressway,5,4,2026-08-22,33588,True,1974,1988,1988,0,0.007,bootstrap,2026-08-17T07:42:16.074240Z
+9,Delhi-Mumbai Expressway,expressway,5,5,2026-08-22,33588,True,1974,1989,1989,0,0.0075,bootstrap,2026-08-17T07:42:16.650493Z
+9,Delhi-Mumbai Expressway,expressway,5,6,2026-08-22,33588,True,1974,1999,1999,0,0.0125,bootstrap,2026-08-17T07:42:17.137210Z
+9,Delhi-Mumbai Expressway,expressway,5,7,2026-08-22,33588,True,1974,2044,2044,0,0.0342,bootstrap,2026-08-17T07:42:17.716547Z
+9,Delhi-Mumbai Expressway,expressway,5,8,2026-08-22,33588,True,1974,2109,2109,0,0.064,bootstrap,2026-08-17T07:42:18.291678Z
+9,Delhi-Mumbai Expressway,expressway,5,9,2026-08-22,33588,True,1974,2142,2142,0,0.0784,bootstrap,2026-08-17T07:42:18.928106Z
+9,Delhi-Mumbai Expressway,expressway,5,10,2026-08-22,33588,True,1974,2172,2172,0,0.0912,bootstrap,2026-08-17T07:42:19.352831Z
+9,Delhi-Mumbai Expressway,expressway,5,11,2026-08-22,33588,True,1974,2217,2217,0,0.1096,bootstrap,2026-08-17T07:42:19.874274Z
+9,Delhi-Mumbai Expressway,expressway,5,12,2026-08-22,33588,True,1974,2240,2240,0,0.1188,bootstrap,2026-08-17T07:42:20.318614Z
+9,Delhi-Mumbai Expressway,expressway,5,13,2026-08-22,33588,True,1974,2238,2238,0,0.118,bootstrap,2026-08-17T07:42:20.781830Z
+9,Delhi-Mumbai Expressway,expressway,5,14,2026-08-22,33588,True,1974,2242,2242,0,0.1195,bootstrap,2026-08-17T07:42:21.593349Z
+9,Delhi-Mumbai Expressway,expressway,5,15,2026-08-22,33588,True,1974,2263,2263,0,0.1277,bootstrap,2026-08-17T07:42:22.003931Z
+9,Delhi-Mumbai Expressway,expressway,5,16,2026-08-22,33588,True,1974,2285,2285,0,0.1361,bootstrap,2026-08-17T07:42:22.422675Z
+9,Delhi-Mumbai Expressway,expressway,5,17,2026-08-22,33588,True,1974,2308,2308,0,0.1447,bootstrap,2026-08-17T07:42:23.033514Z
+9,Delhi-Mumbai Expressway,expressway,5,18,2026-08-22,33588,True,1974,2295,2295,0,0.1399,bootstrap,2026-08-17T07:42:23.881453Z
+9,Delhi-Mumbai Expressway,expressway,5,19,2026-08-22,33588,True,1974,2230,2230,0,0.1148,bootstrap,2026-08-17T07:42:24.671349Z
+9,Delhi-Mumbai Expressway,expressway,5,20,2026-08-22,33588,True,1974,2158,2158,0,0.0853,bootstrap,2026-08-17T07:42:25.275144Z
+9,Delhi-Mumbai Expressway,expressway,5,21,2026-08-22,33588,True,1974,2054,2054,0,0.0389,bootstrap,2026-08-17T07:42:25.723195Z
+9,Delhi-Mumbai Expressway,expressway,5,22,2026-08-22,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:27.262775Z
+9,Delhi-Mumbai Expressway,expressway,5,23,2026-08-22,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:27.786840Z
+9,Delhi-Mumbai Expressway,expressway,6,0,2026-08-23,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:28.447529Z
+9,Delhi-Mumbai Expressway,expressway,6,1,2026-08-23,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:29.094367Z
+9,Delhi-Mumbai Expressway,expressway,6,2,2026-08-23,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:29.941139Z
+9,Delhi-Mumbai Expressway,expressway,6,3,2026-08-23,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:30.349091Z
+9,Delhi-Mumbai Expressway,expressway,6,4,2026-08-23,33588,True,1974,1984,1984,0,0.005,bootstrap,2026-08-17T07:42:30.807033Z
+9,Delhi-Mumbai Expressway,expressway,6,5,2026-08-23,33588,True,1974,1986,1986,0,0.006,bootstrap,2026-08-17T07:42:31.224314Z
+9,Delhi-Mumbai Expressway,expressway,6,6,2026-08-23,33588,True,1974,1992,1992,0,0.009,bootstrap,2026-08-17T07:42:31.752173Z
+9,Delhi-Mumbai Expressway,expressway,6,7,2026-08-23,33588,True,1974,2023,2023,0,0.0242,bootstrap,2026-08-17T07:42:32.254453Z
+9,Delhi-Mumbai Expressway,expressway,6,8,2026-08-23,33588,True,1974,2079,2079,0,0.0505,bootstrap,2026-08-17T07:42:32.793135Z
+9,Delhi-Mumbai Expressway,expressway,6,9,2026-08-23,33588,True,1974,2115,2115,0,0.0667,bootstrap,2026-08-17T07:42:33.577753Z
+9,Delhi-Mumbai Expressway,expressway,6,10,2026-08-23,33588,True,1974,2147,2147,0,0.0806,bootstrap,2026-08-17T07:42:34.251104Z
+9,Delhi-Mumbai Expressway,expressway,6,11,2026-08-23,33588,True,1974,2184,2184,0,0.0962,bootstrap,2026-08-17T07:42:34.701940Z
+9,Delhi-Mumbai Expressway,expressway,6,12,2026-08-23,33588,True,1974,2190,2190,0,0.0986,bootstrap,2026-08-17T07:42:35.963557Z
+9,Delhi-Mumbai Expressway,expressway,6,13,2026-08-23,33588,True,1974,2177,2177,0,0.0932,bootstrap,2026-08-17T07:42:36.489482Z
+9,Delhi-Mumbai Expressway,expressway,6,14,2026-08-23,33588,True,1974,2170,2170,0,0.0903,bootstrap,2026-08-17T07:42:36.906794Z
+9,Delhi-Mumbai Expressway,expressway,6,15,2026-08-23,33588,True,1974,2176,2176,0,0.0928,bootstrap,2026-08-17T07:42:37.604476Z
+9,Delhi-Mumbai Expressway,expressway,6,16,2026-08-23,33588,True,1974,2191,2191,0,0.099,bootstrap,2026-08-17T07:42:39.854679Z
+9,Delhi-Mumbai Expressway,expressway,6,17,2026-08-23,33588,True,1974,2220,2220,0,0.1108,bootstrap,2026-08-17T07:42:40.277991Z
+9,Delhi-Mumbai Expressway,expressway,6,18,2026-08-23,33588,True,1974,2224,2224,0,0.1124,bootstrap,2026-08-17T07:42:41.178391Z
+9,Delhi-Mumbai Expressway,expressway,6,19,2026-08-23,33588,True,1974,2189,2189,0,0.0982,bootstrap,2026-08-17T07:42:41.598056Z
+9,Delhi-Mumbai Expressway,expressway,6,20,2026-08-23,33588,True,1974,2126,2126,0,0.0715,bootstrap,2026-08-17T07:42:42.082862Z
+9,Delhi-Mumbai Expressway,expressway,6,21,2026-08-23,33588,True,1974,2037,2037,0,0.0309,bootstrap,2026-08-17T07:42:42.909657Z
+9,Delhi-Mumbai Expressway,expressway,6,22,2026-08-23,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:43.334275Z
+9,Delhi-Mumbai Expressway,expressway,6,23,2026-08-23,33588,True,1974,1974,1974,0,0.0,bootstrap,2026-08-17T07:42:43.809766Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,0,2026-08-17,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:45.198348Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,1,2026-08-17,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:45.808163Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,2,2026-08-17,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:46.737583Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,3,2026-08-17,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:47.397365Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,4,2026-08-17,14599,True,1634,1648,1617,0,0.0085,bootstrap,2026-08-17T07:42:48.090899Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,5,2026-08-17,14599,True,1634,1652,1621,0,0.0109,bootstrap,2026-08-17T07:42:48.637600Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,6,2026-08-17,14599,True,1634,1671,1635,0,0.0221,bootstrap,2026-08-17T07:42:49.164542Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,7,2026-08-17,14599,True,1634,1720,1678,0,0.05,bootstrap,2026-08-17T07:42:49.603138Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,8,2026-08-17,14599,True,1634,1806,1746,0,0.0952,bootstrap,2026-08-17T07:42:49.995713Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,9,2026-08-17,14599,True,1634,1869,1799,0,0.1257,bootstrap,2026-08-17T07:42:50.567879Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,10,2026-08-17,14599,True,1634,1933,1838,0,0.1547,bootstrap,2026-08-17T07:42:50.980374Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,11,2026-08-17,14599,True,1634,2011,1909,0,0.1875,bootstrap,2026-08-17T07:42:51.451224Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,12,2026-08-17,14599,True,1634,2034,1923,0,0.1967,bootstrap,2026-08-17T07:42:52.440541Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,13,2026-08-17,14599,True,1634,2007,1875,0,0.1858,bootstrap,2026-08-17T07:42:53.071565Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,14,2026-08-17,14599,True,1634,2015,1905,0,0.1891,bootstrap,2026-08-17T07:42:53.561148Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,15,2026-08-17,14599,True,1634,2029,1909,0,0.1947,bootstrap,2026-08-17T07:42:53.991733Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,16,2026-08-17,14599,True,1634,2057,1932,0,0.2056,bootstrap,2026-08-17T07:42:54.419391Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,17,2026-08-17,14599,True,1634,2091,1970,0,0.2186,bootstrap,2026-08-17T07:42:55.203976Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,18,2026-08-17,14599,True,1634,2092,1984,0,0.2189,bootstrap,2026-08-17T07:42:55.643852Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,19,2026-08-17,14599,True,1634,2030,1945,0,0.1951,bootstrap,2026-08-17T07:42:56.210257Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,20,2026-08-17,14599,True,1634,1922,1863,0,0.1498,bootstrap,2026-08-17T07:42:57.049139Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,21,2026-08-17,14599,True,1634,1767,1732,0,0.0753,bootstrap,2026-08-17T07:42:57.638720Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,22,2026-08-17,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:58.084886Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,23,2026-08-17,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:58.486657Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,0,2026-08-18,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:59.005777Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,1,2026-08-18,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:42:59.487392Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,2,2026-08-18,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:43:00.821117Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,3,2026-08-18,14599,True,1634,1634,1603,0,0.0,bootstrap,2026-08-17T07:43:01.438737Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,4,2026-08-18,14599,True,1634,1649,1649,0,0.0091,bootstrap,2026-08-17T07:43:02.755854Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,5,2026-08-18,14599,True,1634,1652,1652,0,0.0109,bootstrap,2026-08-17T07:43:03.402984Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,6,2026-08-18,14599,True,1634,1663,1663,0,0.0174,bootstrap,2026-08-17T07:43:03.898338Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,7,2026-08-18,14599,True,1634,1718,1718,0,0.0489,bootstrap,2026-08-17T07:43:04.409669Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,8,2026-08-18,14599,True,1634,1819,1819,0,0.1017,bootstrap,2026-08-17T07:43:05.446580Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,9,2026-08-18,14599,True,1634,1874,1874,0,0.1281,bootstrap,2026-08-17T07:43:06.961658Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,10,2026-08-18,14599,True,1634,1918,1918,0,0.1481,bootstrap,2026-08-17T07:43:07.798184Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,11,2026-08-18,14599,True,1634,1989,1989,0,0.1785,bootstrap,2026-08-17T07:43:08.512227Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,12,2026-08-18,14599,True,1634,2024,2024,0,0.1927,bootstrap,2026-08-17T07:43:09.000130Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,13,2026-08-18,14599,True,1634,2010,2010,0,0.1871,bootstrap,2026-08-17T07:43:09.436687Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,14,2026-08-18,14599,True,1634,2017,2017,0,0.1899,bootstrap,2026-08-17T07:43:09.874079Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,15,2026-08-18,14599,True,1634,2029,2029,0,0.1947,bootstrap,2026-08-17T07:43:10.340766Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,16,2026-08-18,14599,True,1634,2062,2062,0,0.2076,bootstrap,2026-08-17T07:43:10.775072Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,17,2026-08-18,14599,True,1634,2101,2101,0,0.2223,bootstrap,2026-08-17T07:43:11.281336Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,18,2026-08-18,14599,True,1634,2114,2114,0,0.2271,bootstrap,2026-08-17T07:43:11.675470Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,19,2026-08-18,14599,True,1634,2078,2078,0,0.2137,bootstrap,2026-08-17T07:43:12.299272Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,20,2026-08-18,14599,True,1634,1971,1971,0,0.171,bootstrap,2026-08-17T07:43:12.695694Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,21,2026-08-18,14599,True,1634,1796,1796,0,0.0902,bootstrap,2026-08-17T07:43:13.199622Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,22,2026-08-18,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:13.633574Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,23,2026-08-18,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:14.062570Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,0,2026-08-19,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:14.848206Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,1,2026-08-19,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:15.255459Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,2,2026-08-19,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:15.703963Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,3,2026-08-19,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:16.174028Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,4,2026-08-19,14599,True,1634,1649,1649,0,0.0091,bootstrap,2026-08-17T07:43:16.713933Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,5,2026-08-19,14599,True,1634,1652,1652,0,0.0109,bootstrap,2026-08-17T07:43:17.330047Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,6,2026-08-19,14599,True,1634,1666,1666,0,0.0192,bootstrap,2026-08-17T07:43:17.966898Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,7,2026-08-19,14599,True,1634,1734,1734,0,0.0577,bootstrap,2026-08-17T07:43:19.449780Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,8,2026-08-19,14599,True,1634,1849,1849,0,0.1163,bootstrap,2026-08-17T07:43:19.900711Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,9,2026-08-19,14599,True,1634,1911,1911,0,0.145,bootstrap,2026-08-17T07:43:20.551170Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,10,2026-08-19,14599,True,1634,1972,1972,0,0.1714,bootstrap,2026-08-17T07:43:21.219211Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,11,2026-08-19,14599,True,1634,2056,2056,0,0.2053,bootstrap,2026-08-17T07:43:22.581075Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,12,2026-08-19,14599,True,1634,2080,2080,0,0.2144,bootstrap,2026-08-17T07:43:23.459531Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,13,2026-08-19,14599,True,1634,2052,2052,0,0.2037,bootstrap,2026-08-17T07:43:24.006933Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,14,2026-08-19,14599,True,1634,2055,2055,0,0.2049,bootstrap,2026-08-17T07:43:24.586444Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,15,2026-08-19,14599,True,1634,2075,2075,0,0.2125,bootstrap,2026-08-17T07:43:25.531702Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,16,2026-08-19,14411,True,1677,2111,2111,0,0.2056,bootstrap,2026-08-17T07:43:25.965169Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,17,2026-08-19,14411,True,1677,2170,2170,0,0.2272,bootstrap,2026-08-17T07:43:26.434535Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,18,2026-08-19,14411,True,1677,2195,2195,0,0.236,bootstrap,2026-08-17T07:43:27.375573Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,19,2026-08-19,14599,True,1634,2143,2143,0,0.2375,bootstrap,2026-08-17T07:43:27.801687Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,20,2026-08-19,14599,True,1634,1993,1993,0,0.1801,bootstrap,2026-08-17T07:43:28.380107Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,21,2026-08-19,14599,True,1634,1795,1795,0,0.0897,bootstrap,2026-08-17T07:43:29.009462Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,22,2026-08-19,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:29.470495Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,2,23,2026-08-19,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:31.356078Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,0,2026-08-20,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:32.397505Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,1,2026-08-20,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:33.130576Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,2,2026-08-20,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:33.614355Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,3,2026-08-20,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:34.104100Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,4,2026-08-20,14599,True,1634,1649,1649,0,0.0091,bootstrap,2026-08-17T07:43:34.843775Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,5,2026-08-20,14599,True,1634,1652,1652,0,0.0109,bootstrap,2026-08-17T07:43:35.463823Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,6,2026-08-20,14599,True,1634,1662,1662,0,0.0168,bootstrap,2026-08-17T07:43:35.966877Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,7,2026-08-20,14599,True,1634,1717,1717,0,0.0483,bootstrap,2026-08-17T07:43:36.466303Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,8,2026-08-20,14599,True,1634,1822,1822,0,0.1032,bootstrap,2026-08-17T07:43:36.980955Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,9,2026-08-20,14599,True,1634,1890,1890,0,0.1354,bootstrap,2026-08-17T07:43:37.510557Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,10,2026-08-20,14599,True,1634,1950,1950,0,0.1621,bootstrap,2026-08-17T07:43:38.225052Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,11,2026-08-20,14599,True,1634,2031,2031,0,0.1955,bootstrap,2026-08-17T07:43:38.815796Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,12,2026-08-20,14599,True,1634,2062,2062,0,0.2076,bootstrap,2026-08-17T07:43:39.234809Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,13,2026-08-20,14599,True,1634,2036,2036,0,0.1974,bootstrap,2026-08-17T07:43:39.686976Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,14,2026-08-20,14599,True,1634,2044,2044,0,0.2006,bootstrap,2026-08-17T07:43:40.241114Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,15,2026-08-20,14599,True,1634,2060,2060,0,0.2068,bootstrap,2026-08-17T07:43:40.742585Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,16,2026-08-20,14599,True,1634,2099,2099,0,0.2215,bootstrap,2026-08-17T07:43:41.359787Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,17,2026-08-20,14411,True,1677,2135,2135,0,0.2145,bootstrap,2026-08-17T07:43:41.973751Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,18,2026-08-20,14411,True,1677,2154,2154,0,0.2214,bootstrap,2026-08-17T07:43:42.795852Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,19,2026-08-20,14599,True,1634,2103,2103,0,0.223,bootstrap,2026-08-17T07:43:43.310273Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,20,2026-08-20,14599,True,1634,1966,1966,0,0.1689,bootstrap,2026-08-17T07:43:43.853207Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,21,2026-08-20,14599,True,1634,1784,1784,0,0.0841,bootstrap,2026-08-17T07:43:44.369902Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,22,2026-08-20,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:44.882494Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,3,23,2026-08-20,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:45.365715Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,0,2026-08-21,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:45.861434Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,1,2026-08-21,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:46.402630Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,2,2026-08-21,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:46.836007Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,3,2026-08-21,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:43:47.912998Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,4,2026-08-21,14599,True,1634,1649,1649,0,0.0091,bootstrap,2026-08-17T07:43:48.356580Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,5,2026-08-21,14599,True,1634,1652,1652,0,0.0109,bootstrap,2026-08-17T07:43:48.972130Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,6,2026-08-21,14599,True,1634,1664,1664,0,0.018,bootstrap,2026-08-17T07:43:49.450422Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,7,2026-08-21,14599,True,1634,1725,1725,0,0.0528,bootstrap,2026-08-17T07:43:49.982805Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,8,2026-08-21,14599,True,1634,1820,1820,0,0.1022,bootstrap,2026-08-17T07:43:51.154694Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,9,2026-08-21,14599,True,1634,1882,1882,0,0.1318,bootstrap,2026-08-17T07:43:55.183090Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,10,2026-08-21,14599,True,1634,1954,1954,0,0.1638,bootstrap,2026-08-17T07:43:55.695906Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,11,2026-08-21,14599,True,1634,2044,2044,0,0.2006,bootstrap,2026-08-17T07:43:56.124506Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,12,2026-08-21,14599,True,1634,2072,2072,0,0.2114,bootstrap,2026-08-17T07:43:56.552202Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,13,2026-08-21,14599,True,1634,2043,2043,0,0.2002,bootstrap,2026-08-17T07:43:56.991743Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,14,2026-08-21,14599,True,1634,2061,2061,0,0.2072,bootstrap,2026-08-17T07:43:57.452394Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,15,2026-08-21,14599,True,1634,2085,2085,0,0.2163,bootstrap,2026-08-17T07:43:57.962184Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,16,2026-08-21,14599,True,1634,2123,2123,0,0.2303,bootstrap,2026-08-17T07:43:58.454526Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,17,2026-08-21,14599,True,1634,2160,2160,0,0.2435,bootstrap,2026-08-17T07:43:58.867879Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,18,2026-08-21,14599,True,1634,2158,2158,0,0.2428,bootstrap,2026-08-17T07:43:59.307999Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,19,2026-08-21,14599,True,1634,2077,2077,0,0.2133,bootstrap,2026-08-17T07:43:59.890281Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,20,2026-08-21,14599,True,1634,1944,1944,0,0.1595,bootstrap,2026-08-17T07:44:00.308679Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,21,2026-08-21,14599,True,1634,1774,1774,0,0.0789,bootstrap,2026-08-17T07:44:00.864687Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,22,2026-08-21,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:44:01.614351Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,4,23,2026-08-21,14599,True,1634,1634,1634,0,0.0,bootstrap,2026-08-17T07:44:02.054561Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,0,2026-08-22,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:02.853381Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,1,2026-08-22,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:03.415140Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,2,2026-08-22,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:04.027208Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,3,2026-08-22,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:04.449460Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,4,2026-08-22,14599,True,1634,1663,1663,0,0.0174,bootstrap,2026-08-17T07:44:04.957640Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,5,2026-08-22,14599,True,1634,1666,1666,0,0.0192,bootstrap,2026-08-17T07:44:05.555307Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,6,2026-08-22,14599,True,1634,1677,1677,0,0.0256,bootstrap,2026-08-17T07:44:05.953654Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,7,2026-08-22,14599,True,1634,1739,1739,0,0.0604,bootstrap,2026-08-17T07:44:06.465325Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,8,2026-08-22,14599,True,1634,1849,1849,0,0.1163,bootstrap,2026-08-17T07:44:07.524571Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,9,2026-08-22,14599,True,1634,1908,1908,0,0.1436,bootstrap,2026-08-17T07:44:08.392355Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,10,2026-08-22,14599,True,1634,1962,1962,0,0.1672,bootstrap,2026-08-17T07:44:09.356243Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,11,2026-08-22,14411,True,1677,2026,2026,0,0.1723,bootstrap,2026-08-17T07:44:10.371992Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,12,2026-08-22,14599,True,1634,2071,2071,0,0.211,bootstrap,2026-08-17T07:44:10.864855Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,13,2026-08-22,14599,True,1634,2058,2058,0,0.206,bootstrap,2026-08-17T07:44:11.357504Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,14,2026-08-22,14411,True,1677,2057,2057,0,0.1847,bootstrap,2026-08-17T07:44:11.805724Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,15,2026-08-22,14411,True,1677,2066,2066,0,0.1883,bootstrap,2026-08-17T07:44:12.227712Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,16,2026-08-22,14411,True,1677,2095,2095,0,0.1995,bootstrap,2026-08-17T07:44:12.701851Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,17,2026-08-22,14411,True,1677,2137,2137,0,0.2153,bootstrap,2026-08-17T07:44:13.313034Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,18,2026-08-22,14599,True,1634,2165,2165,0,0.2453,bootstrap,2026-08-17T07:44:13.785507Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,19,2026-08-22,14599,True,1634,2097,2097,0,0.2208,bootstrap,2026-08-17T07:44:14.328417Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,20,2026-08-22,14599,True,1634,1973,1973,0,0.1718,bootstrap,2026-08-17T07:44:14.744253Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,21,2026-08-22,14599,True,1634,1799,1799,0,0.0917,bootstrap,2026-08-17T07:44:15.188991Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,22,2026-08-22,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:15.609678Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,5,23,2026-08-22,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:16.108144Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,0,2026-08-23,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:16.582534Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,1,2026-08-23,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:17.099915Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,2,2026-08-23,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:17.606917Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,3,2026-08-23,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:18.164685Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,4,2026-08-23,14599,True,1634,1657,1657,0,0.0139,bootstrap,2026-08-17T07:44:18.558295Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,5,2026-08-23,14599,True,1634,1660,1660,0,0.0157,bootstrap,2026-08-17T07:44:19.109679Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,6,2026-08-23,14599,True,1634,1668,1668,0,0.0204,bootstrap,2026-08-17T07:44:19.698053Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,7,2026-08-23,14599,True,1634,1701,1701,0,0.0394,bootstrap,2026-08-17T07:44:20.313398Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,8,2026-08-23,14599,True,1634,1767,1767,0,0.0753,bootstrap,2026-08-17T07:44:20.801373Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,9,2026-08-23,14599,True,1634,1835,1835,0,0.1095,bootstrap,2026-08-17T07:44:21.293674Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,10,2026-08-23,14411,True,1677,1892,1892,0,0.1136,bootstrap,2026-08-17T07:44:21.802513Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,11,2026-08-23,14411,True,1677,1943,1943,0,0.1369,bootstrap,2026-08-17T07:44:22.388073Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,12,2026-08-23,14411,True,1677,1960,1960,0,0.1444,bootstrap,2026-08-17T07:44:23.085077Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,13,2026-08-23,14411,True,1677,1945,1945,0,0.1378,bootstrap,2026-08-17T07:44:23.558049Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,14,2026-08-23,14411,True,1677,1950,1950,0,0.14,bootstrap,2026-08-17T07:44:24.293654Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,15,2026-08-23,14411,True,1677,1955,1955,0,0.1422,bootstrap,2026-08-17T07:44:24.893343Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,16,2026-08-23,14411,True,1677,1957,1957,0,0.1431,bootstrap,2026-08-17T07:44:28.094328Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,17,2026-08-23,14411,True,1677,1953,1953,0,0.1413,bootstrap,2026-08-17T07:44:30.418362Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,18,2026-08-23,14599,True,1634,1931,1931,0,0.1538,bootstrap,2026-08-17T07:44:32.158664Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,19,2026-08-23,14599,True,1634,1858,1858,0,0.1206,bootstrap,2026-08-17T07:44:33.202720Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,20,2026-08-23,14599,True,1634,1789,1789,0,0.0866,bootstrap,2026-08-17T07:44:33.682405Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,21,2026-08-23,14599,True,1634,1716,1716,0,0.0478,bootstrap,2026-08-17T07:44:34.105537Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,22,2026-08-23,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:34.552295Z
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,6,23,2026-08-23,14599,True,1634,1648,1648,0,0.0085,bootstrap,2026-08-17T07:44:35.031775Z
+11,Old Delhi-Gurgaon Road,highway,0,0,2026-08-17,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:35.442684Z
+11,Old Delhi-Gurgaon Road,highway,0,1,2026-08-17,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:35.855773Z
+11,Old Delhi-Gurgaon Road,highway,0,2,2026-08-17,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:36.248706Z
+11,Old Delhi-Gurgaon Road,highway,0,3,2026-08-17,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:36.774603Z
+11,Old Delhi-Gurgaon Road,highway,0,4,2026-08-17,15258,True,1320,1333,1301,0,0.0098,bootstrap,2026-08-17T07:44:37.173718Z
+11,Old Delhi-Gurgaon Road,highway,0,5,2026-08-17,15258,True,1320,1335,1304,0,0.0112,bootstrap,2026-08-17T07:44:37.951075Z
+11,Old Delhi-Gurgaon Road,highway,0,6,2026-08-17,15258,True,1320,1344,1312,0,0.0179,bootstrap,2026-08-17T07:44:38.536306Z
+11,Old Delhi-Gurgaon Road,highway,0,7,2026-08-17,15258,True,1320,1419,1382,0,0.0698,bootstrap,2026-08-17T07:44:39.265918Z
+11,Old Delhi-Gurgaon Road,highway,0,8,2026-08-17,15258,True,1320,1580,1518,0,0.1646,bootstrap,2026-08-17T07:44:39.665403Z
+11,Old Delhi-Gurgaon Road,highway,0,9,2026-08-17,15258,True,1320,1609,1548,0,0.1796,bootstrap,2026-08-17T07:44:40.550645Z
+11,Old Delhi-Gurgaon Road,highway,0,10,2026-08-17,15258,True,1320,1595,1531,0,0.1724,bootstrap,2026-08-17T07:44:40.982339Z
+11,Old Delhi-Gurgaon Road,highway,0,11,2026-08-17,15258,True,1320,1624,1551,0,0.1872,bootstrap,2026-08-17T07:44:41.478479Z
+11,Old Delhi-Gurgaon Road,highway,0,12,2026-08-17,15258,True,1320,1619,1553,0,0.1847,bootstrap,2026-08-17T07:44:42.025386Z
+11,Old Delhi-Gurgaon Road,highway,0,13,2026-08-17,15258,True,1320,1587,1589,49,0.1682,bootstrap,2026-08-17T07:44:42.547584Z
+11,Old Delhi-Gurgaon Road,highway,0,14,2026-08-17,15258,True,1320,1592,1523,0,0.1709,bootstrap,2026-08-17T07:44:42.922487Z
+11,Old Delhi-Gurgaon Road,highway,0,15,2026-08-17,15258,True,1320,1654,1569,0,0.2019,bootstrap,2026-08-17T07:44:43.440903Z
+11,Old Delhi-Gurgaon Road,highway,0,16,2026-08-17,15258,True,1320,1788,1656,0,0.2617,bootstrap,2026-08-17T07:44:44.290764Z
+11,Old Delhi-Gurgaon Road,highway,0,17,2026-08-17,15258,True,1320,2074,1836,0,0.3635,bootstrap,2026-08-17T07:44:44.769300Z
+11,Old Delhi-Gurgaon Road,highway,0,18,2026-08-17,15285,True,1391,2262,1984,0,0.3851,bootstrap,2026-08-17T07:44:46.516578Z
+11,Old Delhi-Gurgaon Road,highway,0,19,2026-08-17,15285,True,1391,2161,1942,0,0.3563,bootstrap,2026-08-17T07:44:48.783819Z
+11,Old Delhi-Gurgaon Road,highway,0,20,2026-08-17,15258,True,1320,1796,1678,0,0.265,bootstrap,2026-08-17T07:44:54.417826Z
+11,Old Delhi-Gurgaon Road,highway,0,21,2026-08-17,15258,True,1320,1481,1442,0,0.1087,bootstrap,2026-08-17T07:44:54.987804Z
+11,Old Delhi-Gurgaon Road,highway,0,22,2026-08-17,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:55.434730Z
+11,Old Delhi-Gurgaon Road,highway,0,23,2026-08-17,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:55.826691Z
+11,Old Delhi-Gurgaon Road,highway,1,0,2026-08-18,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:56.319811Z
+11,Old Delhi-Gurgaon Road,highway,1,1,2026-08-18,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:56.768601Z
+11,Old Delhi-Gurgaon Road,highway,1,2,2026-08-18,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:57.286183Z
+11,Old Delhi-Gurgaon Road,highway,1,3,2026-08-18,15258,True,1320,1320,1288,0,0.0,bootstrap,2026-08-17T07:44:57.756226Z
+11,Old Delhi-Gurgaon Road,highway,1,4,2026-08-18,15258,True,1320,1333,1333,0,0.0098,bootstrap,2026-08-17T07:44:58.168306Z
+11,Old Delhi-Gurgaon Road,highway,1,5,2026-08-18,15258,True,1320,1336,1336,0,0.012,bootstrap,2026-08-17T07:44:58.600071Z
+11,Old Delhi-Gurgaon Road,highway,1,6,2026-08-18,15258,True,1320,1345,1345,0,0.0186,bootstrap,2026-08-17T07:45:00.012083Z
+11,Old Delhi-Gurgaon Road,highway,1,7,2026-08-18,15258,True,1320,1428,1428,0,0.0756,bootstrap,2026-08-17T07:45:00.438890Z
+11,Old Delhi-Gurgaon Road,highway,1,8,2026-08-18,15258,True,1320,1605,1605,0,0.1776,bootstrap,2026-08-17T07:45:00.890183Z
+11,Old Delhi-Gurgaon Road,highway,1,9,2026-08-18,15258,True,1320,1635,1635,0,0.1927,bootstrap,2026-08-17T07:45:01.435670Z
+11,Old Delhi-Gurgaon Road,highway,1,10,2026-08-18,15258,True,1320,1619,1619,0,0.1847,bootstrap,2026-08-17T07:45:01.915012Z
+11,Old Delhi-Gurgaon Road,highway,1,11,2026-08-18,15258,True,1320,1651,1651,0,0.2005,bootstrap,2026-08-17T07:45:02.382447Z
+11,Old Delhi-Gurgaon Road,highway,1,12,2026-08-18,15258,True,1320,1646,1646,0,0.1981,bootstrap,2026-08-17T07:45:02.903280Z
+11,Old Delhi-Gurgaon Road,highway,1,13,2026-08-18,15258,True,1320,1613,1613,0,0.1816,bootstrap,2026-08-17T07:45:03.395677Z
+11,Old Delhi-Gurgaon Road,highway,1,14,2026-08-18,15258,True,1320,1622,1622,0,0.1862,bootstrap,2026-08-17T07:45:04.244098Z
+11,Old Delhi-Gurgaon Road,highway,1,15,2026-08-18,15258,True,1320,1687,1687,0,0.2175,bootstrap,2026-08-17T07:45:04.869607Z
+11,Old Delhi-Gurgaon Road,highway,1,16,2026-08-18,15258,True,1320,1828,1828,0,0.2779,bootstrap,2026-08-17T07:45:05.459974Z
+11,Old Delhi-Gurgaon Road,highway,1,17,2026-08-18,15285,True,1391,2074,2074,0,0.3293,bootstrap,2026-08-17T07:45:05.991285Z
+11,Old Delhi-Gurgaon Road,highway,1,18,2026-08-18,15285,True,1391,2366,2366,0,0.4121,bootstrap,2026-08-17T07:45:06.385118Z
+11,Old Delhi-Gurgaon Road,highway,1,19,2026-08-18,14888,False,1482,2151,2151,0,0.311,bootstrap,2026-08-17T07:45:06.929112Z
+11,Old Delhi-Gurgaon Road,highway,1,20,2026-08-18,15258,True,1320,1816,1816,0,0.2731,bootstrap,2026-08-17T07:45:07.906026Z
+11,Old Delhi-Gurgaon Road,highway,1,21,2026-08-18,15258,True,1320,1487,1487,0,0.1123,bootstrap,2026-08-17T07:45:08.408909Z
+11,Old Delhi-Gurgaon Road,highway,1,22,2026-08-18,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:10.567386Z
+11,Old Delhi-Gurgaon Road,highway,1,23,2026-08-18,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:12.743976Z
+11,Old Delhi-Gurgaon Road,highway,2,0,2026-08-19,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:13.429418Z
+11,Old Delhi-Gurgaon Road,highway,2,1,2026-08-19,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:13.838347Z
+11,Old Delhi-Gurgaon Road,highway,2,2,2026-08-19,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:14.266021Z
+11,Old Delhi-Gurgaon Road,highway,2,3,2026-08-19,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:14.777654Z
+11,Old Delhi-Gurgaon Road,highway,2,4,2026-08-19,15258,True,1320,1333,1333,0,0.0098,bootstrap,2026-08-17T07:45:15.362219Z
+11,Old Delhi-Gurgaon Road,highway,2,5,2026-08-19,15258,True,1320,1336,1336,0,0.012,bootstrap,2026-08-17T07:45:15.819447Z
+11,Old Delhi-Gurgaon Road,highway,2,6,2026-08-19,15258,True,1320,1347,1347,0,0.02,bootstrap,2026-08-17T07:45:16.313199Z
+11,Old Delhi-Gurgaon Road,highway,2,7,2026-08-19,15258,True,1320,1440,1440,0,0.0833,bootstrap,2026-08-17T07:45:16.832428Z
+11,Old Delhi-Gurgaon Road,highway,2,8,2026-08-19,15258,True,1320,1628,1628,0,0.1892,bootstrap,2026-08-17T07:45:17.234064Z
+11,Old Delhi-Gurgaon Road,highway,2,9,2026-08-19,15258,True,1320,1653,1653,0,0.2015,bootstrap,2026-08-17T07:45:17.642537Z
+11,Old Delhi-Gurgaon Road,highway,2,10,2026-08-19,15258,True,1320,1639,1639,0,0.1946,bootstrap,2026-08-17T07:45:18.199162Z
+11,Old Delhi-Gurgaon Road,highway,2,11,2026-08-19,15258,True,1320,1673,1673,0,0.211,bootstrap,2026-08-17T07:45:20.219109Z
+11,Old Delhi-Gurgaon Road,highway,2,12,2026-08-19,15258,True,1320,1670,1670,0,0.2096,bootstrap,2026-08-17T07:45:20.683903Z
+11,Old Delhi-Gurgaon Road,highway,2,13,2026-08-19,15258,True,1320,1636,1636,0,0.1932,bootstrap,2026-08-17T07:45:21.254193Z
+11,Old Delhi-Gurgaon Road,highway,2,14,2026-08-19,15258,True,1320,1640,1640,0,0.1951,bootstrap,2026-08-17T07:45:21.859695Z
+11,Old Delhi-Gurgaon Road,highway,2,15,2026-08-19,15258,True,1320,1711,1711,0,0.2285,bootstrap,2026-08-17T07:45:22.578017Z
+11,Old Delhi-Gurgaon Road,highway,2,16,2026-08-19,15258,True,1320,1860,1860,0,0.2903,bootstrap,2026-08-17T07:45:23.042175Z
+11,Old Delhi-Gurgaon Road,highway,2,17,2026-08-19,15285,True,1391,2110,2110,0,0.3408,bootstrap,2026-08-17T07:45:23.969498Z
+11,Old Delhi-Gurgaon Road,highway,2,18,2026-08-19,14888,False,1482,2303,2303,0,0.3565,bootstrap,2026-08-17T07:45:24.423203Z
+11,Old Delhi-Gurgaon Road,highway,2,19,2026-08-19,14888,False,1482,2149,2149,0,0.3104,bootstrap,2026-08-17T07:45:24.991365Z
+11,Old Delhi-Gurgaon Road,highway,2,20,2026-08-19,15258,True,1320,1821,1821,0,0.2751,bootstrap,2026-08-17T07:45:25.771512Z
+11,Old Delhi-Gurgaon Road,highway,2,21,2026-08-19,15258,True,1320,1490,1490,0,0.1141,bootstrap,2026-08-17T07:45:26.327794Z
+11,Old Delhi-Gurgaon Road,highway,2,22,2026-08-19,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:26.971342Z
+11,Old Delhi-Gurgaon Road,highway,2,23,2026-08-19,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:27.442545Z
+11,Old Delhi-Gurgaon Road,highway,3,0,2026-08-20,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:27.904924Z
+11,Old Delhi-Gurgaon Road,highway,3,1,2026-08-20,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:28.538610Z
+11,Old Delhi-Gurgaon Road,highway,3,2,2026-08-20,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:29.302959Z
+11,Old Delhi-Gurgaon Road,highway,3,3,2026-08-20,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:29.954195Z
+11,Old Delhi-Gurgaon Road,highway,3,4,2026-08-20,15258,True,1320,1333,1333,0,0.0098,bootstrap,2026-08-17T07:45:30.551032Z
+11,Old Delhi-Gurgaon Road,highway,3,5,2026-08-20,15258,True,1320,1336,1336,0,0.012,bootstrap,2026-08-17T07:45:30.957051Z
+11,Old Delhi-Gurgaon Road,highway,3,6,2026-08-20,15258,True,1320,1345,1345,0,0.0186,bootstrap,2026-08-17T07:45:31.448052Z
+11,Old Delhi-Gurgaon Road,highway,3,7,2026-08-20,15258,True,1320,1424,1424,0,0.073,bootstrap,2026-08-17T07:45:31.971374Z
+11,Old Delhi-Gurgaon Road,highway,3,8,2026-08-20,15258,True,1320,1594,1594,0,0.1719,bootstrap,2026-08-17T07:45:32.453014Z
+11,Old Delhi-Gurgaon Road,highway,3,9,2026-08-20,15258,True,1320,1621,1621,0,0.1857,bootstrap,2026-08-17T07:45:33.031390Z
+11,Old Delhi-Gurgaon Road,highway,3,10,2026-08-20,15258,True,1320,1612,1612,0,0.1811,bootstrap,2026-08-17T07:45:33.740784Z
+11,Old Delhi-Gurgaon Road,highway,3,11,2026-08-20,15258,True,1320,1644,1644,0,0.1971,bootstrap,2026-08-17T07:45:34.559010Z
+11,Old Delhi-Gurgaon Road,highway,3,12,2026-08-20,15258,True,1320,1643,1643,0,0.1966,bootstrap,2026-08-17T07:45:35.066405Z
+11,Old Delhi-Gurgaon Road,highway,3,13,2026-08-20,15258,True,1320,1617,1617,0,0.1837,bootstrap,2026-08-17T07:45:35.473846Z
+11,Old Delhi-Gurgaon Road,highway,3,14,2026-08-20,15258,True,1320,1627,1627,0,0.1887,bootstrap,2026-08-17T07:45:35.890137Z
+11,Old Delhi-Gurgaon Road,highway,3,15,2026-08-20,15258,True,1320,1688,1688,0,0.218,bootstrap,2026-08-17T07:45:36.303257Z
+11,Old Delhi-Gurgaon Road,highway,3,16,2026-08-20,15258,True,1320,1814,1814,0,0.2723,bootstrap,2026-08-17T07:45:36.976967Z
+11,Old Delhi-Gurgaon Road,highway,3,17,2026-08-20,15285,True,1391,2019,2019,0,0.311,bootstrap,2026-08-17T07:45:37.521393Z
+11,Old Delhi-Gurgaon Road,highway,3,18,2026-08-20,14888,False,1482,2187,2187,0,0.3224,bootstrap,2026-08-17T07:45:38.195504Z
+11,Old Delhi-Gurgaon Road,highway,3,19,2026-08-20,14888,False,1482,2065,2065,0,0.2823,bootstrap,2026-08-17T07:45:39.145921Z
+11,Old Delhi-Gurgaon Road,highway,3,20,2026-08-20,15258,True,1320,1794,1794,0,0.2642,bootstrap,2026-08-17T07:45:39.673618Z
+11,Old Delhi-Gurgaon Road,highway,3,21,2026-08-20,15258,True,1320,1484,1484,0,0.1105,bootstrap,2026-08-17T07:45:40.087985Z
+11,Old Delhi-Gurgaon Road,highway,3,22,2026-08-20,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:40.791824Z
+11,Old Delhi-Gurgaon Road,highway,3,23,2026-08-20,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:43.766354Z
+11,Old Delhi-Gurgaon Road,highway,4,0,2026-08-21,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:44.755478Z
+11,Old Delhi-Gurgaon Road,highway,4,1,2026-08-21,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:46.226878Z
+11,Old Delhi-Gurgaon Road,highway,4,2,2026-08-21,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:47.005349Z
+11,Old Delhi-Gurgaon Road,highway,4,3,2026-08-21,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:45:47.764240Z
+11,Old Delhi-Gurgaon Road,highway,4,4,2026-08-21,15258,True,1320,1333,1333,0,0.0098,bootstrap,2026-08-17T07:45:48.274557Z
+11,Old Delhi-Gurgaon Road,highway,4,5,2026-08-21,15258,True,1320,1335,1335,0,0.0112,bootstrap,2026-08-17T07:45:48.694626Z
+11,Old Delhi-Gurgaon Road,highway,4,6,2026-08-21,15258,True,1320,1345,1345,0,0.0186,bootstrap,2026-08-17T07:45:49.509221Z
+11,Old Delhi-Gurgaon Road,highway,4,7,2026-08-21,15258,True,1320,1425,1425,0,0.0737,bootstrap,2026-08-17T07:45:50.185853Z
+11,Old Delhi-Gurgaon Road,highway,4,8,2026-08-21,15258,True,1320,1580,1580,0,0.1646,bootstrap,2026-08-17T07:45:54.279109Z
+11,Old Delhi-Gurgaon Road,highway,4,9,2026-08-21,15258,True,1320,1601,1601,0,0.1755,bootstrap,2026-08-17T07:45:54.696326Z
+11,Old Delhi-Gurgaon Road,highway,4,10,2026-08-21,15258,True,1320,1585,1585,0,0.1672,bootstrap,2026-08-17T07:45:56.147571Z
+11,Old Delhi-Gurgaon Road,highway,4,11,2026-08-21,15258,True,1320,1612,1612,0,0.1811,bootstrap,2026-08-17T07:45:57.561003Z
+11,Old Delhi-Gurgaon Road,highway,4,12,2026-08-21,15258,True,1320,1614,1614,0,0.1822,bootstrap,2026-08-17T07:45:57.984124Z
+11,Old Delhi-Gurgaon Road,highway,4,13,2026-08-21,15258,True,1320,1587,1587,0,0.1682,bootstrap,2026-08-17T07:45:58.481728Z
+11,Old Delhi-Gurgaon Road,highway,4,14,2026-08-21,15258,True,1320,1590,1590,0,0.1698,bootstrap,2026-08-17T07:45:59.103593Z
+11,Old Delhi-Gurgaon Road,highway,4,15,2026-08-21,15258,True,1320,1654,1654,0,0.2019,bootstrap,2026-08-17T07:45:59.769581Z
+11,Old Delhi-Gurgaon Road,highway,4,16,2026-08-21,15258,True,1320,1792,1792,0,0.2634,bootstrap,2026-08-17T07:46:00.572406Z
+11,Old Delhi-Gurgaon Road,highway,4,17,2026-08-21,15285,True,1391,2022,2022,0,0.3121,bootstrap,2026-08-17T07:46:01.065772Z
+11,Old Delhi-Gurgaon Road,highway,4,18,2026-08-21,14888,False,1482,2193,2193,0,0.3242,bootstrap,2026-08-17T07:46:01.583484Z
+11,Old Delhi-Gurgaon Road,highway,4,19,2026-08-21,14888,False,1482,2083,2083,0,0.2885,bootstrap,2026-08-17T07:46:21.122408Z
+11,Old Delhi-Gurgaon Road,highway,4,20,2026-08-21,15258,True,1320,1808,1808,0,0.2699,bootstrap,2026-08-17T07:46:21.567708Z
+11,Old Delhi-Gurgaon Road,highway,4,21,2026-08-21,15258,True,1320,1485,1485,0,0.1111,bootstrap,2026-08-17T07:46:22.089394Z
+11,Old Delhi-Gurgaon Road,highway,4,22,2026-08-21,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:22.604121Z
+11,Old Delhi-Gurgaon Road,highway,4,23,2026-08-21,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:23.400039Z
+11,Old Delhi-Gurgaon Road,highway,5,0,2026-08-22,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:24.533366Z
+11,Old Delhi-Gurgaon Road,highway,5,1,2026-08-22,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:24.941946Z
+11,Old Delhi-Gurgaon Road,highway,5,2,2026-08-22,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:25.547268Z
+11,Old Delhi-Gurgaon Road,highway,5,3,2026-08-22,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:26.056747Z
+11,Old Delhi-Gurgaon Road,highway,5,4,2026-08-22,15258,True,1320,1332,1332,0,0.009,bootstrap,2026-08-17T07:46:26.578233Z
+11,Old Delhi-Gurgaon Road,highway,5,5,2026-08-22,15258,True,1320,1334,1334,0,0.0105,bootstrap,2026-08-17T07:46:27.201234Z
+11,Old Delhi-Gurgaon Road,highway,5,6,2026-08-22,15258,True,1320,1337,1337,0,0.0127,bootstrap,2026-08-17T07:46:27.704509Z
+11,Old Delhi-Gurgaon Road,highway,5,7,2026-08-22,15258,True,1320,1363,1363,0,0.0315,bootstrap,2026-08-17T07:46:28.221424Z
+11,Old Delhi-Gurgaon Road,highway,5,8,2026-08-22,15258,True,1320,1406,1406,0,0.0612,bootstrap,2026-08-17T07:46:28.707787Z
+11,Old Delhi-Gurgaon Road,highway,5,9,2026-08-22,15258,True,1320,1426,1426,0,0.0743,bootstrap,2026-08-17T07:46:29.157398Z
+11,Old Delhi-Gurgaon Road,highway,5,10,2026-08-22,15258,True,1320,1439,1439,0,0.0827,bootstrap,2026-08-17T07:46:29.927157Z
+11,Old Delhi-Gurgaon Road,highway,5,11,2026-08-22,15258,True,1320,1470,1470,0,0.102,bootstrap,2026-08-17T07:46:30.360981Z
+11,Old Delhi-Gurgaon Road,highway,5,12,2026-08-22,15258,True,1320,1492,1492,0,0.1153,bootstrap,2026-08-17T07:46:30.942670Z
+11,Old Delhi-Gurgaon Road,highway,5,13,2026-08-22,15258,True,1320,1496,1496,0,0.1176,bootstrap,2026-08-17T07:46:31.354002Z
+11,Old Delhi-Gurgaon Road,highway,5,14,2026-08-22,15258,True,1320,1505,1505,0,0.1229,bootstrap,2026-08-17T07:46:31.868796Z
+11,Old Delhi-Gurgaon Road,highway,5,15,2026-08-22,15258,True,1320,1519,1519,0,0.131,bootstrap,2026-08-17T07:46:32.880350Z
+11,Old Delhi-Gurgaon Road,highway,5,16,2026-08-22,15258,True,1320,1536,1536,0,0.1406,bootstrap,2026-08-17T07:46:33.317767Z
+11,Old Delhi-Gurgaon Road,highway,5,17,2026-08-22,15258,True,1320,1575,1575,0,0.1619,bootstrap,2026-08-17T07:46:35.361373Z
+11,Old Delhi-Gurgaon Road,highway,5,18,2026-08-22,15258,True,1320,1614,1614,0,0.1822,bootstrap,2026-08-17T07:46:37.529247Z
+11,Old Delhi-Gurgaon Road,highway,5,19,2026-08-22,15141,True,1350,1578,1578,0,0.1445,bootstrap,2026-08-17T07:46:39.434018Z
+11,Old Delhi-Gurgaon Road,highway,5,20,2026-08-22,15258,True,1320,1510,1510,0,0.1258,bootstrap,2026-08-17T07:46:39.963176Z
+11,Old Delhi-Gurgaon Road,highway,5,21,2026-08-22,15258,True,1320,1411,1411,0,0.0645,bootstrap,2026-08-17T07:46:40.351581Z
+11,Old Delhi-Gurgaon Road,highway,5,22,2026-08-22,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:40.768408Z
+11,Old Delhi-Gurgaon Road,highway,5,23,2026-08-22,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:41.303125Z
+11,Old Delhi-Gurgaon Road,highway,6,0,2026-08-23,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:41.996955Z
+11,Old Delhi-Gurgaon Road,highway,6,1,2026-08-23,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:42.437523Z
+11,Old Delhi-Gurgaon Road,highway,6,2,2026-08-23,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:43.033400Z
+11,Old Delhi-Gurgaon Road,highway,6,3,2026-08-23,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:43.760487Z
+11,Old Delhi-Gurgaon Road,highway,6,4,2026-08-23,15258,True,1320,1327,1327,0,0.0053,bootstrap,2026-08-17T07:46:44.247173Z
+11,Old Delhi-Gurgaon Road,highway,6,5,2026-08-23,15258,True,1320,1328,1328,0,0.006,bootstrap,2026-08-17T07:46:44.656792Z
+11,Old Delhi-Gurgaon Road,highway,6,6,2026-08-23,15258,True,1320,1332,1332,0,0.009,bootstrap,2026-08-17T07:46:45.907000Z
+11,Old Delhi-Gurgaon Road,highway,6,7,2026-08-23,15258,True,1320,1356,1356,0,0.0265,bootstrap,2026-08-17T07:46:46.515746Z
+11,Old Delhi-Gurgaon Road,highway,6,8,2026-08-23,15258,True,1320,1396,1396,0,0.0544,bootstrap,2026-08-17T07:46:46.996589Z
+11,Old Delhi-Gurgaon Road,highway,6,9,2026-08-23,15258,True,1320,1400,1400,0,0.0571,bootstrap,2026-08-17T07:46:47.440659Z
+11,Old Delhi-Gurgaon Road,highway,6,10,2026-08-23,15258,True,1320,1396,1396,0,0.0544,bootstrap,2026-08-17T07:46:47.937743Z
+11,Old Delhi-Gurgaon Road,highway,6,11,2026-08-23,15258,True,1320,1402,1402,0,0.0585,bootstrap,2026-08-17T07:46:48.356158Z
+11,Old Delhi-Gurgaon Road,highway,6,12,2026-08-23,15258,True,1320,1405,1405,0,0.0605,bootstrap,2026-08-17T07:46:48.884494Z
+11,Old Delhi-Gurgaon Road,highway,6,13,2026-08-23,15258,True,1320,1401,1401,0,0.0578,bootstrap,2026-08-17T07:46:49.589020Z
+11,Old Delhi-Gurgaon Road,highway,6,14,2026-08-23,15258,True,1320,1397,1397,0,0.0551,bootstrap,2026-08-17T07:46:50.015026Z
+11,Old Delhi-Gurgaon Road,highway,6,15,2026-08-23,15258,True,1320,1403,1403,0,0.0592,bootstrap,2026-08-17T07:46:50.508301Z
+11,Old Delhi-Gurgaon Road,highway,6,16,2026-08-23,15258,True,1320,1422,1422,0,0.0717,bootstrap,2026-08-17T07:46:51.022495Z
+11,Old Delhi-Gurgaon Road,highway,6,17,2026-08-23,15258,True,1320,1459,1459,0,0.0953,bootstrap,2026-08-17T07:46:51.948295Z
+11,Old Delhi-Gurgaon Road,highway,6,18,2026-08-23,15141,True,1350,1473,1473,0,0.0835,bootstrap,2026-08-17T07:46:52.876821Z
+11,Old Delhi-Gurgaon Road,highway,6,19,2026-08-23,15141,True,1350,1447,1447,0,0.067,bootstrap,2026-08-17T07:46:53.704433Z
+11,Old Delhi-Gurgaon Road,highway,6,20,2026-08-23,15258,True,1320,1422,1422,0,0.0717,bootstrap,2026-08-17T07:46:54.299485Z
+11,Old Delhi-Gurgaon Road,highway,6,21,2026-08-23,15258,True,1320,1362,1362,0,0.0308,bootstrap,2026-08-17T07:46:54.832316Z
+11,Old Delhi-Gurgaon Road,highway,6,22,2026-08-23,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:55.544772Z
+11,Old Delhi-Gurgaon Road,highway,6,23,2026-08-23,15258,True,1320,1320,1320,0,0.0,bootstrap,2026-08-17T07:46:56.362305Z
+12,Pataudi Road,highway,0,0,2026-08-17,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:46:56.807527Z
+12,Pataudi Road,highway,0,1,2026-08-17,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:46:57.267186Z
+12,Pataudi Road,highway,0,2,2026-08-17,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:46:57.681275Z
+12,Pataudi Road,highway,0,3,2026-08-17,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:46:58.180630Z
+12,Pataudi Road,highway,0,4,2026-08-17,30038,True,2875,2905,2849,0,0.0103,bootstrap,2026-08-17T07:46:58.651072Z
+12,Pataudi Road,highway,0,5,2026-08-17,30038,True,2875,2908,2852,0,0.0113,bootstrap,2026-08-17T07:46:59.233876Z
+12,Pataudi Road,highway,0,6,2026-08-17,30038,True,2875,2933,2874,0,0.0198,bootstrap,2026-08-17T07:46:59.838944Z
+12,Pataudi Road,highway,0,7,2026-08-17,29860,True,2890,3050,2972,0,0.0525,bootstrap,2026-08-17T07:47:00.254183Z
+12,Pataudi Road,highway,0,8,2026-08-17,29860,True,2890,3152,3060,0,0.0831,bootstrap,2026-08-17T07:47:00.681132Z
+12,Pataudi Road,highway,0,9,2026-08-17,30038,True,2875,3143,3053,0,0.0853,bootstrap,2026-08-17T07:47:01.281821Z
+12,Pataudi Road,highway,0,10,2026-08-17,30038,True,2875,3148,3060,0,0.0867,bootstrap,2026-08-17T07:47:01.782397Z
+12,Pataudi Road,highway,0,11,2026-08-17,30038,True,2875,3175,3083,0,0.0945,bootstrap,2026-08-17T07:47:02.233478Z
+12,Pataudi Road,highway,0,12,2026-08-17,30038,True,2875,3171,3080,0,0.0933,bootstrap,2026-08-17T07:47:03.406366Z
+12,Pataudi Road,highway,0,13,2026-08-17,30038,True,2875,3151,3062,0,0.0876,bootstrap,2026-08-17T07:47:03.954703Z
+12,Pataudi Road,highway,0,14,2026-08-17,30038,True,2875,3139,3047,0,0.0841,bootstrap,2026-08-17T07:47:04.366276Z
+12,Pataudi Road,highway,0,15,2026-08-17,30038,True,2875,3143,3051,0,0.0853,bootstrap,2026-08-17T07:47:04.758900Z
+12,Pataudi Road,highway,0,16,2026-08-17,30038,True,2875,3191,3094,0,0.099,bootstrap,2026-08-17T07:47:05.253997Z
+12,Pataudi Road,highway,0,17,2026-08-17,30038,True,2875,3280,3172,0,0.1235,bootstrap,2026-08-17T07:47:05.699325Z
+12,Pataudi Road,highway,0,18,2026-08-17,30601,True,2891,3311,3204,0,0.1268,bootstrap,2026-08-17T07:47:06.177330Z
+12,Pataudi Road,highway,0,19,2026-08-17,30423,True,2906,3279,3188,0,0.1138,bootstrap,2026-08-17T07:47:06.638991Z
+12,Pataudi Road,highway,0,20,2026-08-17,30423,True,2906,3182,3107,0,0.0867,bootstrap,2026-08-17T07:47:07.224994Z
+12,Pataudi Road,highway,0,21,2026-08-17,29860,True,2890,3012,2954,0,0.0405,bootstrap,2026-08-17T07:47:07.725484Z
+12,Pataudi Road,highway,0,22,2026-08-17,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:47:08.123957Z
+12,Pataudi Road,highway,0,23,2026-08-17,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:47:08.647986Z
+12,Pataudi Road,highway,1,0,2026-08-18,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:47:09.096108Z
+12,Pataudi Road,highway,1,1,2026-08-18,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:47:09.692017Z
+12,Pataudi Road,highway,1,2,2026-08-18,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:47:10.168382Z
+12,Pataudi Road,highway,1,3,2026-08-18,30038,True,2875,2875,2820,0,0.0,bootstrap,2026-08-17T07:47:10.685375Z
+12,Pataudi Road,highway,1,4,2026-08-18,30038,True,2875,2907,2907,0,0.011,bootstrap,2026-08-17T07:47:11.224108Z
+12,Pataudi Road,highway,1,5,2026-08-18,30038,True,2875,2913,2913,0,0.013,bootstrap,2026-08-17T07:47:11.803434Z
+12,Pataudi Road,highway,1,6,2026-08-18,30038,True,2875,2956,2956,0,0.0274,bootstrap,2026-08-17T07:47:12.625472Z
+12,Pataudi Road,highway,1,7,2026-08-18,30038,True,2875,3050,3050,0,0.0574,bootstrap,2026-08-17T07:47:13.839146Z
+12,Pataudi Road,highway,1,8,2026-08-18,30105,True,2901,3149,3149,0,0.0788,bootstrap,2026-08-17T07:47:14.375008Z
+12,Pataudi Road,highway,1,9,2026-08-18,30038,True,2875,3165,3165,0,0.0916,bootstrap,2026-08-17T07:47:16.345508Z
+12,Pataudi Road,highway,1,10,2026-08-18,30038,True,2875,3175,3175,0,0.0945,bootstrap,2026-08-17T07:47:17.127757Z
+12,Pataudi Road,highway,1,11,2026-08-18,30038,True,2875,3214,3214,0,0.1055,bootstrap,2026-08-17T07:47:17.531178Z
+12,Pataudi Road,highway,1,12,2026-08-18,30038,True,2875,3217,3217,0,0.1063,bootstrap,2026-08-17T07:47:18.059457Z
+12,Pataudi Road,highway,1,13,2026-08-18,30038,True,2875,3198,3198,0,0.101,bootstrap,2026-08-17T07:47:18.475546Z
+12,Pataudi Road,highway,1,14,2026-08-18,30038,True,2875,3193,3193,0,0.0996,bootstrap,2026-08-17T07:47:18.972015Z
+12,Pataudi Road,highway,1,15,2026-08-18,30038,True,2875,3206,3206,0,0.1032,bootstrap,2026-08-17T07:47:19.399149Z
+12,Pataudi Road,highway,1,16,2026-08-18,30038,True,2875,3265,3265,0,0.1194,bootstrap,2026-08-17T07:47:19.914642Z
+12,Pataudi Road,highway,1,17,2026-08-18,30601,True,2891,3370,3370,0,0.1421,bootstrap,2026-08-17T07:47:20.418342Z
+12,Pataudi Road,highway,1,18,2026-08-18,30601,True,2891,3412,3412,0,0.1527,bootstrap,2026-08-17T07:47:20.839811Z
+12,Pataudi Road,highway,1,19,2026-08-18,30423,True,2906,3357,3357,0,0.1343,bootstrap,2026-08-17T07:47:21.280719Z
+12,Pataudi Road,highway,1,20,2026-08-18,30423,True,2906,3234,3234,0,0.1014,bootstrap,2026-08-17T07:47:21.725182Z
+12,Pataudi Road,highway,1,21,2026-08-18,29860,True,2890,3033,3033,0,0.0471,bootstrap,2026-08-17T07:47:22.180655Z
+12,Pataudi Road,highway,1,22,2026-08-18,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:22.692700Z
+12,Pataudi Road,highway,1,23,2026-08-18,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:23.206121Z
+12,Pataudi Road,highway,2,0,2026-08-19,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:23.696028Z
+12,Pataudi Road,highway,2,1,2026-08-19,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:24.112811Z
+12,Pataudi Road,highway,2,2,2026-08-19,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:24.533814Z
+12,Pataudi Road,highway,2,3,2026-08-19,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:25.002542Z
+12,Pataudi Road,highway,2,4,2026-08-19,30038,True,2875,2906,2906,0,0.0107,bootstrap,2026-08-17T07:47:25.533264Z
+12,Pataudi Road,highway,2,5,2026-08-19,30038,True,2875,2916,2916,0,0.0141,bootstrap,2026-08-17T07:47:26.162322Z
+12,Pataudi Road,highway,2,6,2026-08-19,29860,True,2890,2956,2956,0,0.0223,bootstrap,2026-08-17T07:47:26.671984Z
+12,Pataudi Road,highway,2,7,2026-08-19,29860,True,2890,3057,3057,0,0.0546,bootstrap,2026-08-17T07:47:27.372489Z
+12,Pataudi Road,highway,2,8,2026-08-19,29860,True,2890,3180,3180,0,0.0912,bootstrap,2026-08-17T07:47:27.937795Z
+12,Pataudi Road,highway,2,9,2026-08-19,29860,True,2890,3190,3190,0,0.094,bootstrap,2026-08-17T07:47:28.593922Z
+12,Pataudi Road,highway,2,10,2026-08-19,29860,True,2890,3204,3204,0,0.098,bootstrap,2026-08-17T07:47:29.417708Z
+12,Pataudi Road,highway,2,11,2026-08-19,29860,True,2890,3237,3237,0,0.1072,bootstrap,2026-08-17T07:47:29.948394Z
+12,Pataudi Road,highway,2,12,2026-08-19,29860,True,2890,3236,3236,0,0.1069,bootstrap,2026-08-17T07:47:30.416008Z
+12,Pataudi Road,highway,2,13,2026-08-19,29860,True,2890,3206,3206,0,0.0986,bootstrap,2026-08-17T07:47:30.864907Z
+12,Pataudi Road,highway,2,14,2026-08-19,29860,True,2890,3189,3189,0,0.0938,bootstrap,2026-08-17T07:47:31.391444Z
+12,Pataudi Road,highway,2,15,2026-08-19,29860,True,2890,3196,3196,0,0.0957,bootstrap,2026-08-17T07:47:31.860374Z
+12,Pataudi Road,highway,2,16,2026-08-19,30038,True,2875,3247,3247,0,0.1146,bootstrap,2026-08-17T07:47:32.903348Z
+12,Pataudi Road,highway,2,17,2026-08-19,30601,True,2891,3343,3343,0,0.1352,bootstrap,2026-08-17T07:47:33.296575Z
+12,Pataudi Road,highway,2,18,2026-08-19,30601,True,2891,3377,3377,0,0.1439,bootstrap,2026-08-17T07:47:33.809063Z
+12,Pataudi Road,highway,2,19,2026-08-19,30423,True,2906,3330,3330,0,0.1273,bootstrap,2026-08-17T07:47:34.374200Z
+12,Pataudi Road,highway,2,20,2026-08-19,30423,True,2906,3210,3210,0,0.0947,bootstrap,2026-08-17T07:47:34.866726Z
+12,Pataudi Road,highway,2,21,2026-08-19,29860,True,2890,3024,3024,0,0.0443,bootstrap,2026-08-17T07:47:35.392366Z
+12,Pataudi Road,highway,2,22,2026-08-19,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:35.921486Z
+12,Pataudi Road,highway,2,23,2026-08-19,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:36.912005Z
+12,Pataudi Road,highway,3,0,2026-08-20,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:37.415139Z
+12,Pataudi Road,highway,3,1,2026-08-20,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:37.858152Z
+12,Pataudi Road,highway,3,2,2026-08-20,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:38.344678Z
+12,Pataudi Road,highway,3,3,2026-08-20,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:39.762374Z
+12,Pataudi Road,highway,3,4,2026-08-20,30038,True,2875,2905,2905,0,0.0103,bootstrap,2026-08-17T07:47:40.800875Z
+12,Pataudi Road,highway,3,5,2026-08-20,30038,True,2875,2912,2912,0,0.0127,bootstrap,2026-08-17T07:47:41.214730Z
+12,Pataudi Road,highway,3,6,2026-08-20,30038,True,2875,2936,2936,0,0.0208,bootstrap,2026-08-17T07:47:41.605920Z
+12,Pataudi Road,highway,3,7,2026-08-20,30038,True,2875,3039,3039,0,0.054,bootstrap,2026-08-17T07:47:42.004823Z
+12,Pataudi Road,highway,3,8,2026-08-20,30105,True,2901,3147,3147,0,0.0782,bootstrap,2026-08-17T07:47:42.420471Z
+12,Pataudi Road,highway,3,9,2026-08-20,30038,True,2875,3164,3164,0,0.0913,bootstrap,2026-08-17T07:47:42.927493Z
+12,Pataudi Road,highway,3,10,2026-08-20,30038,True,2875,3166,3166,0,0.0919,bootstrap,2026-08-17T07:47:43.387991Z
+12,Pataudi Road,highway,3,11,2026-08-20,30038,True,2875,3199,3199,0,0.1013,bootstrap,2026-08-17T07:47:43.976844Z
+12,Pataudi Road,highway,3,12,2026-08-20,30038,True,2875,3197,3197,0,0.1007,bootstrap,2026-08-17T07:47:44.424265Z
+12,Pataudi Road,highway,3,13,2026-08-20,30038,True,2875,3173,3173,0,0.0939,bootstrap,2026-08-17T07:47:44.977201Z
+12,Pataudi Road,highway,3,14,2026-08-20,30601,True,2891,3158,3158,0,0.0845,bootstrap,2026-08-17T07:47:45.411051Z
+12,Pataudi Road,highway,3,15,2026-08-20,30038,True,2875,3170,3170,0,0.0931,bootstrap,2026-08-17T07:47:45.857671Z
+12,Pataudi Road,highway,3,16,2026-08-20,30038,True,2875,3224,3224,0,0.1083,bootstrap,2026-08-17T07:47:46.429086Z
+12,Pataudi Road,highway,3,17,2026-08-20,30601,True,2891,3322,3322,0,0.1297,bootstrap,2026-08-17T07:47:46.927070Z
+12,Pataudi Road,highway,3,18,2026-08-20,30423,True,2906,3373,3373,0,0.1385,bootstrap,2026-08-17T07:47:47.396027Z
+12,Pataudi Road,highway,3,19,2026-08-20,30423,True,2906,3314,3314,0,0.1231,bootstrap,2026-08-17T07:47:47.769610Z
+12,Pataudi Road,highway,3,20,2026-08-20,30423,True,2906,3194,3194,0,0.0902,bootstrap,2026-08-17T07:47:48.182534Z
+12,Pataudi Road,highway,3,21,2026-08-20,29860,True,2890,3019,3019,0,0.0427,bootstrap,2026-08-17T07:47:48.597877Z
+12,Pataudi Road,highway,3,22,2026-08-20,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:49.098140Z
+12,Pataudi Road,highway,3,23,2026-08-20,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:49.582534Z
+12,Pataudi Road,highway,4,0,2026-08-21,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:50.086587Z
+12,Pataudi Road,highway,4,1,2026-08-21,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:50.606082Z
+12,Pataudi Road,highway,4,2,2026-08-21,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:50.996705Z
+12,Pataudi Road,highway,4,3,2026-08-21,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:47:52.034974Z
+12,Pataudi Road,highway,4,4,2026-08-21,30038,True,2875,2905,2905,0,0.0103,bootstrap,2026-08-17T07:47:52.514285Z
+12,Pataudi Road,highway,4,5,2026-08-21,30038,True,2875,2910,2910,0,0.012,bootstrap,2026-08-17T07:47:53.027544Z
+12,Pataudi Road,highway,4,6,2026-08-21,30038,True,2875,2929,2929,0,0.0184,bootstrap,2026-08-17T07:47:53.470658Z
+12,Pataudi Road,highway,4,7,2026-08-21,30038,True,2875,3022,3022,0,0.0486,bootstrap,2026-08-17T07:47:53.990060Z
+12,Pataudi Road,highway,4,8,2026-08-21,30038,True,2875,3131,3131,0,0.0818,bootstrap,2026-08-17T07:47:54.521946Z
+12,Pataudi Road,highway,4,9,2026-08-21,30038,True,2875,3142,3142,0,0.085,bootstrap,2026-08-17T07:48:03.720886Z
+12,Pataudi Road,highway,4,10,2026-08-21,30038,True,2875,3155,3155,0,0.0887,bootstrap,2026-08-17T07:48:04.425112Z
+12,Pataudi Road,highway,4,11,2026-08-21,30038,True,2875,3193,3193,0,0.0996,bootstrap,2026-08-17T07:48:05.050602Z
+12,Pataudi Road,highway,4,12,2026-08-21,30038,True,2875,3196,3196,0,0.1004,bootstrap,2026-08-17T07:48:05.458763Z
+12,Pataudi Road,highway,4,13,2026-08-21,30038,True,2875,3180,3180,0,0.0959,bootstrap,2026-08-17T07:48:05.978777Z
+12,Pataudi Road,highway,4,14,2026-08-21,30038,True,2875,3173,3173,0,0.0939,bootstrap,2026-08-17T07:48:06.496663Z
+12,Pataudi Road,highway,4,15,2026-08-21,30038,True,2875,3187,3187,0,0.0979,bootstrap,2026-08-17T07:48:06.954872Z
+12,Pataudi Road,highway,4,16,2026-08-21,30038,True,2875,3245,3245,0,0.114,bootstrap,2026-08-17T07:48:07.395387Z
+12,Pataudi Road,highway,4,17,2026-08-21,30601,True,2891,3338,3338,0,0.1339,bootstrap,2026-08-17T07:48:07.850194Z
+12,Pataudi Road,highway,4,18,2026-08-21,30423,True,2906,3378,3378,0,0.1397,bootstrap,2026-08-17T07:48:08.268113Z
+12,Pataudi Road,highway,4,19,2026-08-21,30423,True,2906,3314,3314,0,0.1231,bootstrap,2026-08-17T07:48:08.897848Z
+12,Pataudi Road,highway,4,20,2026-08-21,30423,True,2906,3198,3198,0,0.0913,bootstrap,2026-08-17T07:48:09.405601Z
+12,Pataudi Road,highway,4,21,2026-08-21,29860,True,2890,3012,3012,0,0.0405,bootstrap,2026-08-17T07:48:09.886633Z
+12,Pataudi Road,highway,4,22,2026-08-21,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:48:11.303116Z
+12,Pataudi Road,highway,4,23,2026-08-21,30038,True,2875,2875,2875,0,0.0,bootstrap,2026-08-17T07:48:12.971526Z
+12,Pataudi Road,highway,5,0,2026-08-22,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:13.375889Z
+12,Pataudi Road,highway,5,1,2026-08-22,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:13.774874Z
+12,Pataudi Road,highway,5,2,2026-08-22,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:14.196657Z
+12,Pataudi Road,highway,5,3,2026-08-22,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:14.795684Z
+12,Pataudi Road,highway,5,4,2026-08-22,30038,True,2875,2908,2908,0,0.0113,bootstrap,2026-08-17T07:48:15.290339Z
+12,Pataudi Road,highway,5,5,2026-08-22,30038,True,2875,2912,2912,0,0.0127,bootstrap,2026-08-17T07:48:15.821149Z
+12,Pataudi Road,highway,5,6,2026-08-22,29860,True,2890,2943,2943,0,0.018,bootstrap,2026-08-17T07:48:16.248066Z
+12,Pataudi Road,highway,5,7,2026-08-22,29860,True,2890,3031,3031,0,0.0465,bootstrap,2026-08-17T07:48:16.682844Z
+12,Pataudi Road,highway,5,8,2026-08-22,29860,True,2890,3132,3132,0,0.0773,bootstrap,2026-08-17T07:48:17.150436Z
+12,Pataudi Road,highway,5,9,2026-08-22,29860,True,2890,3159,3159,0,0.0852,bootstrap,2026-08-17T07:48:17.586386Z
+12,Pataudi Road,highway,5,10,2026-08-22,29860,True,2890,3195,3195,0,0.0955,bootstrap,2026-08-17T07:48:18.172268Z
+12,Pataudi Road,highway,5,11,2026-08-22,29860,True,2890,3242,3242,0,0.1086,bootstrap,2026-08-17T07:48:18.664021Z
+12,Pataudi Road,highway,5,12,2026-08-22,29860,True,2890,3249,3249,0,0.1105,bootstrap,2026-08-17T07:48:19.318006Z
+12,Pataudi Road,highway,5,13,2026-08-22,30423,True,2906,3224,3224,0,0.0986,bootstrap,2026-08-17T07:48:20.215388Z
+12,Pataudi Road,highway,5,14,2026-08-22,30038,True,2875,3206,3206,0,0.1032,bootstrap,2026-08-17T07:48:20.695785Z
+12,Pataudi Road,highway,5,15,2026-08-22,30038,True,2875,3221,3221,0,0.1074,bootstrap,2026-08-17T07:48:21.129239Z
+12,Pataudi Road,highway,5,16,2026-08-22,30038,True,2875,3279,3279,0,0.1232,bootstrap,2026-08-17T07:48:21.556441Z
+12,Pataudi Road,highway,5,17,2026-08-22,30601,True,2891,3352,3352,0,0.1375,bootstrap,2026-08-17T07:48:22.073989Z
+12,Pataudi Road,highway,5,18,2026-08-22,30601,True,2891,3363,3363,0,0.1404,bootstrap,2026-08-17T07:48:22.617686Z
+12,Pataudi Road,highway,5,19,2026-08-22,30423,True,2906,3305,3305,0,0.1207,bootstrap,2026-08-17T07:48:23.163624Z
+12,Pataudi Road,highway,5,20,2026-08-22,30423,True,2906,3189,3189,0,0.0887,bootstrap,2026-08-17T07:48:23.591997Z
+12,Pataudi Road,highway,5,21,2026-08-22,30038,True,2875,3012,3012,0,0.0455,bootstrap,2026-08-17T07:48:24.003870Z
+12,Pataudi Road,highway,5,22,2026-08-22,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:24.419085Z
+12,Pataudi Road,highway,5,23,2026-08-22,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:24.852324Z
+12,Pataudi Road,highway,6,0,2026-08-23,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:25.299609Z
+12,Pataudi Road,highway,6,1,2026-08-23,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:25.752029Z
+12,Pataudi Road,highway,6,2,2026-08-23,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:26.253731Z
+12,Pataudi Road,highway,6,3,2026-08-23,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:26.738592Z
+12,Pataudi Road,highway,6,4,2026-08-23,30038,True,2875,2899,2899,0,0.0083,bootstrap,2026-08-17T07:48:27.159754Z
+12,Pataudi Road,highway,6,5,2026-08-23,30038,True,2875,2901,2901,0,0.009,bootstrap,2026-08-17T07:48:27.669236Z
+12,Pataudi Road,highway,6,6,2026-08-23,30038,True,2875,2911,2911,0,0.0124,bootstrap,2026-08-17T07:48:28.196924Z
+12,Pataudi Road,highway,6,7,2026-08-23,30038,True,2875,2957,2957,0,0.0277,bootstrap,2026-08-17T07:48:28.697529Z
+12,Pataudi Road,highway,6,8,2026-08-23,30038,True,2875,3028,3028,0,0.0505,bootstrap,2026-08-17T07:48:29.131743Z
+12,Pataudi Road,highway,6,9,2026-08-23,29860,True,2890,3059,3059,0,0.0552,bootstrap,2026-08-17T07:48:29.686096Z
+12,Pataudi Road,highway,6,10,2026-08-23,30038,True,2875,3069,3069,0,0.0632,bootstrap,2026-08-17T07:48:30.134713Z
+12,Pataudi Road,highway,6,11,2026-08-23,30038,True,2875,3095,3095,0,0.0711,bootstrap,2026-08-17T07:48:30.655289Z
+12,Pataudi Road,highway,6,12,2026-08-23,29860,True,2890,3100,3100,0,0.0677,bootstrap,2026-08-17T07:48:31.106374Z
+12,Pataudi Road,highway,6,13,2026-08-23,29860,True,2890,3088,3088,0,0.0641,bootstrap,2026-08-17T07:48:31.719968Z
+12,Pataudi Road,highway,6,14,2026-08-23,29860,True,2890,3084,3084,0,0.0629,bootstrap,2026-08-17T07:48:32.199305Z
+12,Pataudi Road,highway,6,15,2026-08-23,29860,True,2890,3088,3088,0,0.0641,bootstrap,2026-08-17T07:48:32.801627Z
+12,Pataudi Road,highway,6,16,2026-08-23,29860,True,2890,3111,3111,0,0.071,bootstrap,2026-08-17T07:48:33.408416Z
+12,Pataudi Road,highway,6,17,2026-08-23,30423,True,2906,3139,3139,0,0.0742,bootstrap,2026-08-17T07:48:33.874636Z
+12,Pataudi Road,highway,6,18,2026-08-23,30423,True,2906,3133,3133,0,0.0725,bootstrap,2026-08-17T07:48:34.372468Z
+12,Pataudi Road,highway,6,19,2026-08-23,30423,True,2906,3086,3086,0,0.0583,bootstrap,2026-08-17T07:48:34.803640Z
+12,Pataudi Road,highway,6,20,2026-08-23,30423,True,2906,3037,3037,0,0.0431,bootstrap,2026-08-17T07:48:35.264632Z
+12,Pataudi Road,highway,6,21,2026-08-23,29860,True,2890,2955,2955,0,0.022,bootstrap,2026-08-17T07:48:35.832537Z
+12,Pataudi Road,highway,6,22,2026-08-23,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:36.401876Z
+12,Pataudi Road,highway,6,23,2026-08-23,30038,True,2875,2879,2879,0,0.0014,bootstrap,2026-08-17T07:48:37.145556Z
