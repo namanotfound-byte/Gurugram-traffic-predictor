@@ -36,6 +36,14 @@ for the authoritative, machine-readable version of this):
   "provenance": "observed" | "bootstrap" | "synthetic",
   "trained_rows": <int|null>,
   "measured_cells": <int>, "inferred_cells": <int>,
+  "accuracy": {  // same object GET /health serves under "accuracy" -- see
+                 // docs/accuracy_report.md. Surfaces the site's real strength
+                 // (ranking hours, ~89% concordance) vs its real weakness
+                 // (exact labels, ~58% agreement) -- see "label honesty" in
+                 // docs/api_contract.md.
+    "label_agreement_pct", "hour_ranking_concordance_pct", "sample_size",
+    "as_of", "note"
+  },
   "corridors": [
     {"id", "name", "sub", "road_class", "start": [lat,lon], "end": [lat,lon],
      "length_km", "free_flow_minutes"}, ...  // same shape as GET /corridors,
@@ -51,9 +59,16 @@ for the authoritative, machine-readable version of this):
   },
   "advice": [
     // one object per (corridor, day) = 13*7 = 91, same shape GET /advice
-    // returns (minus the top-level-only "provenance" field):
+    // returns (minus the top-level-only "provenance" field). Added
+    // 2026-08-17: whole-day best-vs-worst saving in minutes AND percent, so
+    // a short corridor's small minute figure still reads as compelling and
+    // a narrow-window UI can lead with the corridor-wide number -- see
+    // "best-time saving fields" in docs/api_contract.md.
     {"corridor_id", "day", "profile": [24 floats], "best_windows": [...],
-     "worst_windows": [...], "best_hour", "peak_hour", "summary", "confidence"}
+     "worst_windows": [...], "best_hour", "peak_hour",
+     "best_hour_delay_minutes", "peak_delay_minutes", "peak_delay_pct",
+     "whole_day_saving_minutes", "whole_day_saving_pct",
+     "summary", "confidence"}
   ],
   "conventions": {
     "label_thresholds": [[0.091,"Free"],[0.2,"Moderate"],[0.31,"Heavy"]],
@@ -175,6 +190,10 @@ def build_bundle():
         "trained_rows": app_module.TRAINED_ROWS,
         "measured_cells": measured_cells,
         "inferred_cells": inferred_cells,
+        # Same object GET /health serves under "accuracy" -- read verbatim
+        # from app_module.ACCURACY_SUMMARY, never re-typed here, so the
+        # static site and the live API can never drift on this figure.
+        "accuracy": app_module.ACCURACY_SUMMARY,
         "corridors": corridors_out,
         "grid": {
             "congestion_index": congestion_index,

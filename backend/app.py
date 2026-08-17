@@ -102,6 +102,34 @@ def label_for(idx: float) -> str:
     return "Severe"
 
 
+# Sourced verbatim from docs/accuracy_report.md (generated 2026-08-17 by
+# tools/evaluate_accuracy.py, n=115 observed rows / 3.5% cell coverage --
+# see that file for the full methodology and confidence-tier caveats).
+# NOT re-derived here -- these are the two headline figures from that
+# report, kept in sync by hand whenever the report is regenerated with a
+# materially larger n. Surfaced via /health (and the static bundle) so the
+# product's real, defensible strength (ranking hours against each other)
+# and real, honest weakness (matching an exact label to a specific date)
+# are both discoverable, instead of only the flattering absolute-label
+# numbers.
+ACCURACY_SUMMARY = {
+    "label_agreement_pct": 58.3,
+    "hour_ranking_concordance_pct": 89.4,
+    "sample_size": 115,
+    "as_of": "2026-08-17",
+    "note": (
+        "Measured against 115 real observations: this site is much better at "
+        "RANKING which hour is better than another within a corridor/day "
+        "(89.4% pairwise concordance) than at getting the exact congestion "
+        "label right for one specific date (58.3% label agreement). Treat "
+        "labels as a typical value for that day-of-week and hour, not a "
+        "forecast for today specifically -- and trust the site most when "
+        "it's telling you which hour is better, not what exact label a "
+        "given hour deserves. Source: docs/accuracy_report.md."
+    ),
+}
+
+
 def fmt_ampm(hour: int) -> str:
     hour = hour % 24
     period = "AM" if hour < 12 else "PM"
@@ -448,9 +476,11 @@ def require_model(f):
 # Window detection (contiguous good/bad hour runs, wrap-aware)
 # ─────────────────────────────────────────────────────────────────────────
 
-def _merge_runs(flags):
-    """flags: list[bool] length 24 -> list of (start_hour, end_hour) inclusive,
-    with a run touching both hour 0 and hour 23 merged into one wrapping run."""
+def _merge_runs_raw(flags):
+    """flags: list[bool] length n -> list of (start_index, end_index) inclusive
+    contiguous True-runs, with NO wrap merge between the first and last index.
+    Shared by both the full 24h (circular) and period-local (linear) window
+    detectors below."""
     n = len(flags)
     if all(flags):
         return [(0, n - 1)]
@@ -467,6 +497,16 @@ def _merge_runs(flags):
             start = None
     if start is not None:
         runs.append((start, n - 1))
+    return runs
+
+
+def _merge_runs(flags):
+    """flags: list[bool] length 24 -> list of (start_hour, end_hour) inclusive,
+    with a run touching both hour 0 and hour 23 merged into one wrapping run.
+    Circular -- appropriate for a full 24h clock, where hour 23 and hour 0
+    really are adjacent."""
+    n = len(flags)
+    runs = _merge_runs_raw(flags)
 
     if len(runs) >= 2 and runs[0][0] == 0 and runs[-1][1] == n - 1:
         first = runs.pop(0)
@@ -534,7 +574,134 @@ def find_windows(profile):
     return best_windows, worst_windows
 
 
-def build_advice_summary(best_windows, peak_hour, peak_delay_minutes):
+# ─────────────────────────────────────────────────────────────────────────
+# Day/night split (added 2026-08-17)
+# ─────────────────────────────────────────────────────────────────────────
+# The whole-day best_hour is midnight for essentially every corridor --
+# roads are simply empty overnight -- which made the whole-day "best time"
+# figure look identical and useless for every corridor to a daytime
+# traveller (real user complaint: "it always shows that night is free...
+# going in at night is not viable"). The boundary below is derived from the
+# actual measured grid, not asserted: averaging congestion_index across all
+# 13 corridors x 7 days at each hour (see GRID) shows a near-zero, flat
+# floor overnight (0.0005-0.0009 avg, max <=0.009 -- i.e. every corridor
+# reads "Free") that holds from 22:00 through 03:00, a small uptick at
+# 04:00-05:00 (avg <=0.012, still Free-band), then a sharp order-of-magnitude
+# climb starting 06:00 (avg 0.019) and steepening fast by 07:00-08:00 (avg
+# 0.054 -> 0.114). The evening side shows the mirror-image cliff: 21:00
+# still averages 0.087 (max 0.15) but 22:00 drops to 0.0006 (max 0.009) --
+# a >100x collapse in one hour. So 22:00-05:59 is where congestion is
+# structurally, measurably absent across the whole dataset, and 06:00-21:59
+# is where it actually varies by corridor and hour -- which is exactly the
+# window a daytime traveller needs advice about. Night advice is still
+# served (truck/shift-worker use case), just as its own explicit period
+# rather than silently winning every "best time" comparison.
+DAY_HOURS = list(range(6, 22))                       # 06:00-21:59
+NIGHT_HOURS = list(range(22, 24)) + list(range(0, 6))  # 22:00-05:59, in real-time order
+
+
+def find_windows_for_hours(profile, hours):
+    """Like find_windows, but restricted to an explicit, already-ordered list
+    of hours (e.g. DAY_HOURS or NIGHT_HOURS) rather than the full 24h clock.
+
+    Uses the non-circular run merge (_merge_runs_raw): the first and last
+    hour of a period (e.g. hour 6 and hour 21 for "day") are NOT adjacent in
+    real time -- there's a whole other period in between -- so, unlike
+    find_windows's full-clock wrap, runs must never be merged across that
+    boundary. Hour ordering within NIGHT_HOURS (22,23,0,...,5) is already
+    real-time-contiguous, so a run spanning the whole period still comes out
+    as a correctly-wrapping (start_hour > end_hour) window via _window_text.
+    """
+    sub = [profile[h] for h in hours]
+    lo, hi = min(sub), max(sub)
+    span = hi - lo
+    if span < 1e-9:
+        return [], []
+
+    low_thr = lo + 0.15 * span
+    high_thr = hi - 0.15 * span
+
+    best_runs = _merge_runs_raw([sub[i] <= low_thr for i in range(len(sub))])
+    worst_runs = _merge_runs_raw([sub[i] >= high_thr for i in range(len(sub))])
+
+    def build(runs, kind):
+        out = []
+        for start_i, end_i in runs:
+            hrs = hours[start_i:end_i + 1]
+            avg = round(sum(profile[h] for h in hrs) / len(hrs), 3)
+            start_hour, end_hour = hrs[0], hrs[-1]
+            out.append({
+                "start_hour": start_hour, "end_hour": end_hour,
+                "avg_index": avg, "label": label_for(avg),
+                "text": _window_text(start_hour, end_hour, kind),
+            })
+        return out
+
+    best_windows = build(best_runs, "best")
+    worst_windows = build(worst_runs, "worst")
+    best_windows.sort(key=lambda w: w["avg_index"])
+    worst_windows.sort(key=lambda w: -w["avg_index"])
+    return best_windows, worst_windows
+
+
+_PERIOD_LABELS = {"day": "daytime", "night": "nighttime", "any": "all-day"}
+
+
+def _period_summary_text(period_name, best_hour, worst_hour, worst_delay_minutes, worst_delay_pct, saving_minutes):
+    period_label = _PERIOD_LABELS.get(period_name, period_name)
+    if saving_minutes >= 0.5:
+        return (f"Best {period_label} departure: {fmt_ampm(best_hour)}. "
+                f"Avoid {fmt_ampm(worst_hour)} ({worst_delay_minutes:+.0f} min, {worst_delay_pct:.0f}% longer).")
+    return f"Traffic barely varies across {period_label} hours today."
+
+
+def period_payload_for(corridor_id: int, day: int, profile, hours, period_name: str) -> dict:
+    """Best/worst hour, windows, and saving figures restricted to one period
+    (day/night) of a corridor/day's profile. Reuses find_windows_for_hours
+    and the same GRID-derived delay/pct math as the whole-day figures --
+    nothing here is a parallel reimplementation."""
+    best_windows, worst_windows = find_windows_for_hours(profile, hours)
+    best_hour = min(hours, key=lambda h: profile[h])
+    worst_hour = max(hours, key=lambda h: profile[h])
+    best_cell = GRID[(corridor_id, day, best_hour)]
+    worst_cell = GRID[(corridor_id, day, worst_hour)]
+
+    saving_minutes = round(worst_cell["delay_minutes"] - best_cell["delay_minutes"], 1)
+    saving_pct = (
+        round(saving_minutes / worst_cell["typical_minutes"] * 100, 1)
+        if worst_cell["typical_minutes"] > 0 else 0.0
+    )
+    worst_delay_pct = (
+        round(worst_cell["delay_minutes"] / worst_cell["free_flow_minutes"] * 100, 1)
+        if worst_cell["free_flow_minutes"] > 0 else 0.0
+    )
+
+    summary = _period_summary_text(period_name, best_hour, worst_hour,
+                                    worst_cell["delay_minutes"], worst_delay_pct, saving_minutes)
+    if worst_cell["confidence"] < 0.5:
+        summary += " (Limited data for this corridor/day — treat as a rough guide.)"
+
+    return {
+        "period": period_name,
+        "start_hour": hours[0],
+        "end_hour": hours[-1],
+        "best_hour": best_hour,
+        "worst_hour": worst_hour,
+        "best_hour_delay_minutes": best_cell["delay_minutes"],
+        "worst_hour_delay_minutes": worst_cell["delay_minutes"],
+        "worst_hour_delay_pct": worst_delay_pct,
+        "saving_minutes": saving_minutes,
+        "saving_pct": saving_pct,
+        "best_windows": best_windows,
+        "worst_windows": worst_windows,
+        "summary": summary,
+        "confidence": worst_cell["confidence"],
+    }
+
+
+def build_advice_summary(best_windows, peak_hour, peak_delay_minutes,
+                          whole_day_saving_minutes, whole_day_saving_pct,
+                          peak_delay_pct, confidence):
     if not best_windows:
         leave = "No clearly free window today"
     else:
@@ -551,8 +718,19 @@ def build_advice_summary(best_windows, peak_hour, peak_delay_minutes):
             leave = f"Leave after {fmt_ampm(s)}"
         else:
             leave = f"Leave between {fmt_ampm(s)} and {fmt_ampm(e)}"
-    worst = f"Worst is {fmt_ampm(peak_hour)} ({peak_delay_minutes:+.0f} min)."
-    return f"{leave}. {worst}"
+    worst = f"Worst is {fmt_ampm(peak_hour)} ({peak_delay_minutes:+.0f} min, {peak_delay_pct:.0f}% longer than free-flow)."
+
+    if whole_day_saving_minutes >= 0.5:
+        saving = (f" Timing it right saves ~{whole_day_saving_minutes:.0f} min "
+                  f"({whole_day_saving_pct:.0f}% shorter trip) versus the worst hour.")
+    else:
+        saving = " Traffic barely varies by hour on this corridor today."
+
+    caveat = ""
+    if confidence < 0.5:
+        caveat = " (Limited data for this corridor/day — treat as a rough guide.)"
+
+    return f"{leave}. {worst}{saving}{caveat}"
 
 
 def advice_payload_for(corridor_id: int, day: int) -> dict:
@@ -560,8 +738,33 @@ def advice_payload_for(corridor_id: int, day: int) -> dict:
     best_windows, worst_windows = find_windows(profile)
     best_hour = int(np.argmin(profile))
     peak_hour = int(np.argmax(profile))
-    peak_delay = GRID[(corridor_id, day, peak_hour)]["delay_minutes"]
-    summary = build_advice_summary(best_windows, peak_hour, peak_delay)
+    best_cell = GRID[(corridor_id, day, best_hour)]
+    peak_cell = GRID[(corridor_id, day, peak_hour)]
+    best_hour_delay = best_cell["delay_minutes"]
+    peak_delay = peak_cell["delay_minutes"]
+
+    whole_day_saving_minutes = round(peak_delay - best_hour_delay, 1)
+    whole_day_saving_pct = (
+        round(whole_day_saving_minutes / peak_cell["typical_minutes"] * 100, 1)
+        if peak_cell["typical_minutes"] > 0 else 0.0
+    )
+    peak_delay_pct = (
+        round(peak_delay / peak_cell["free_flow_minutes"] * 100, 1)
+        if peak_cell["free_flow_minutes"] > 0 else 0.0
+    )
+
+    confidence = GRID[(corridor_id, day, peak_hour)]["confidence"]
+    summary = build_advice_summary(
+        best_windows, peak_hour, peak_delay,
+        whole_day_saving_minutes, whole_day_saving_pct, peak_delay_pct, confidence,
+    )
+
+    # Day/night split (added 2026-08-17) -- see DAY_HOURS/NIGHT_HOURS above
+    # for why this boundary. Additive: every field above is unchanged, for
+    # backwards compatibility with the frontend build already in progress.
+    day_period = period_payload_for(corridor_id, day, profile, DAY_HOURS, "day")
+    night_period = period_payload_for(corridor_id, day, profile, NIGHT_HOURS, "night")
+
     return {
         "corridor_id": corridor_id,
         "profile": profile,
@@ -569,8 +772,15 @@ def advice_payload_for(corridor_id: int, day: int) -> dict:
         "worst_windows": worst_windows,
         "best_hour": best_hour,
         "peak_hour": peak_hour,
+        "best_hour_delay_minutes": best_hour_delay,
+        "peak_delay_minutes": peak_delay,
+        "peak_delay_pct": peak_delay_pct,
+        "whole_day_saving_minutes": whole_day_saving_minutes,
+        "whole_day_saving_pct": whole_day_saving_pct,
         "summary": summary,
-        "confidence": GRID[(corridor_id, day, peak_hour)]["confidence"],
+        "confidence": confidence,
+        "day_period": day_period,
+        "night_period": night_period,
     }
 
 
@@ -586,6 +796,7 @@ def health():
         "provenance": MODEL_PROVENANCE,
         "corridors": N_CORRIDORS,
         "trained_rows": TRAINED_ROWS,
+        "accuracy": ACCURACY_SUMMARY,
     })
 
 
@@ -675,17 +886,41 @@ def best_time():
     day, err = parse_query_int("day", 0, 6)
     if err:
         return jsonify({"error": err}), 400
-    earliest, err = parse_query_int("earliest", 0, 23)
-    if err:
-        return jsonify({"error": err}), 400
-    latest, err = parse_query_int("latest", 0, 23)
-    if err:
-        return jsonify({"error": err}), 400
 
-    if latest < earliest:
-        hours = list(range(earliest, 24)) + list(range(0, latest + 1))
+    # Added 2026-08-17: an explicit period ("day"/"night"/"any") as an
+    # alternative to earliest/latest -- see DAY_HOURS/NIGHT_HOURS above.
+    # Without this, the whole-day scan silently recommends midnight for
+    # almost every corridor (roads are empty overnight), which is
+    # technically correct but useless to a daytime commuter. earliest/latest
+    # keep working exactly as before when period is omitted.
+    period = request.args.get("period")
+    if period is not None and period not in ("day", "night", "any"):
+        return jsonify({"error": f"'period' must be one of day, night, any, got '{period}'"}), 400
+
+    if period == "day":
+        hours = DAY_HOURS
+        period_value = "day"
+        earliest, latest = hours[0], hours[-1]
+    elif period == "night":
+        hours = NIGHT_HOURS
+        period_value = "night"
+        earliest, latest = hours[0], hours[-1]
+    elif period == "any":
+        hours = list(range(24))
+        period_value = "any"
+        earliest, latest = hours[0], hours[-1]
     else:
-        hours = list(range(earliest, latest + 1))
+        earliest, err = parse_query_int("earliest", 0, 23)
+        if err:
+            return jsonify({"error": err}), 400
+        latest, err = parse_query_int("latest", 0, 23)
+        if err:
+            return jsonify({"error": err}), 400
+        period_value = "custom"
+        if latest < earliest:
+            hours = list(range(earliest, 24)) + list(range(0, latest + 1))
+        else:
+            hours = list(range(earliest, latest + 1))
 
     def idx_of(h):
         return GRID[(corridor_id, day, h)]["congestion_index"]
@@ -696,6 +931,10 @@ def best_time():
     worst_cell = GRID[(corridor_id, day, worst_hour)]
 
     saving = round(worst_cell["delay_minutes"] - rec_cell["delay_minutes"], 1)
+    saving_pct = (
+        round(saving / worst_cell["typical_minutes"] * 100, 1)
+        if worst_cell["typical_minutes"] > 0 else 0.0
+    )
 
     other_hours = sorted((h for h in hours if h != recommended_hour), key=idx_of)
     alternatives = [
@@ -707,16 +946,70 @@ def best_time():
         for h in other_hours[:3]
     ]
 
-    if saving >= 0.5:
-        summary = (f"Of {fmt_ampm(earliest)}-{fmt_ampm(latest)}, leave at {fmt_ampm(recommended_hour)}. "
-                   f"Saves ~{saving:.0f} min vs leaving at {fmt_ampm(worst_hour)}.")
+    # Whole-day (unconstrained) best/worst for this corridor/day, so a small
+    # window-limited saving can be reported honestly as "within your window"
+    # rather than implying that's the best this corridor can ever do -- see
+    # docs/api_contract.md "best-time" for the rationale (a narrow window can
+    # bury a much larger saving available just outside it).
+    all_hours = list(range(24))
+    day_idx_of = lambda h: GRID[(corridor_id, day, h)]["congestion_index"]  # noqa: E731
+    whole_day_best_hour = min(all_hours, key=day_idx_of)
+    whole_day_worst_hour = max(all_hours, key=day_idx_of)
+    day_best_cell = GRID[(corridor_id, day, whole_day_best_hour)]
+    day_worst_cell = GRID[(corridor_id, day, whole_day_worst_hour)]
+    whole_day_saving_minutes = round(day_worst_cell["delay_minutes"] - day_best_cell["delay_minutes"], 1)
+    whole_day_saving_pct = (
+        round(whole_day_saving_minutes / day_worst_cell["typical_minutes"] * 100, 1)
+        if day_worst_cell["typical_minutes"] > 0 else 0.0
+    )
+    if period_value == "custom":
+        # Legacy explicit earliest/latest path -- unchanged. True if a
+        # strictly better hour exists outside the user's chosen window.
+        window_constrained = (
+            whole_day_best_hour not in hours
+            and whole_day_saving_minutes > saving + 0.5
+        )
+        if window_constrained:
+            lead = (f"Best overall on this day: avoid {fmt_ampm(whole_day_worst_hour)}, leave around "
+                     f"{fmt_ampm(whole_day_best_hour)} instead — saves ~{whole_day_saving_minutes:.0f} min "
+                     f"({whole_day_saving_pct:.0f}% shorter trip) across the full day.")
+            if saving >= 0.5:
+                window_part = (f" Within your {fmt_ampm(earliest)}-{fmt_ampm(latest)} window, leave at "
+                                f"{fmt_ampm(recommended_hour)}: saves ~{saving:.0f} min ({saving_pct:.0f}%) vs "
+                                f"{fmt_ampm(worst_hour)} within that window, but a bigger saving is available "
+                                f"outside it.")
+            else:
+                window_part = (f" Within your {fmt_ampm(earliest)}-{fmt_ampm(latest)} window, traffic is about "
+                                f"the same throughout — widen your window for a bigger saving.")
+            summary = lead + window_part
+        elif saving >= 0.5:
+            summary = (f"Of {fmt_ampm(earliest)}-{fmt_ampm(latest)}, leave at {fmt_ampm(recommended_hour)}. "
+                       f"Saves ~{saving:.0f} min ({saving_pct:.0f}%) vs leaving at {fmt_ampm(worst_hour)}.")
+        else:
+            summary = (f"Of {fmt_ampm(earliest)}-{fmt_ampm(latest)}, leave at {fmt_ampm(recommended_hour)}. "
+                       f"Traffic is about the same all through this window.")
     else:
-        summary = (f"Of {fmt_ampm(earliest)}-{fmt_ampm(latest)}, leave at {fmt_ampm(recommended_hour)}. "
-                   f"Traffic is about the same all through this window.")
+        # Explicit period ("day"/"night"/"any") -- the caller deliberately
+        # scoped the search, so never second-guess it by comparing back
+        # against the unconstrained whole day (that comparison is exactly
+        # what made night silently "win" every time before this feature
+        # existed). Reuses the same phrasing as /advice's day_period /
+        # night_period blocks.
+        window_constrained = False
+        worst_delay_pct = (
+            round(worst_cell["delay_minutes"] / worst_cell["free_flow_minutes"] * 100, 1)
+            if worst_cell["free_flow_minutes"] > 0 else 0.0
+        )
+        summary = _period_summary_text(period_value, recommended_hour, worst_hour,
+                                        worst_cell["delay_minutes"], worst_delay_pct, saving)
+
+    if rec_cell["confidence"] < 0.5:
+        summary += " (Limited data for this corridor/day — treat as a rough guide.)"
 
     return jsonify({
         "corridor_id": corridor_id,
         "day": day,
+        "period": period_value,
         "earliest": earliest,
         "latest": latest,
         "recommended_hour": recommended_hour,
@@ -724,6 +1017,12 @@ def best_time():
         "label": rec_cell["label"],
         "delay_minutes": rec_cell["delay_minutes"],
         "saving_vs_worst_minutes": saving,
+        "saving_vs_worst_pct": saving_pct,
+        "window_constrained": window_constrained,
+        "whole_day_best_hour": whole_day_best_hour,
+        "whole_day_worst_hour": whole_day_worst_hour,
+        "whole_day_saving_minutes": whole_day_saving_minutes,
+        "whole_day_saving_pct": whole_day_saving_pct,
         "alternatives": alternatives,
         "summary": summary,
         "provenance": MODEL_PROVENANCE,
@@ -742,12 +1041,21 @@ def _trend_for(corridor_id, day, hour):
     return "flat"
 
 
-def _now_text(label, verdict):
+def _now_text(label, verdict, confidence):
+    # "label" here is the served value for this hour's typical congestion,
+    # not a live sensor reading of this exact moment -- word it as such
+    # (see docs/api_contract.md "label honesty") so a low-confidence cell
+    # doesn't read as an absolute, certain claim.
     if verdict == "go_now":
-        return "Clear. Good time to travel." if label == "Free" else f"{label} but manageable. Good time to travel."
-    if verdict == "wait":
-        return f"{label} now, easing soon. Consider waiting a bit."
-    return f"Avoid — {label.lower()} congestion right now."
+        base = "Typically clear now. Good time to travel." if label == "Free" \
+            else f"Typically {label.lower()} but manageable. Good time to travel."
+    elif verdict == "wait":
+        base = f"Typically {label.lower()} now, easing soon. Consider waiting a bit."
+    else:
+        base = f"Typically {label.lower()} at this hour — consider avoiding."
+    if confidence < 0.5:
+        base += " Limited data for this hour — treat as a rough guide."
+    return base
 
 
 def _verdict_for(label, trend):
@@ -779,7 +1087,7 @@ def now():
             "delay_minutes": cell["delay_minutes"],
             "trend": trend,
             "verdict": verdict,
-            "text": _now_text(cell["label"], verdict),
+            "text": _now_text(cell["label"], verdict, cell["confidence"]),
         })
 
     vals = [r["congestion_index"] for r in results]

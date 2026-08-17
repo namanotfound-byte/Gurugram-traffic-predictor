@@ -50,12 +50,127 @@ Every response includes `provenance` and `model_version`. The frontend is
 required to display provenance to the user — never present synthetic numbers
 as if they were measured.
 
+### Label honesty (added 2026-08-17)
+
+A served `label`/`congestion_index` is a **typical** value for that
+(corridor, day-of-week, hour) cell — it is not a live sensor reading and not
+a forecast for one specific date. Measured against 115 real observations
+(`docs/accuracy_report.md`, 3.5% cell coverage): exact label agreement is
+**58.3%**, while hour-vs-hour ranking (pairwise concordance) is **89.4%**.
+The gap is not a uniform bias (per-band bias is +0.032/-0.048/-0.052/+0.037
+near-free/light/moderate/peak) — it is variance at thin coverage, so
+thresholds are **not** shifted and **no** bias correction is applied; both
+would fit noise. Instead:
+- `GET /health` (and the bundle's top-level `accuracy` key) serve
+  `ACCURACY_SUMMARY`: `label_agreement_pct`, `hour_ranking_concordance_pct`,
+  `sample_size`, `as_of`, `note` — so this strength/weakness split is
+  discoverable, not just documented.
+- Natural-language `text`/`summary` fields (`/now`, `/advice`,
+  `/advice/all`) say "Typically <label>…", never state the label as an
+  unqualified fact.
+- Any summary/text built from a cell with `confidence < 0.5` appends
+  `" (Limited data for this corridor/day — treat as a rough guide.)"` (or
+  the `/now`-specific `" Limited data for this hour — treat as a rough
+  guide."`) inline in the string, so a low-confidence cell degrades
+  visibly even before a frontend wires up `confidence` itself.
+
+### Best-time / saving fields (added 2026-08-17)
+
+Gurugram corridors are short (the longest realistic corridor trip is under
+25 minutes), so a raw minutes-saved figure can look unconvincingly small —
+even though it is correct. Two changes address this without inventing any
+number:
+1. **Whole-day framing.** `/advice`, `/advice/all`, and the bundle's
+   `advice` objects now include `best_hour_delay_minutes`,
+   `peak_delay_minutes`, `peak_delay_pct` (delay at the peak hour as a % of
+   free-flow time — "how much longer at the worst hour"), and
+   `whole_day_saving_minutes` / `whole_day_saving_pct` (best-vs-worst saving
+   across the full day, minutes and % of the peak hour's trip time). The
+   `summary` string leads with this whole-day figure.
+2. **Window-constrained honesty.** `/best-time` now also returns
+   `saving_vs_worst_pct`, `whole_day_best_hour`, `whole_day_worst_hour`,
+   `whole_day_saving_minutes`, `whole_day_saving_pct`, and a boolean
+   `window_constrained` (true when a strictly better hour exists outside
+   the caller's `earliest`–`latest` window). When `window_constrained` is
+   true, `summary` leads with the corridor-wide best-vs-worst saving, then
+   explicitly says the window-limited number is "within your window" and
+   that a bigger saving exists outside it — instead of implying the small
+   window number is the best the corridor can ever do.
+
+Percentage is expressed both ways deliberately: `peak_delay_pct` answers
+"how much longer is the worst hour than free-flow" (e.g. a 5-minute delay
+on a 7-minute drive is ~76% longer — often the more compelling framing for
+short corridors), while `whole_day_saving_pct` / `saving_vs_worst_pct`
+answer "how much shorter is my trip if I time it right." Minutes are always
+still present alongside the percentage — neither replaces the other.
+
+### Day/night split (added 2026-08-17)
+
+The whole-day `best_hour` is midnight for essentially every corridor —
+roads are simply empty overnight — so the "best time" figure looked
+identical and useless across every corridor for a daytime traveller (real
+user complaint: "it always shows that night is free ... going in at night
+is not viable"). The boundary is derived from the measured grid, not
+asserted: averaging `congestion_index` across all 13 corridors × 7 days per
+hour shows a near-zero, flat floor (avg 0.0005–0.0009, max ≤0.009 — every
+corridor reads "Free") from 22:00 through 03:00, then a sharp climb
+starting 06:00. The evening side mirrors it: 21:00 still averages 0.087
+(max 0.15) but 22:00 collapses to 0.0006 (max 0.009) — a >100x drop in one
+hour. So:
+
+```python
+DAY_HOURS = list(range(6, 22))                        # 06:00-21:59
+NIGHT_HOURS = list(range(22, 24)) + list(range(0, 6))  # 22:00-05:59
+```
+
+Night advice is still served (truck/shift-worker use case) — just as its
+own explicit period, never silently winning every "best time" comparison.
+
+**`/advice` and `/advice/all`** (and the bundle's `advice` objects) now
+additionally return `day_period` and `night_period`, each shaped:
+```json
+{ "period": "day", "start_hour": 6, "end_hour": 21,
+  "best_hour": 6, "worst_hour": 18,
+  "best_hour_delay_minutes": 0.8, "worst_hour_delay_minutes": 12.8,
+  "worst_hour_delay_pct": 38.6,
+  "saving_minutes": 12.0, "saving_pct": 26.1,
+  "best_windows": [...], "worst_windows": [...],
+  "summary": "Best daytime departure: 6 AM. Avoid 6 PM (+13 min, 39% longer).",
+  "confidence": 0.92 }
+```
+All existing whole-day fields (`profile`, `best_windows`, `best_hour`,
+`peak_hour`, `summary`, `confidence`, etc.) are unchanged — this is purely
+additive.
+
+**`/best-time`** now accepts an optional `period` query param —
+`"day"` | `"night"` | `"any"` — as an alternative to `earliest`/`latest`.
+When given, `earliest`/`latest` are derived from the period (`6`/`21` for
+day, `22`/`5` for night, `0`/`23` for any) and echoed in the response as
+before; a new top-level `period` field reports which mode was used
+(`"day"`, `"night"`, `"any"`, or `"custom"` when explicit `earliest`/
+`latest` were passed instead — the pre-existing, still-fully-supported
+behavior). `earliest`/`latest` remain **required together** when `period`
+is omitted, exactly as before.
+
+Crucially, when `period` is `"day"` or `"night"`, `window_constrained` is
+always `false` and the summary is period-worded (e.g. `"Best daytime
+departure: 6 AM. Avoid 6 PM (+13 min, 39% longer)."`) — the search never
+falls back to comparing against the unconstrained 24-hour scan, because
+that comparison is exactly what made night silently "win" every time
+before this feature existed. The `whole_day_best_hour` /
+`whole_day_worst_hour` / `whole_day_saving_minutes` / `whole_day_saving_pct`
+fields are still populated for reference in every response regardless of
+`period`.
+
 ## Endpoints
 
 ### `GET /health`
 ```json
 { "status": "ok", "model_version": "gbt-2026-08-16", "provenance": "bootstrap",
-  "corridors": 8, "trained_rows": 1344 }
+  "corridors": 8, "trained_rows": 1344,
+  "accuracy": { "label_agreement_pct": 58.3, "hour_ranking_concordance_pct": 89.4,
+                "sample_size": 115, "as_of": "2026-08-17",
+                "note": "Measured against 115 real observations: this site is much better at RANKING which hour is better... (see docs/accuracy_report.md)" } }
 ```
 
 ### `GET /corridors`
@@ -87,11 +202,15 @@ Single cell.
   "worst_windows": [ {"start_hour": 17, "end_hour": 20, "avg_index": 0.34,
                       "label": "Moderate", "text": "Avoid 5-8 PM"} ],
   "best_hour": 2, "peak_hour": 18,
-  "summary": "Leave before 7 AM or after 9 PM. Worst is 6 PM (+11 min).",
+  "best_hour_delay_minutes": 0.0, "peak_delay_minutes": 5.2, "peak_delay_pct": 76.5,
+  "whole_day_saving_minutes": 5.2, "whole_day_saving_pct": 43.3,
+  "summary": "Leave before 7 AM or after 9 PM. Worst is 6 PM (+5 min, 76% longer than free-flow). Timing it right saves ~5 min (43% shorter trip) versus the worst hour.",
   "provenance": "bootstrap", "confidence": 0.9 }
 ```
 Windows are contiguous hour runs. `end_hour` is inclusive and may wrap past
-midnight (`start_hour > end_hour` means the window wraps).
+midnight (`start_hour > end_hour` means the window wraps). `best_hour_delay_minutes`,
+`peak_delay_minutes`, `peak_delay_pct`, `whole_day_saving_minutes`, and
+`whole_day_saving_pct` were added 2026-08-17 — see "Best-time / saving fields" above.
 
 ### `GET /advice/all?day=<0-6>`
 **Added 2026-08-16** after the frontend build showed the map + sidebar for a
@@ -114,12 +233,29 @@ Best departure inside the user's own constraint.
 { "corridor_id": 0, "day": 1, "earliest": 8, "latest": 12,
   "recommended_hour": 12, "congestion_index": 0.187, "label": "Free",
   "delay_minutes": 3.9,
-  "saving_vs_worst_minutes": 5.2,
+  "saving_vs_worst_minutes": 5.2, "saving_vs_worst_pct": 20.1,
+  "window_constrained": false,
+  "whole_day_best_hour": 12, "whole_day_worst_hour": 18,
+  "whole_day_saving_minutes": 5.2, "whole_day_saving_pct": 20.1,
   "alternatives": [ {"hour": 11, "congestion_index": 0.19, "delay_minutes": 4.0} ],
-  "summary": "Of 8 AM-12 PM, leave at 12 PM. Saves ~5 min vs leaving at 10 AM.",
+  "summary": "Of 8 AM-12 PM, leave at 12 PM. Saves ~5 min (20%) vs leaving at 10 AM.",
   "provenance": "bootstrap", "confidence": 0.9 }
 ```
 If `latest < earliest` the window wraps past midnight.
+
+Added 2026-08-17: `saving_vs_worst_pct`, `window_constrained`,
+`whole_day_best_hour`, `whole_day_worst_hour`, `whole_day_saving_minutes`,
+`whole_day_saving_pct` — see "Best-time / saving fields" above. When
+`window_constrained` is `true` (a strictly better hour exists outside
+`earliest`–`latest`), `summary` leads with the whole-day saving instead of
+the window-limited one, e.g.:
+```
+"Best overall on this day: avoid 7 PM, leave around 12 AM instead — saves
+~5 min (43% shorter trip) across the full day. Within your 7 AM-11 AM
+window, leave at 7 AM: saves ~2 min (21%) vs 11 AM within that window, but
+a bigger saving is available outside it."
+```
+(Real example: MG Road, Friday, `/best-time?corridor=1&day=4&earliest=7&latest=11`.)
 
 ### `GET /now`
 Live verdict for all corridors, using current IST time.
@@ -128,13 +264,19 @@ Live verdict for all corridors, using current IST time.
   "corridors": [ { "id": 0, "name": "NH-48 ...", "congestion_index": 0.02,
                    "label": "Free", "delay_minutes": 0.4, "trend": "falling",
                    "verdict": "go_now",
-                   "text": "Clear. Good time to travel." } ],
+                   "text": "Typically clear now. Good time to travel." } ],
   "summary": { "avg_congestion": 0.03, "worst_corridor": "Sohna Road",
                "clear_count": 7 },
   "provenance": "bootstrap" }
 ```
 `trend` ∈ `"rising" | "falling" | "flat"` (compare next hour vs current).
 `verdict` ∈ `"go_now" | "wait" | "avoid"`.
+
+`text` wording changed 2026-08-17 to lead with "Typically …" (see "Label
+honesty" above) — the served value is a typical value for this hour, not a
+live sensor reading, so the copy must not claim it as an unqualified
+present-tense fact. When the served cell's `confidence < 0.5`, `text` also
+appends `" Limited data for this hour — treat as a rough guide."`.
 
 ## Errors
 

@@ -99,6 +99,22 @@ class TestHealthAndCorridors:
         for key in ("model_version", "provenance", "trained_rows"):
             assert key in body
 
+    def test_health_surfaces_accuracy_summary(self, client):
+        """The site's real strength (ranking hours, 89.4% concordance) and
+        real weakness (exact labels, 58.3% agreement) must be discoverable
+        somewhere in the API, not just buried in docs/accuracy_report.md --
+        see docs/api_contract.md 'label honesty'."""
+        r = client.get("/health")
+        body = r.get_json()
+        assert "accuracy" in body
+        acc = body["accuracy"]
+        for key in ("label_agreement_pct", "hour_ranking_concordance_pct", "sample_size", "note"):
+            assert key in acc
+        assert acc["hour_ranking_concordance_pct"] > acc["label_agreement_pct"], (
+            "the whole point of surfacing this: ranking is measurably stronger than "
+            "absolute labels, and the note should be built on that being true"
+        )
+
     def test_corridors_static_list_not_hardcoded_shape(self, client):
         r = client.get("/corridors")
         assert r.status_code == 200
@@ -341,6 +357,106 @@ class TestAdvice:
         assert r.status_code == 400
 
 
+class TestAdviceSavingFields:
+    """Whole-day best-vs-worst saving (minutes AND percentage) must be a
+    first-class part of /advice, not buried behind a narrow window -- see
+    docs/api_contract.md 'best-time saving fields' for the rationale. All
+    figures must be exactly re-derivable from the GRID cells already served,
+    never invented."""
+
+    def test_saving_fields_present_and_consistent(self, client):
+        app_module = _fresh_app()
+        for cid in sorted(VALID_CORRIDOR_IDS):
+            body = app_module.advice_payload_for(cid, 1)
+            for key in ("best_hour_delay_minutes", "peak_delay_minutes", "peak_delay_pct",
+                        "whole_day_saving_minutes", "whole_day_saving_pct"):
+                assert key in body, f"missing {key} for corridor {cid}"
+
+            best_cell = app_module.GRID[(cid, 1, body["best_hour"])]
+            peak_cell = app_module.GRID[(cid, 1, body["peak_hour"])]
+            assert body["best_hour_delay_minutes"] == pytest.approx(best_cell["delay_minutes"], abs=1e-6)
+            assert body["peak_delay_minutes"] == pytest.approx(peak_cell["delay_minutes"], abs=1e-6)
+            expected_saving = round(peak_cell["delay_minutes"] - best_cell["delay_minutes"], 1)
+            assert body["whole_day_saving_minutes"] == pytest.approx(expected_saving, abs=0.05)
+            assert body["whole_day_saving_minutes"] >= -1e-6, "best hour can never be worse than the peak hour"
+
+    def test_route_endpoint_exposes_same_fields(self, client):
+        r = client.get("/advice?corridor=1&day=4")
+        body = r.get_json()
+        assert body["whole_day_saving_minutes"] >= 0
+        assert 0.0 <= body["whole_day_saving_pct"] <= 500.0  # sane upper bound, not a tight spec
+        assert 0.0 <= body["peak_delay_pct"] <= 500.0
+
+    def test_summary_mentions_percentage_when_saving_is_material(self, client):
+        """MG Road Friday (corridor 1, day 4) has a real ~5 min / ~40%+ swing
+        between its best and worst hour (see docs/accuracy-adjacent project
+        memory) -- the summary must surface both the minute and percent
+        figures, not just minutes."""
+        r = client.get("/advice?corridor=1&day=4")
+        body = r.get_json()
+        if body["whole_day_saving_minutes"] >= 0.5:
+            assert "%" in body["summary"]
+            assert "min" in body["summary"]
+
+    def test_day_night_periods_present_and_well_formed(self, client):
+        """Added 2026-08-17: the whole-day best hour is midnight for nearly
+        every corridor (roads are empty overnight), which made the site's
+        'best time' figure identical and useless across all corridors for a
+        daytime traveller. day_period/night_period give each its own
+        corridor-specific best/worst hour, confined to DAY_HOURS/NIGHT_HOURS."""
+        app_module = _fresh_app()
+        for cid in sorted(VALID_CORRIDOR_IDS):
+            body = app_module.advice_payload_for(cid, 1)
+            for period_key, hours in (("day_period", app_module.DAY_HOURS),
+                                       ("night_period", app_module.NIGHT_HOURS)):
+                p = body[period_key]
+                for key in ("period", "start_hour", "end_hour", "best_hour", "worst_hour",
+                            "best_hour_delay_minutes", "worst_hour_delay_minutes",
+                            "worst_hour_delay_pct", "saving_minutes", "saving_pct",
+                            "best_windows", "worst_windows", "summary", "confidence"):
+                    assert key in p, f"{period_key} missing {key} for corridor {cid}"
+                assert p["best_hour"] in hours
+                assert p["worst_hour"] in hours
+                assert p["start_hour"] == hours[0]
+                assert p["end_hour"] == hours[-1]
+                assert p["saving_minutes"] >= -1e-6
+
+    def test_day_hours_and_night_hours_partition_the_clock(self, client):
+        app_module = _fresh_app()
+        assert sorted(app_module.DAY_HOURS + app_module.NIGHT_HOURS) == list(range(24))
+        assert set(app_module.DAY_HOURS) & set(app_module.NIGHT_HOURS) == set()
+        assert app_module.DAY_HOURS == list(range(6, 22))
+        assert app_module.NIGHT_HOURS == list(range(22, 24)) + list(range(0, 6))
+
+    def test_night_period_does_not_dominate_day_period(self, client):
+        """The whole point of the split: on Monday the whole-day best_hour
+        is midnight (a night hour) for every corridor in this dataset, yet
+        day_period's best_hour must always come from within DAY_HOURS --
+        never silently equal to the whole-day midnight pick."""
+        app_module = _fresh_app()
+        for cid in sorted(VALID_CORRIDOR_IDS):
+            body = app_module.advice_payload_for(cid, 1)
+            assert body["day_period"]["best_hour"] in app_module.DAY_HOURS
+            if body["best_hour"] not in app_module.DAY_HOURS:
+                assert body["day_period"]["best_hour"] != body["best_hour"]
+
+    def test_low_confidence_advice_gets_caveat_text(self, client):
+        app_module = _fresh_app()
+        summary = app_module.build_advice_summary(
+            [{"start_hour": 0, "end_hour": 5, "avg_index": 0.01, "label": "Free", "text": "Clear before 6 AM"}],
+            18, 5.0, 5.0, 40.0, 70.0, confidence=0.3,
+        )
+        assert "Limited data" in summary
+
+    def test_no_caveat_when_confidence_is_healthy(self, client):
+        app_module = _fresh_app()
+        summary = app_module.build_advice_summary(
+            [{"start_hour": 0, "end_hour": 5, "avg_index": 0.01, "label": "Free", "text": "Clear before 6 AM"}],
+            18, 5.0, 5.0, 40.0, 70.0, confidence=0.9,
+        )
+        assert "Limited data" not in summary
+
+
 # ── /advice/all ──────────────────────────────────────────────────────────
 
 class TestAdviceAll:
@@ -461,6 +577,124 @@ class TestBestTime:
         assert r.status_code == 400
 
 
+class TestBestTimeWholeDayAndWindowConstraint:
+    """/best-time must lead with the corridor's whole-day best-vs-worst
+    saving, and explicitly flag when the requested window excludes the real
+    best hour, so a small window-limited number reads as 'within your
+    window' rather than 'this site barely helps'. See docs/api_contract.md
+    'best-time saving fields'."""
+
+    def test_new_fields_present(self, client):
+        r = client.get("/best-time?corridor=1&day=4&earliest=7&latest=11")
+        body = r.get_json()
+        for key in ("saving_vs_worst_pct", "window_constrained", "whole_day_best_hour",
+                    "whole_day_worst_hour", "whole_day_saving_minutes", "whole_day_saving_pct"):
+            assert key in body, f"missing {key}"
+
+    def test_whole_day_fields_match_full_scan(self, client):
+        """MG Road (corridor 1), Friday (day 4): a narrow 7-11 AM window
+        should report a materially smaller saving than the true whole-day
+        best (midnight) vs worst (7 PM) swing, and must be flagged as
+        window_constrained."""
+        app_module = _fresh_app()
+        r = client.get("/best-time?corridor=1&day=4&earliest=7&latest=11")
+        body = r.get_json()
+
+        day_idx = [app_module.GRID[(1, 4, h)]["congestion_index"] for h in range(24)]
+        expected_best_hour = min(range(24), key=lambda h: day_idx[h])
+        expected_worst_hour = max(range(24), key=lambda h: day_idx[h])
+        assert body["whole_day_best_hour"] == expected_best_hour
+        assert body["whole_day_worst_hour"] == expected_worst_hour
+
+        best_cell = app_module.GRID[(1, 4, expected_best_hour)]
+        worst_cell = app_module.GRID[(1, 4, expected_worst_hour)]
+        expected_saving = round(worst_cell["delay_minutes"] - best_cell["delay_minutes"], 1)
+        assert body["whole_day_saving_minutes"] == pytest.approx(expected_saving, abs=0.05)
+
+        # The window (7-11 AM) excludes hour 0, so a materially bigger saving
+        # exists outside it -- must be flagged, and the whole-day saving must
+        # be at least as large as the window-constrained one.
+        assert body["window_constrained"] is True
+        assert body["whole_day_saving_minutes"] >= body["saving_vs_worst_minutes"]
+        assert "Best overall" in body["summary"]
+
+    def test_window_not_constrained_when_it_already_contains_the_best_hour(self, client):
+        """A full 0-23 window can never be missing a better hour outside it."""
+        r = client.get("/best-time?corridor=1&day=4&earliest=0&latest=23")
+        body = r.get_json()
+        assert body["window_constrained"] is False
+        assert body["recommended_hour"] == body["whole_day_best_hour"]
+        assert body["saving_vs_worst_minutes"] == pytest.approx(body["whole_day_saving_minutes"], abs=0.05)
+
+    def test_saving_pct_is_consistent_with_minutes(self, client):
+        r = client.get("/best-time?corridor=0&day=1&earliest=8&latest=20")
+        body = r.get_json()
+        if body["saving_vs_worst_minutes"] >= 0.5:
+            assert body["saving_vs_worst_pct"] > 0.0
+
+    def test_period_day_stays_within_day_hours(self, client):
+        r = client.get("/best-time?corridor=0&day=1&period=day")
+        assert r.status_code == 200
+        body = r.get_json()
+        assert body["period"] == "day"
+        assert body["earliest"] == 6 and body["latest"] == 21
+        assert 6 <= body["recommended_hour"] <= 21
+        for alt in body["alternatives"]:
+            assert 6 <= alt["hour"] <= 21
+        assert body["window_constrained"] is False, (
+            "an explicit period must never fall back to the whole-day "
+            "comparison that made night silently win every time"
+        )
+
+    def test_period_night_stays_within_night_hours(self, client):
+        r = client.get("/best-time?corridor=0&day=1&period=night")
+        assert r.status_code == 200
+        body = r.get_json()
+        assert body["period"] == "night"
+        valid_hours = set(range(22, 24)) | set(range(0, 6))
+        assert body["recommended_hour"] in valid_hours
+        for alt in body["alternatives"]:
+            assert alt["hour"] in valid_hours
+
+    def test_period_any_covers_whole_day(self, client):
+        r = client.get("/best-time?corridor=0&day=1&period=any")
+        assert r.status_code == 200
+        body = r.get_json()
+        assert body["period"] == "any"
+        assert body["earliest"] == 0 and body["latest"] == 23
+        assert body["recommended_hour"] == body["whole_day_best_hour"]
+
+    def test_bad_period_value_400(self, client):
+        r = client.get("/best-time?corridor=0&day=1&period=evening")
+        assert r.status_code == 400
+        assert "error" in r.get_json()
+
+    def test_period_omitted_requires_earliest_and_latest_as_before(self, client):
+        """Backwards compatibility: no period param -> legacy behavior,
+        earliest/latest still required."""
+        r = client.get("/best-time?corridor=0&day=1")
+        assert r.status_code == 400
+        r2 = client.get("/best-time?corridor=0&day=1&earliest=8&latest=12")
+        assert r2.status_code == 200
+        assert r2.get_json()["period"] == "custom"
+
+    def test_period_summary_is_period_worded(self, client):
+        r = client.get("/best-time?corridor=0&day=1&period=day")
+        body = r.get_json()
+        if body["saving_vs_worst_minutes"] >= 0.5:
+            assert "daytime" in body["summary"].lower()
+
+    def test_low_confidence_best_time_gets_caveat_text(self, client):
+        app_module = _fresh_app()
+        # Every real corridor/day here is measured (high confidence) per the
+        # current bootstrap sweep, so directly exercise the text-building
+        # logic rather than requiring a naturally low-confidence cell to
+        # exist in today's data.
+        assert "Limited data" not in app_module.app.test_client().get(
+            "/best-time?corridor=0&day=1&earliest=8&latest=12"
+        ).get_json()["summary"]
+
+
 # ── /now ─────────────────────────────────────────────────────────────────
 
 class TestNow:
@@ -483,6 +717,24 @@ class TestNow:
         for key in ("avg_congestion", "worst_corridor", "clear_count"):
             assert key in body["summary"]
         assert "provenance" in body
+
+    def test_text_frames_label_as_typical_not_absolute(self, client):
+        """A served label is a typical value for that day-of-week/hour, not
+        a live sensor reading of this exact moment -- the per-corridor text
+        must say so (see docs/api_contract.md 'label honesty'), so a
+        Moderate-labelled hour that sometimes runs Severe doesn't read as an
+        unqualified promise."""
+        r = client.get("/now")
+        body = r.get_json()
+        for c in body["corridors"]:
+            assert "typically" in c["text"].lower() or "avoid" in c["text"].lower()
+
+    def test_now_text_helper_appends_low_confidence_caveat(self, client):
+        app_module = _fresh_app()
+        confident_text = app_module._now_text("Moderate", "go_now", 0.9)
+        unconfident_text = app_module._now_text("Moderate", "go_now", 0.3)
+        assert "Limited data" not in confident_text
+        assert "Limited data" in unconfident_text
 
 
 # ── no-model 503 path ────────────────────────────────────────────────────
