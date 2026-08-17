@@ -250,6 +250,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <div class="pills">
       <div class="pill"><div class="dot-live" id="apiDot"></div><span id="apiPillText">API: connecting…</span></div>
       <div class="pill" id="modelPill" style="display:none"></div>
+      <div class="pill" id="dataAsOfPill" style="display:none"></div>
     </div>
     <div class="header-right">
       <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">IST</span>
@@ -396,6 +397,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
           <div class="model-row"><span>Provenance</span><b id="mProv">--</b></div>
           <div class="model-row"><span>Corridors</span><b id="mCorridors">--</b></div>
           <div class="model-row"><span>Trained rows</span><b id="mRows">--</b></div>
+          <div class="model-row"><span>Data as of</span><b id="mGeneratedAt">--</b></div>
         </div>
       </div>
       <div>
@@ -424,7 +426,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 // Overridable via ?api=http://host:port — run.sh appends this so the page
 // keeps working when it had to move the backend off its default port (e.g.
 // 5000 was already taken). Falls back to the historical default otherwise.
-const API_BASE = new URLSearchParams(location.search).get('api') || 'http://localhost:5000';
+const API_PARAM = new URLSearchParams(location.search).get('api'); // explicit opt-in to a live backend (run.sh passes this)
+const API_BASE = API_PARAM || 'http://localhost:5000';
 const IS_FILE_PROTOCOL = location.protocol === 'file:';
 const MOCK = new URLSearchParams(location.search).has('mock'); // ?mock=1 for offline/demo rendering with fixture data
 // ?mock=1&synth=1 additionally simulates a deployment running on synthetic
@@ -433,15 +436,48 @@ const MOCK = new URLSearchParams(location.search).has('mock'); // ?mock=1 for of
 // switches the fixture data generator to the old inflated formula that
 // produced the up-to-0.92 values the real synthetic generator produced).
 const FORCE_SYNTHETIC = MOCK && new URLSearchParams(location.search).has('synth');
+// data/bundle.json is the default data source for the public site (GitHub
+// Pages has no server to hit): precomputed by tools/build_static_bundle.py,
+// exhaustively verified to match backend/app.py's live GRID/advice output
+// exactly. Only skipped when ?mock=1 or ?api=... take precedence (below).
+const BUNDLE_URL = 'data/bundle.json';
+
+// ─────────────────────────────────────────────────────────────────────────
+// IST TIME — derived explicitly from UTC, never from the browser/OS
+// timezone, so a visitor anywhere in the world still sees Gurugram's actual
+// current day/hour (this page has no server to ask, so "now" has to be
+// computed correctly client-side or every "leave now" verdict is wrong for
+// anyone not already in IST).
+// ─────────────────────────────────────────────────────────────────────────
+function nowIST(){
+  const now = new Date();
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000; // -> true UTC instant
+  const ist = new Date(utcMs + 5.5 * 60 * 60000);                // UTC+5:30, no DST
+  // ist's UTC* getters now read out IST wall-clock fields
+  const day = (ist.getUTCDay() + 6) % 7; // JS Sun=0..Sat=6 -> contract Mon=0..Sun=6 (Python weekday())
+  const hour = ist.getUTCHours();
+  const p2 = n => String(n).padStart(2,'0');
+  const iso = `${ist.getUTCFullYear()}-${p2(ist.getUTCMonth()+1)}-${p2(ist.getUTCDate())}T${p2(hour)}:${p2(ist.getUTCMinutes())}:${p2(ist.getUTCSeconds())}+05:30`;
+  return {day, hour, minute: ist.getUTCMinutes(), second: ist.getUTCSeconds(), iso};
+}
+function fmtAmpm(h){
+  h = ((h % 24) + 24) % 24;
+  const period = h < 12 ? 'AM' : 'PM';
+  let h12 = h % 12; if(h12 === 0) h12 = 12;
+  return h12 + ' ' + period;
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────────────────────────────────
 let CORRIDORS = [];           // from GET /corridors — never hardcoded
 let health = null;            // GET /health
-let curDay = (new Date().getDay() + 6) % 7; // JS Sun=0..Sat=6 -> contract Mon=0..Sun=6
-let curHour = new Date().getHours();
+const _bootIST = nowIST();
+let curDay = _bootIST.day;    // IST, not the visitor's local timezone
+let curHour = _bootIST.hour;
 let selCorridor = null;
+let BUNDLE = null;            // parsed frontend/data/bundle.json, once loaded
+let BUNDLE_MODE = false;      // true once the bundle is the active data source
 const adviceCache = {};       // `${corridorId}_${day}` -> /advice response
 let nowData = null;           // GET /now
 let apiReachable = null;      // null=unknown, true/false
@@ -641,6 +677,139 @@ function mockFetch(path, params){
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// STATIC BUNDLE (frontend/data/bundle.json) — the default, no-backend data
+// source. Serves every endpoint the page uses (health/corridors/advice/
+// advice-all/best-time/predict/now) from the precomputed grid so the whole
+// app works from a plain static file host (GitHub Pages). Reimplements the
+// same math as backend/app.py's route handlers (minutes_from_index,
+// find_windows are already baked into bundle.advice — only /predict,
+// /best-time and /now need to be computed here) — kept line-for-line close
+// to app.py so the two can't quietly drift apart.
+// ─────────────────────────────────────────────────────────────────────────
+async function loadBundleJson(){
+  try{
+    const res = await fetch(BUNDLE_URL);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  }catch(e){
+    console.warn('[bundle] could not load ' + BUNDLE_URL + ', falling back to live API:', e.message);
+    return null;
+  }
+}
+// Mirrors backend/app.py's minutes_from_index() exactly.
+function minutesFromIndex(freeFlowMinutes, idx){
+  const idxSafe = Math.min(idx, 0.97);
+  const typical = freeFlowMinutes / (1 - idxSafe);
+  const delay = typical - freeFlowMinutes;
+  return [Math.round(typical*10)/10, Math.round(delay*10)/10];
+}
+function bundleCorridor(cid){ return BUNDLE.corridors.find(c=>c.id===cid); }
+// One GRID[(corridor_id, day, hour)] cell, built from grid.congestion_index/
+// confidence/origin — the bundle's per-cell arrays (indexed by corridor id,
+// per its own `conventions.grid_axes`).
+function bundleCell(cid, day, hour){
+  const idx = BUNDLE.grid.congestion_index[cid][day][hour];
+  const conf = BUNDLE.grid.confidence[cid][day][hour];
+  const origin = BUNDLE.grid.origin[cid][day][hour];
+  const c = bundleCorridor(cid);
+  const [typical, delay] = minutesFromIndex(c.free_flow_minutes, idx);
+  return {congestion_index: idx, label: labelFor(idx), delay_minutes: delay,
+          typical_minutes: typical, free_flow_minutes: c.free_flow_minutes,
+          confidence: conf, origin};
+}
+function bundleAdvice(cid, day){ return BUNDLE.advice.find(a=>a.corridor_id===cid && a.day===day); }
+function rangeHours(a,b){ const out=[]; for(let h=a;h<b;h++) out.push(h); return out; }
+// Mirrors backend/app.py's _trend_for / _verdict_for / _now_text exactly.
+function bundleTrend(cid, day, hour){
+  const cur = BUNDLE.grid.congestion_index[cid][day][hour];
+  let nd=day, nh=hour+1;
+  if(hour>=23){ nd=(day+1)%7; nh=0; }
+  const nxt = BUNDLE.grid.congestion_index[cid][nd][nh];
+  if(nxt-cur>0.01) return 'rising';
+  if(cur-nxt>0.01) return 'falling';
+  return 'flat';
+}
+function bundleVerdict(label, trend){
+  if(label==='Severe') return 'avoid';
+  if(label==='Heavy') return trend==='falling' ? 'wait' : 'avoid';
+  if(label==='Moderate') return trend==='rising' ? 'wait' : 'go_now';
+  return 'go_now';
+}
+function bundleNowText(label, verdict){
+  if(verdict==='go_now') return label==='Free' ? 'Clear. Good time to travel.' : `${label} but manageable. Good time to travel.`;
+  if(verdict==='wait') return `${label} now, easing soon. Consider waiting a bit.`;
+  return `Avoid — ${label.toLowerCase()} congestion right now.`;
+}
+function bundleFetch(path, params){
+  const p = params || {};
+  if(path==='/health') return {status:'ok', model_version: BUNDLE.model_version, provenance: BUNDLE.provenance,
+    corridors: BUNDLE.corridors.length, trained_rows: BUNDLE.trained_rows};
+  if(path==='/corridors') return {corridors: BUNDLE.corridors};
+  if(path==='/advice'){
+    const cid=+p.corridor, day=+p.day;
+    const a = bundleAdvice(cid, day);
+    if(!a) throw Object.assign(new Error('no advice for corridor/day'), {status:404});
+    return Object.assign({}, a, {provenance: BUNDLE.provenance});
+  }
+  if(path==='/advice/all'){
+    const day=+p.day;
+    const corridors = BUNDLE.corridors.map(c=>{
+      const a = bundleAdvice(c.id, day);
+      return Object.assign({}, a); // includes corridor_id, profile, windows, best/peak_hour, summary, confidence, day
+    });
+    return {day, corridors, provenance: BUNDLE.provenance, model_version: BUNDLE.model_version};
+  }
+  if(path==='/predict'){
+    const cid=+p.corridor, day=+p.day, hour=+p.hour;
+    const cell = bundleCell(cid, day, hour);
+    return {corridor_id:cid, day, hour, congestion_index:cell.congestion_index, label:cell.label,
+      delay_minutes:cell.delay_minutes, typical_minutes:cell.typical_minutes, free_flow_minutes:cell.free_flow_minutes,
+      provenance: BUNDLE.provenance, confidence:cell.confidence, model_version: BUNDLE.model_version};
+  }
+  if(path==='/best-time'){
+    const cid=+p.corridor, day=+p.day, earliest=+p.earliest, latest=+p.latest;
+    const hours = latest<earliest ? [...rangeHours(earliest,24), ...rangeHours(0,latest+1)] : rangeHours(earliest, latest+1);
+    const idxOf = h => BUNDLE.grid.congestion_index[cid][day][h];
+    const recommendedHour = hours.reduce((a,h)=> idxOf(h)<idxOf(a) ? h : a, hours[0]);
+    const worstHour = hours.reduce((a,h)=> idxOf(h)>idxOf(a) ? h : a, hours[0]);
+    const recCell = bundleCell(cid, day, recommendedHour), worstCell = bundleCell(cid, day, worstHour);
+    const saving = Math.round((worstCell.delay_minutes - recCell.delay_minutes)*10)/10;
+    const others = hours.filter(h=>h!==recommendedHour).sort((a,b)=>idxOf(a)-idxOf(b));
+    const alternatives = others.slice(0,3).map(h=>{
+      const c = bundleCell(cid, day, h);
+      return {hour:h, congestion_index:c.congestion_index, delay_minutes:c.delay_minutes};
+    });
+    const summary = saving >= 0.5
+      ? `Of ${fmtAmpm(earliest)}-${fmtAmpm(latest)}, leave at ${fmtAmpm(recommendedHour)}. Saves ~${Math.round(saving)} min vs leaving at ${fmtAmpm(worstHour)}.`
+      : `Of ${fmtAmpm(earliest)}-${fmtAmpm(latest)}, leave at ${fmtAmpm(recommendedHour)}. Traffic is about the same all through this window.`;
+    return {corridor_id:cid, day, earliest, latest, recommended_hour:recommendedHour,
+      congestion_index:recCell.congestion_index, label:recCell.label, delay_minutes:recCell.delay_minutes,
+      saving_vs_worst_minutes:saving, alternatives, summary,
+      provenance: BUNDLE.provenance, confidence:recCell.confidence};
+  }
+  if(path==='/now'){
+    const t = nowIST();
+    const day = t.day, hour = t.hour;
+    const results = BUNDLE.corridors.map(c=>{
+      const cell = bundleCell(c.id, day, hour);
+      const trend = bundleTrend(c.id, day, hour);
+      const verdict = bundleVerdict(cell.label, trend);
+      return {id:c.id, name:c.name, congestion_index:cell.congestion_index, label:cell.label,
+        delay_minutes:cell.delay_minutes, trend, verdict, text: bundleNowText(cell.label, verdict)};
+    });
+    const vals = results.map(r=>r.congestion_index);
+    const avg = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*1000)/1000;
+    let worstIdx = 0;
+    for(let i=1;i<vals.length;i++) if(vals[i]>vals[worstIdx]) worstIdx = i;
+    return {now_ist: t.iso, day, hour, corridors: results,
+      summary:{avg_congestion:avg, worst_corridor: results[worstIdx].name,
+               clear_count: results.filter(r=>r.label==='Free').length},
+      provenance: BUNDLE.provenance};
+  }
+  throw Object.assign(new Error('bundle: unknown path ' + path), {status:404});
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // FETCH LAYER
 // ─────────────────────────────────────────────────────────────────────────
 async function apiGet(path, params){
@@ -649,6 +818,9 @@ async function apiGet(path, params){
     // simulate latency slightly so loading states are visible
     await new Promise(r=>setTimeout(r, 40));
     return mockFetch(path, params);
+  }
+  if(BUNDLE_MODE){
+    return bundleFetch(path, params);
   }
   let res;
   try{
@@ -693,9 +865,11 @@ function setConnPill(ok, text){
   const dot = document.getElementById('apiDot');
   const txt = document.getElementById('apiPillText');
   dot.classList.toggle('off', !ok);
-  txt.textContent = ok ? ('API: ' + API_BASE) : (MOCK ? 'API: mock mode' : IS_FILE_PROTOCOL ? 'API: blocked (file://)' : 'API: unreachable');
+  if(MOCK) txt.textContent = 'API: mock mode';
+  else if(BUNDLE_MODE) txt.textContent = ok ? 'DATA: static bundle' : 'DATA: bundle unreachable';
+  else txt.textContent = ok ? ('API: ' + API_BASE) : (IS_FILE_PROTOCOL ? 'API: blocked (file://)' : 'API: unreachable');
   document.getElementById('fsSystem').textContent = ok ? 'ONLINE' : 'OFFLINE';
-  document.getElementById('fsApi').textContent = MOCK ? 'MOCK FIXTURES' : API_BASE;
+  document.getElementById('fsApi').textContent = MOCK ? 'MOCK FIXTURES' : (BUNDLE_MODE ? 'STATIC BUNDLE' : API_BASE);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -704,7 +878,7 @@ function setConnPill(ok, text){
 function provBadgeHtml(prov, conf){
   const cls = prov==='synthetic' ? 'prov-synthetic' : prov==='observed' ? 'prov-observed' : prov==='demo' ? 'prov-demo' : 'prov-bootstrap';
   const icon = prov==='synthetic' ? '⚠ ' : prov==='demo' ? '◆ ' : '';
-  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : 'BOOTSTRAP (TomTom history)';
+  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : prov==='model_inferred' ? 'MODEL-INFERRED (estimated)' : 'BOOTSTRAP (TomTom history)';
   let html = `<span class="prov-badge ${cls}">${icon}${label}</span>`;
   if(typeof conf === 'number'){
     const low = conf < 0.5;
@@ -748,6 +922,15 @@ function buildProjection(){
 // RENDER: MAP
 // ─────────────────────────────────────────────────────────────────────────
 function currentValueFor(cid, day, hour){
+  // Bundle mode has real per-cell confidence/origin (grid.confidence,
+  // grid.origin) — finer-grained than the single peak-hour confidence
+  // attached to a whole day's /advice profile, so prefer it when available.
+  if(BUNDLE_MODE && BUNDLE){
+    const byDay = BUNDLE.grid.congestion_index[cid];
+    const v = byDay && byDay[day] ? byDay[day][hour] : undefined;
+    if(v === undefined) return null;
+    return {v, prov: BUNDLE.grid.origin[cid][day][hour], conf: BUNDLE.grid.confidence[cid][day][hour]};
+  }
   const key = cid+'_'+day;
   const a = adviceCache[key];
   if(a && Array.isArray(a.profile)) return {v:a.profile[hour], prov:a.provenance, conf:a.confidence};
@@ -1152,6 +1335,13 @@ function renderNowStats(){
   worstEl.textContent = nowData.summary.worst_corridor;
 }
 
+// "17 Aug 2026" — used both in the model card and the always-visible header
+// pill, so a static bundle can never be silently presented as if it were live.
+function fmtGeneratedAt(iso){
+  try{
+    return new Date(iso).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric', timeZone:'Asia/Kolkata'});
+  }catch(e){ return iso; }
+}
 function renderModelCard(){
   document.getElementById('mHealth').textContent = health ? health.status : (apiReachable===false ? 'unreachable' : '--');
   document.getElementById('mVersion').textContent = health ? health.model_version : '--';
@@ -1165,6 +1355,17 @@ function renderModelCard(){
   if(health){
     pill.style.display='flex';
     pill.innerHTML = `<div class="dot-live"></div>${health.model_version}`;
+  }
+  const genEl = document.getElementById('mGeneratedAt');
+  const dataAsOfPill = document.getElementById('dataAsOfPill');
+  if(BUNDLE_MODE && BUNDLE && BUNDLE.generated_at){
+    const dateStr = fmtGeneratedAt(BUNDLE.generated_at) + ' IST';
+    genEl.textContent = dateStr;
+    dataAsOfPill.style.display = 'flex';
+    dataAsOfPill.innerHTML = `<div class="dot-live"></div>data as of ${dateStr}`;
+  } else {
+    genEl.textContent = '--';
+    dataAsOfPill.style.display = 'none';
   }
 }
 
@@ -1462,7 +1663,9 @@ document.querySelectorAll('.day-btn').forEach(btn=>{
 document.getElementById('findBtn').onclick = findBestDeparture;
 document.getElementById('errBannerRetry').onclick = refreshAll;
 
-setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().toLocaleTimeString('en-IN'); }, 1000);
+// Explicit Asia/Kolkata timeZone — never the visitor's own OS timezone
+// (header labels this clock "IST", so it must actually show IST).
+setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'}); }, 1000);
 setInterval(loadNow, 60000);
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1481,6 +1684,18 @@ setInterval(loadNow, 60000);
     // Pull the real corridor set/geometry before the first render so the
     // demo never shows a stale or hardcoded corridor count.
     await loadMockCorridors();
+  } else if(API_PARAM){
+    // ?api=<url> is an explicit opt-in to a live backend (run.sh passes
+    // this) — skip the bundle entirely and go straight to that API.
+  } else {
+    // Default path (this is what the public GitHub Pages site uses): load
+    // the precomputed static bundle instead of hitting any backend. If it
+    // can't be loaded, BUNDLE_MODE stays false and apiGet() below falls
+    // through to the live-API code path (http://localhost:5000 default),
+    // which — if that also fails — surfaces the existing honest
+    // "can't reach the API" banner. No backend is required either way.
+    const loaded = await loadBundleJson();
+    if(loaded){ BUNDLE = loaded; BUNDLE_MODE = true; }
   }
   populateHourSelects();
   const hourParam = new URLSearchParams(location.search).get('hour');

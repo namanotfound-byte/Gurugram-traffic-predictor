@@ -11,6 +11,11 @@
 
 ## ▶️ How to run this
 
+The fastest way to see it: **[open the live site](#-deploying--viewing-the-live-site)** — it's a
+static GitHub Pages deployment, no install required.
+
+To run it locally with the real Flask backend instead:
+
 ```bash
 git clone <this-repo-url>
 cd gurugram-traffic-predictor
@@ -22,8 +27,10 @@ it in your browser automatically — you should land on a live map with an advic
 and popups. Press `Ctrl-C` in that terminal to stop both servers when you're done.
 
 **Do not open `frontend/index.html` directly (double-clicking it, or a `file://` URL).** Browsers
-block a `file://` page from reaching the API or loading the map's road geometry, so it can't work
-that way — the page itself will tell you this if you try it anyway.
+block a `file://` page from reaching the API, the static data bundle, or the map's road geometry,
+so it can't work that way — the page itself will tell you this if you try it anyway. Serve it over
+HTTP instead: `./run.sh`, or any plain static server (`python3 -m http.server`) pointed at
+`frontend/`.
 
 Requirements: Python 3 and a `.venv_backend` virtualenv with the backend's dependencies installed
 (see `backend/requirements.txt`). If `run.sh` can't find that virtualenv it prints the exact
@@ -31,6 +38,37 @@ Requirements: Python 3 and a `.venv_backend` virtualenv with the backend's depen
 
 If port 5000 or 8000 is already taken (common on macOS: AirPlay Receiver uses 5000), `run.sh`
 detects it and automatically uses the next free port instead — no manual configuration needed.
+
+---
+
+## 🌐 Deploying / viewing the live site
+
+The frontend runs entirely without a backend — GitHub Pages serves static files only, so
+`frontend/index.html` reads `frontend/data/bundle.json` instead of calling the Flask API.
+That bundle is a precomputed snapshot of the same 13-corridor × 7-day × 24-hour grid the backend
+serves live (built by `tools/build_static_bundle.py`, refreshed automatically by
+`.github/workflows/refresh_bundle.yml`) — same thresholds, same `label`/`typical_minutes` math,
+same advice text, just baked into a file instead of computed per-request.
+
+**Live site:** `https://<github-username>.github.io/<repo-name>/frontend/index.html`
+(for this repo: `https://namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html`)
+— once GitHub Pages is enabled for this repo under **Settings → Pages → Build and deployment →
+Deploy from a branch → `main` / `/ (root)`**. Pages then serves the whole repository as static
+files, so `frontend/` (and its `data/bundle.json`, `corridors.geojson`, `vendor/`) is reachable
+at that path with zero extra configuration — no workflow file needed for this.
+
+The page always tells you which data source it's using:
+- The header pill reads **`DATA: static bundle`** when serving from the bundle (the default —
+  this is what the public site uses), or **`API: <url>`** when talking to a live backend.
+- A **`data as of <date> IST`** pill/row shows the bundle's `generated_at` timestamp, so a stale
+  bundle is never mistaken for live data.
+- `?api=<backend-url>` (what `./run.sh` passes automatically) skips the bundle and talks to that
+  backend directly instead — useful for local development against a running Flask server.
+- `?mock=1` skips both and renders offline fixture data behind a violet "DEMONSTRATION DATA"
+  banner, for UI work with no data dependency at all.
+- If the bundle can't be loaded and no `?api=` was given, the page falls back to trying
+  `http://localhost:5000` and shows an honest "can't reach the API" message if that fails too —
+  it never silently shows nothing or fabricates numbers.
 
 ---
 
@@ -178,8 +216,10 @@ result = predict(hour=8, day_of_week=0, road_class="highway")
 ### 5. Open the frontend
 
 Use `./run.sh` from the repo root (see "How to run this" at the top) — it starts the backend,
-serves the frontend over HTTP, and opens it for you. Opening `frontend/index.html` directly as a
-`file://` URL does not work: browsers block that page from reaching the API or loading the map.
+serves the frontend over HTTP, and opens it for you against the live API. Or just visit the
+[live static site](#-deploying--viewing-the-live-site), which needs no backend at all. Opening
+`frontend/index.html` directly as a `file://` URL does not work either way: browsers block that
+page from reaching the API, the static data bundle, or the map.
 
 ---
 
