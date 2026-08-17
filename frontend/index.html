@@ -31,25 +31,21 @@
   --neu-bg:rgba(0,134,168,0.06);--neu-border:rgba(0,134,168,0.25);--neu-text:#0086a8;
   --demo-bg:rgba(109,40,217,0.08);--demo-border:rgba(109,40,217,0.35);--demo-text:#6d28d9;
 }
-html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--display)}
-body{overflow-x:hidden}
-.app{width:100%;min-height:100vh;display:flex;flex-direction:column}
+html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-family:var(--display)}
+body{overflow-x:hidden;overflow-y:hidden}
+.app{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
 /* HEADER */
-header{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;z-index:500;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;position:sticky;top:0}
-.logo-text{font-size:13px;font-weight:700;letter-spacing:.22em;color:var(--cyan)}
-.logo-sub{font-family:var(--mono);font-size:9px;color:var(--sub);letter-spacing:.1em;margin-top:1px}
-.pills{display:flex;gap:6px;flex-wrap:wrap}
-.pill{font-family:var(--mono);font-size:9px;padding:4px 10px;border:1px solid var(--border);border-radius:20px;color:var(--sub);display:flex;align-items:center;gap:5px}
-.dot-live{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
-.dot-live.off{background:var(--magenta);box-shadow:0 0 6px var(--magenta)}
-#liveTime{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.1em}
-.header-right{display:flex;align-items:center;gap:10px}
-.theme-btn{font-family:var(--mono);font-size:11px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:6px;padding:5px 9px;cursor:pointer}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;z-index:500;background:var(--panel);border-bottom:1px solid var(--border);flex:0 0 auto;gap:8px}
+.logo-text{font-size:15px;font-weight:800;letter-spacing:.06em;color:var(--cyan)}
+.logo-sub{font-family:var(--display);font-size:11px;color:var(--sub);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.theme-btn{font-family:var(--mono);font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:6px;padding:6px 10px;cursor:pointer}
 .theme-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+#liveTime{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.08em}
 
 /* GLOBAL BANNERS */
-.g-banner{display:none;padding:12px 24px;font-family:var(--mono);font-size:11px;line-height:1.6;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.g-banner{display:none;padding:10px 24px;font-family:var(--mono);font-size:11px;line-height:1.6;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex:0 0 auto}
 .g-banner.show{display:flex}
 .g-banner.error{background:var(--warn-bg);border-bottom:1px solid var(--warn-border);color:var(--warn-text)}
 .g-banner.warn{background:rgba(255,184,0,0.10);border-bottom:1px solid rgba(255,184,0,0.4);color:var(--amber)}
@@ -72,10 +68,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .low-conf-note{font-family:var(--mono);font-size:9px;color:var(--warn-text);margin-top:4px}
 .degraded{filter:saturate(.45) brightness(.85);opacity:.8}
 
-/* SELF-DIAGNOSIS OVERLAYS — shown instead of (or in addition to, for the
-   protocol case) the thin g-banner strips above, because these two failure
-   modes leave the whole app non-functional and need to be impossible to
-   miss, not just noted in a corner. */
+/* SELF-DIAGNOSIS OVERLAYS */
 .proto-overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(2,5,12,0.86);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px}
 .proto-overlay.show{display:flex}
 .proto-card{max-width:min(500px, calc(100vw - 48px));width:100%;min-width:0;background:var(--panel);border:1px solid var(--warn-border);border-radius:12px;padding:28px 26px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
@@ -88,63 +81,71 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .proto-cmd{display:block;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cyan);margin-bottom:7px}
 .proto-fix-sub{font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.5}
 
-/* ADVICE BANNER (the centerpiece) */
-.advice-banner{padding:16px 24px;background:linear-gradient(180deg,var(--cyan-dim),transparent);border-bottom:1px solid var(--border)}
-.advice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
-.advice-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--sub);text-transform:uppercase}
-.advice-corridor{font-size:15px;font-weight:700;color:var(--cyan);margin-top:2px}
-.advice-summary{font-size:20px;font-weight:600;line-height:1.35;margin-top:8px;max-width:760px}
-.advice-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.window-chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+/* HERO / ADVICE BANNER — the centerpiece */
+.advice-banner{padding:18px 24px;background:linear-gradient(180deg,var(--cyan-dim),transparent);border-bottom:1px solid var(--border);flex:0 0 auto}
+.advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:6px}
+.advice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-wrap:wrap}
+.advice-main{flex:1 1 420px;min-width:0}
+.advice-corridor{font-size:17px;font-weight:700;color:var(--cyan)}
+.period-toggle{display:inline-flex;gap:4px;margin-top:10px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
+.period-btn{font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.period-btn .period-range{font-family:var(--mono);font-size:9px;font-weight:400;opacity:.8}
+.period-btn.active{background:var(--cyan);color:var(--void)}
+.period-btn.active .period-range{color:var(--void)}
+.advice-summary{font-size:clamp(19px,2.5vw,30px);font-weight:700;line-height:1.3;margin-top:14px;letter-spacing:-0.01em}
+.window-chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .chip{font-family:var(--mono);font-size:10px;padding:6px 11px;border-radius:6px;border:1px solid;display:flex;align-items:center;gap:6px}
 .chip.best{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok-text)}
 .chip.worst{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
 .advice-empty{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
-/* WORKSPACE */
-.workspace{display:grid;grid-template-columns:280px 1fr 300px;flex:1;min-height:600px}
+.hero-stats{display:flex;gap:10px;flex:0 0 auto;flex-wrap:wrap}
+.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 18px;min-width:110px;text-align:center}
+.hstat-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;color:var(--text)}
+.hstat-lbl{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:6px;letter-spacing:.1em;text-transform:uppercase}
+.hstat.conf{border-color:var(--ok-border);background:var(--ok-bg)}
+.hstat.conf .hstat-val{color:var(--ok-text)}
+.hstat.conf.low{border-color:var(--warn-border);background:var(--warn-bg)}
+.hstat.conf.low .hstat-val{color:var(--warn-text)}
 
-/* PANELS */
-.panel{background:var(--panel);overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:14px;z-index:400}
-.panel-left{border-right:1px solid var(--border)}
-.panel-right{border-left:1px solid var(--border)}
-.sec-label{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--cyan);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+/* WORKSPACE — fills remaining viewport height; only .panel-left scrolls internally */
+.workspace{display:flex;flex-direction:row;flex:1 1 auto;min-height:0}
+
+.panel{background:var(--panel);overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:16px;z-index:400}
+.panel-left{border-right:1px solid var(--border);flex:0 0 320px;height:100%}
 
 /* TIME BLOCK */
 .time-block{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:14px}
-.time-big{font-family:var(--mono);font-size:40px;color:var(--cyan);letter-spacing:.04em;line-height:1;text-shadow:0 0 24px var(--cyan-glow)}
-.time-desc{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.5;background:var(--cyan-dim);border-left:2px solid var(--cyan);padding:6px 8px;border-radius:0 4px 4px 0}
+.time-big{font-family:var(--mono);font-size:44px;color:var(--cyan);letter-spacing:.02em;line-height:1;text-shadow:0 0 24px var(--cyan-glow)}
+.time-desc{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.5;background:var(--cyan-dim);border-left:2px solid var(--cyan);padding:6px 8px;border-radius:0 4px 4px 0}
 
 .day-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
 .day-btn{font-family:var(--mono);font-size:9px;padding:7px 2px;text-align:center;border:1px solid var(--card-border);border-radius:4px;cursor:pointer;background:var(--card-bg);color:var(--sub);transition:all .2s;letter-spacing:.04em}
 .day-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .day-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);box-shadow:0 0 10px var(--cyan-dim);font-weight:600}
 
-.slider-section{margin-top:12px}
-.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.slider-label-txt{font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:.05em}
-.slider-val{font-family:var(--mono);font-size:12px;color:var(--cyan);font-weight:500;background:var(--cyan-dim);padding:2px 8px;border-radius:4px;border:1px solid var(--card-border)}
-input[type=range]{width:100%;-webkit-appearance:none;height:4px;background:linear-gradient(to right,var(--cyan) 0%,var(--cyan) var(--pct,33%),var(--cyan-dim) var(--pct,33%));border-radius:2px;outline:none;cursor:pointer;margin:4px 0}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;background:linear-gradient(to right,var(--cyan) 0%,var(--cyan) var(--pct,33%),var(--cyan-dim) var(--pct,33%));border-radius:2px;outline:none;cursor:pointer;margin:12px 0 4px}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--void);border:2px solid var(--cyan);box-shadow:0 0 14px var(--cyan-glow);cursor:pointer}
 input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--void);border:2px solid var(--cyan);cursor:pointer}
 .slider-marks{display:flex;justify-content:space-between;margin-top:4px}
 .slider-mark{font-family:var(--mono);font-size:8px;color:var(--muted)}
 
-/* CORRIDORS */
-.corridor-item{border:1px solid var(--card-border);border-radius:6px;padding:10px 11px;cursor:pointer;transition:all .2s;background:rgba(0,0,0,0.03);position:relative;overflow:hidden}
-.corridor-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--muted));box-shadow:0 0 8px var(--c,transparent);transition:box-shadow .3s}
-.corridor-item:hover{border-color:var(--cyan)}
-.corridor-item.sel{border-color:var(--cyan);background:var(--cyan-dim)}
-.corridor-item.sel::before{box-shadow:0 0 16px var(--c)}
-.ci-name{font-size:11px;font-weight:600;color:var(--text)}
-.ci-sub{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:2px}
-.ci-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
-.ci-bar-wrap{flex:1;height:3px;background:var(--card-border);border-radius:2px;overflow:hidden}
-.ci-bar{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
-.ci-pct{font-family:var(--mono);font-size:10px;font-weight:500;min-width:30px;text-align:right}
-.ci-badge{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;letter-spacing:.06em;white-space:nowrap}
-.ci-skel{opacity:.4;font-family:var(--mono);font-size:9px;color:var(--muted)}
+/* CORRIDOR COMBOBOX */
+.combo{position:relative}
+.combo input{width:100%;background:var(--void);border:1px solid var(--card-border);color:var(--text);padding:12px 13px;border-radius:8px;font-family:var(--display);font-size:14px;font-weight:500}
+.combo input:focus{outline:none;border-color:var(--cyan)}
+.combo-list{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow-y:auto;background:var(--panel);border:1px solid var(--card-border);border-radius:8px;box-shadow:0 24px 50px rgba(0,0,0,0.4);z-index:600}
+.combo-opt{display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border)}
+.combo-opt:last-child{border-bottom:none}
+.combo-opt:hover,.combo-opt.active{background:var(--cyan-dim)}
+.combo-opt.sel{background:var(--cyan-dim)}
+.combo-dot{width:9px;height:9px;border-radius:50%;flex:none}
+.combo-name{flex:1;min-width:0;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combo-meta{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;flex:none}
+.combo-pct{font-weight:600}
+.combo-badge{padding:2px 6px;border-radius:3px;letter-spacing:.05em}
+.combo-empty{padding:14px;color:var(--muted);font-family:var(--mono);font-size:11px;text-align:center}
+.combo-skel{color:var(--muted)}
 
 /* ROUTE / BEST-TIME TOOL */
 .tool-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:12px}
@@ -155,14 +156,14 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .tool-btn:hover{background:var(--cyan-glow)}
 .tool-result{margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.6}
 
-/* MAP — real MapLibre tiles, with the schematic SVG kept as an offline fallback */
-.map-zone{position:relative;min-height:360px;background:
+/* MAP — fills all remaining space beside the left panel */
+.map-zone{position:relative;flex:1 1 auto;min-width:0;height:100%;background:
   linear-gradient(var(--border) 1px,transparent 1px) 0 0/40px 40px,
   linear-gradient(90deg,var(--border) 1px,transparent 1px) 0 0/40px 40px,
   var(--void)}
 #glMap{position:absolute;inset:0;width:100%;height:100%}
 #road-svg{position:absolute;inset:0;width:100%;height:100%;display:none}
-.map-hud{position:absolute;top:14px;left:14px;z-index:10;font-family:var(--mono);font-size:9px;color:var(--cyan);pointer-events:none;line-height:1.8;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.map-hud{position:absolute;top:14px;left:14px;z-index:10;font-family:var(--mono);font-size:10px;color:var(--cyan);pointer-events:none;line-height:1.8;text-shadow:0 1px 4px rgba(0,0,0,.5);background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:5px 12px}
 .map-hud-br{position:absolute;bottom:14px;right:14px;z-index:10;text-align:right;font-family:var(--mono);font-size:8px;color:var(--muted);pointer-events:none}
 .map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--muted);z-index:12;background:var(--void);pointer-events:none}
 .map-offline-notice{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:16;display:none;align-items:center;gap:6px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.3)}
@@ -175,10 +176,11 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .corridor-line-glow{pointer-events:none}
 .corridor-label{font-family:var(--mono);font-size:9px;pointer-events:none}
 
-/* MapLibre popup theming (vendored CSS ships a light-only default box).
-   The vendored .maplibregl-popup rule has no z-index, so without this it
-   paints below our own z-indexed map overlays (.map-legend:15, .detail-float:20)
-   and can end up invisible behind them — give it the highest z-index in the zone. */
+/* Recenter control — matches MapLibre's own NavigationControl button group */
+.recenter-btn{width:29px;height:29px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;cursor:pointer;color:#333}
+.recenter-btn:hover{background:rgba(0,0,0,0.05)}
+
+/* MapLibre popup theming */
 .maplibregl-popup{z-index:25}
 .maplibregl-popup-content{background:var(--panel)!important;color:var(--text);border-radius:10px;padding:13px 15px;box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid var(--card-border)}
 .maplibregl-popup-close-button{color:var(--sub);font-size:16px;padding:2px 6px}
@@ -195,7 +197,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .gl-popup-window{font-family:var(--mono);font-size:10px;color:var(--ok-text);margin-bottom:3px}
 .gl-popup-muted{color:var(--muted);font-family:var(--mono);font-size:10px}
 
-/* DETAIL FLOAT */
+/* DETAIL FLOAT (schematic-fallback only) */
 .detail-float{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--neu-border);border-radius:10px;padding:14px 16px;min-width:300px;max-width:92%;z-index:20;box-shadow:0 20px 60px rgba(0,0,0,0.35);display:none}
 .df-title{font-size:13px;font-weight:600;color:var(--cyan);margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .df-chart{display:flex;align-items:flex-end;gap:3px;height:44px;margin-bottom:4px}
@@ -209,34 +211,33 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .df-close{cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 6px}
 .df-close:hover{color:var(--text)}
 
-/* RIGHT PANEL */
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:7px;padding:12px}
-.stat-card.wide{grid-column:1/-1}
-.stat-val{font-family:var(--mono);font-size:24px;font-weight:500;line-height:1}
-.stat-lbl{font-family:var(--mono);font-size:8px;color:var(--sub);margin-top:5px;letter-spacing:.1em;text-transform:uppercase}
-.model-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:14px}
-.model-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--sub);padding:4px 0;border-bottom:1px solid var(--border)}
-.model-row:last-child{border-bottom:none}
-.model-row b{color:var(--text);font-weight:500}
-.win-row{background:rgba(0,0,0,.03);border:1px solid var(--card-border);border-radius:6px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.win-name{font-size:11px;font-weight:600;color:var(--text)}
-.win-sub{font-family:var(--mono);font-size:8px;color:var(--sub);margin-top:2px}
-.win-time{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right}
-.win-lbl{font-family:var(--mono);font-size:8px;color:var(--sub);text-align:right;margin-top:2px}
+/* FOOTER — slim, fixed height, houses the "Data & model" provenance popover */
+.footer-strip{background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;padding:6px 16px;flex:0 0 auto}
+.info-btn{font-family:var(--mono);font-size:9px;letter-spacing:.06em;background:transparent;border:1px solid var(--card-border);color:var(--sub);border-radius:20px;padding:5px 12px;cursor:pointer;display:flex;align-items:center}
+.info-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.info-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;margin-right:7px}
+.info-dot.off{background:var(--magenta);box-shadow:0 0 6px var(--magenta)}
+.info-popover{position:fixed;bottom:44px;right:16px;z-index:900;width:min(340px, calc(100vw - 32px));background:var(--panel);border:1px solid var(--card-border);border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,0.45);padding:14px 16px}
+.info-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--sub);padding:5px 0;border-bottom:1px solid var(--border)}
+.info-row:last-of-type{border-bottom:none}
+.info-row b{color:var(--text);font-weight:500}
+.info-accuracy{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-family:var(--display);font-size:11px;line-height:1.5;color:var(--sub)}
 
-/* FOOTER */
-.footer-strip{background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:8px 20px;font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.07em;flex-wrap:wrap;gap:6px}
-.fs-item{display:flex;align-items:center;gap:5px}
-.fs-val{color:var(--cyan)}
-
-/* RESPONSIVE */
+/* RESPONSIVE — below this width the fixed no-scroll shell relaxes into a
+   normal scrolling document: the app-shell model (fixed 100vh, only the
+   left panel scrolling internally) doesn't fit a phone alongside a
+   full-height map, so the page itself is allowed to scroll vertically
+   here. Horizontal scroll stays forbidden at every width. */
 @media (max-width: 980px){
-  .workspace{grid-template-columns:1fr}
-  .panel-left,.panel-right{border:none;border-top:1px solid var(--border)}
-  .map-zone{min-height:320px;order:-1}
-  .advice-summary{font-size:16px}
-  .time-big{font-size:32px}
+  html,body{height:auto;overflow-y:auto;overflow-x:hidden}
+  .app{height:auto;min-height:100vh;overflow:visible}
+  .workspace{flex-direction:column;min-height:0}
+  .panel-left{flex:none;width:100%;height:auto;max-height:none;border-right:none;border-top:1px solid var(--border);overflow-y:visible}
+  .map-zone{flex:none;height:340px;order:-1}
+  .advice-top{gap:16px}
+  .hero-stats{width:100%}
+  .hstat{flex:1;min-width:90px}
+  .time-big{font-size:34px}
 }
 </style>
 </head>
@@ -244,13 +245,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 <div class="app">
   <header>
     <div>
-      <div class="logo-text">GTP SYSTEM</div>
-      <div class="logo-sub">Gurugram Traffic Intelligence v2.0</div>
-    </div>
-    <div class="pills">
-      <div class="pill"><div class="dot-live" id="apiDot"></div><span id="apiPillText">API: connecting…</span></div>
-      <div class="pill" id="modelPill" style="display:none"></div>
-      <div class="pill" id="dataAsOfPill" style="display:none"></div>
+      <div class="logo-text">GURUGRAM TRAFFIC</div>
+      <div class="logo-sub">Know when to leave.</div>
     </div>
     <div class="header-right">
       <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">IST</span>
@@ -261,8 +257,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
   <!-- Shown only when this file was opened directly (file://) instead of via
        ./run.sh. Blocks nothing — the app still tries to render behind it —
-       but explains up front why the map/API will not work, instead of
-       letting the user discover a silently-broken page on their own. -->
+       but explains up front why the map/API will not work. -->
   <div class="proto-overlay" id="protoOverlay">
     <div class="proto-card">
       <div class="proto-icon">&#9888;&#65039;</div>
@@ -281,9 +276,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   </div>
 
   <!-- Persistent, non-dismissible: shown for the entire life of the page
-       whenever ?mock=1 is active (this is how the GitHub Pages demo runs,
-       since Pages can't host the Flask API). Fixture numbers must never be
-       mistaken for real measured traffic — no close button, no auto-hide. -->
+       whenever ?mock=1 is active. Fixture numbers must never be mistaken
+       for real measured traffic — no close button, no auto-hide. -->
   <div class="g-banner demo" id="demoBanner">
     <span>&#9670; DEMONSTRATION DATA &mdash; every number on this page is a fixture, not measured traffic. To see real data: run <code>./run.sh</code> locally, or open this page with <code>?api=&lt;your-backend-url&gt;</code>.</span>
   </div>
@@ -295,24 +289,31 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <span id="warnBannerText"></span>
   </div>
 
-  <!-- ADVICE — the centerpiece -->
+  <!-- HERO — "when should you leave" -->
   <div class="advice-banner" id="adviceBanner">
+    <div class="advice-eyebrow">When should you leave?</div>
     <div class="advice-top">
-      <div>
-        <div class="advice-eyebrow">When should you leave?</div>
+      <div class="advice-main">
         <div class="advice-corridor" id="adviceCorridorName">Loading…</div>
+        <div class="period-toggle" id="periodToggle">
+          <button class="period-btn active" data-period="day" type="button">Day</button>
+          <button class="period-btn" data-period="night" type="button">Night</button>
+        </div>
         <div class="advice-summary" id="adviceSummary">Fetching advice from the model…</div>
+        <div class="window-chips" id="windowChips"></div>
       </div>
-      <div class="advice-badges" id="adviceBadges"></div>
+      <div class="hero-stats" id="heroStats">
+        <div class="hstat"><div class="hstat-val" id="hsBest">--</div><div class="hstat-lbl">Best time</div></div>
+        <div class="hstat"><div class="hstat-val" id="hsSave">--</div><div class="hstat-lbl">You save</div></div>
+        <div class="hstat conf" id="hsConfWrap"><div class="hstat-val" id="hsConf">--</div><div class="hstat-lbl">Confidence</div></div>
+      </div>
     </div>
-    <div class="window-chips" id="windowChips"></div>
   </div>
 
   <div class="workspace">
     <!-- LEFT PANEL -->
     <div class="panel panel-left">
       <div>
-        <div class="sec-label">Temporal Control</div>
         <div class="time-block">
           <div class="time-big" id="timeDisp">08:00</div>
           <div class="time-desc" id="timeDesc">Select a day and hour to preview congestion</div>
@@ -325,38 +326,31 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
             <button class="day-btn" data-d="5">SAT</button>
             <button class="day-btn" data-d="6">SUN</button>
           </div>
-          <div class="slider-section">
-            <div class="slider-header">
-              <span class="slider-label-txt">DEPARTURE HOUR</span>
-              <span class="slider-val" id="sliderVal">08:00</span>
-            </div>
-            <input type="range" id="timeSlider" min="0" max="23" value="8">
-            <div class="slider-marks">
-              <span class="slider-mark">12AM</span><span class="slider-mark">6AM</span>
-              <span class="slider-mark">12PM</span><span class="slider-mark">6PM</span>
-              <span class="slider-mark">11PM</span>
-            </div>
+          <input type="range" id="timeSlider" min="0" max="23" value="8" aria-label="Departure hour">
+          <div class="slider-marks">
+            <span class="slider-mark">12AM</span><span class="slider-mark">6AM</span>
+            <span class="slider-mark">12PM</span><span class="slider-mark">6PM</span>
+            <span class="slider-mark">11PM</span>
           </div>
         </div>
       </div>
 
-      <div>
-        <div class="sec-label">Route &amp; Best Time</div>
-        <div class="tool-card">
-          <input id="fromInput" placeholder="From (e.g. Cyber Hub) — optional">
-          <input id="toInput" placeholder="To (e.g. Sector 56) — optional">
-          <div class="tool-row">
-            <select id="earliestSel"></select>
-            <select id="latestSel"></select>
-          </div>
-          <button class="tool-btn" id="findBtn">FIND BEST DEPARTURE</button>
-          <div id="routeResult" class="tool-result"></div>
-        </div>
+      <div class="combo" id="corridorCombo">
+        <input type="text" id="corridorInput" placeholder="Search corridors…" autocomplete="off"
+               role="combobox" aria-expanded="false" aria-autocomplete="list"
+               aria-controls="corridorListbox" aria-label="Select corridor">
+        <div class="combo-list" id="corridorListbox" role="listbox" style="display:none"></div>
       </div>
 
-      <div>
-        <div class="sec-label">Corridors</div>
-        <div id="corridorList" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div class="tool-card">
+        <input id="fromInput" placeholder="From (e.g. Cyber Hub) — optional" aria-label="From location">
+        <input id="toInput" placeholder="To (e.g. Sector 56) — optional" aria-label="To location">
+        <div class="tool-row">
+          <select id="earliestSel" aria-label="Earliest departure"></select>
+          <select id="latestSel" aria-label="Latest departure"></select>
+        </div>
+        <button class="tool-btn" id="findBtn">FIND BEST DEPARTURE</button>
+        <div id="routeResult" class="tool-result"></div>
       </div>
     </div>
 
@@ -378,41 +372,20 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <div class="detail-float" id="detailFloat"></div>
       <div class="map-empty" id="mapEmpty" style="display:none">Waiting for corridor data…</div>
     </div>
-
-    <!-- RIGHT PANEL -->
-    <div class="panel panel-right">
-      <div>
-        <div class="sec-label">Live Now</div>
-        <div class="stat-grid">
-          <div class="stat-card"><div class="stat-val" id="statAvg">--</div><div class="stat-lbl">Avg Congestion</div></div>
-          <div class="stat-card"><div class="stat-val" id="statFree" style="color:var(--green)">--</div><div class="stat-lbl">Free Corridors</div></div>
-          <div class="stat-card wide"><div class="stat-lbl" style="margin-bottom:5px">Worst Corridor Now</div><div id="statWorst" style="font-size:12px;font-weight:600;color:var(--magenta)">--</div></div>
-        </div>
-      </div>
-      <div>
-        <div class="sec-label">Model &amp; Data Provenance</div>
-        <div class="model-card" id="modelCard">
-          <div class="model-row"><span>Status</span><b id="mHealth">--</b></div>
-          <div class="model-row"><span>Model version</span><b id="mVersion">--</b></div>
-          <div class="model-row"><span>Provenance</span><b id="mProv">--</b></div>
-          <div class="model-row"><span>Corridors</span><b id="mCorridors">--</b></div>
-          <div class="model-row"><span>Trained rows</span><b id="mRows">--</b></div>
-          <div class="model-row"><span>Data as of</span><b id="mGeneratedAt">--</b></div>
-        </div>
-      </div>
-      <div>
-        <div class="sec-label">Best Travel Windows (all corridors)</div>
-        <div id="travelWindows" style="display:flex;flex-direction:column;gap:6px"></div>
-      </div>
-    </div>
   </div>
 
   <div class="footer-strip">
-    <div class="fs-item">SYSTEM <span class="fs-val" id="fsSystem">CONNECTING</span></div>
-    <div class="fs-item">API <span class="fs-val" id="fsApi"></span></div>
-    <div class="fs-item">MODEL <span class="fs-val" id="fsModel">--</span></div>
-    <div class="fs-item">CORRIDORS <span class="fs-val" id="fsCorridors">--</span></div>
-    <div class="fs-item">© 2026 GTP INTELLIGENCE</div>
+    <button class="info-btn" id="dataInfoBtn" type="button" aria-haspopup="true" aria-expanded="false">
+      <span class="info-dot" id="infoDot"></span>Data &amp; model
+    </button>
+  </div>
+  <div class="info-popover" id="dataInfoPopover" role="dialog" aria-label="Data and model information" style="display:none">
+    <div class="info-row"><span>Status</span><b id="mHealth">--</b></div>
+    <div class="info-row"><span>Model version</span><b id="mVersion">--</b></div>
+    <div class="info-row"><span>Provenance</span><b id="mProv">--</b></div>
+    <div class="info-row"><span>Trained rows</span><b id="mRows">--</b></div>
+    <div class="info-row"><span>Generated</span><b id="mGeneratedAt">--</b></div>
+    <div class="info-accuracy" id="mAccuracy"></div>
   </div>
 </div>
 
@@ -423,38 +396,21 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 // ─────────────────────────────────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────────────────────────────────
-// Overridable via ?api=http://host:port — run.sh appends this so the page
-// keeps working when it had to move the backend off its default port (e.g.
-// 5000 was already taken). Falls back to the historical default otherwise.
-const API_PARAM = new URLSearchParams(location.search).get('api'); // explicit opt-in to a live backend (run.sh passes this)
+const API_PARAM = new URLSearchParams(location.search).get('api');
 const API_BASE = API_PARAM || 'http://localhost:5000';
 const IS_FILE_PROTOCOL = location.protocol === 'file:';
-const MOCK = new URLSearchParams(location.search).has('mock'); // ?mock=1 for offline/demo rendering with fixture data
-// ?mock=1&synth=1 additionally simulates a deployment running on synthetic
-// data (provenance is a response-level field per the contract, not
-// per-corridor, so this flips it for every mock endpoint at once — and also
-// switches the fixture data generator to the old inflated formula that
-// produced the up-to-0.92 values the real synthetic generator produced).
+const MOCK = new URLSearchParams(location.search).has('mock');
 const FORCE_SYNTHETIC = MOCK && new URLSearchParams(location.search).has('synth');
-// data/bundle.json is the default data source for the public site (GitHub
-// Pages has no server to hit): precomputed by tools/build_static_bundle.py,
-// exhaustively verified to match backend/app.py's live GRID/advice output
-// exactly. Only skipped when ?mock=1 or ?api=... take precedence (below).
 const BUNDLE_URL = 'data/bundle.json';
 
 // ─────────────────────────────────────────────────────────────────────────
-// IST TIME — derived explicitly from UTC, never from the browser/OS
-// timezone, so a visitor anywhere in the world still sees Gurugram's actual
-// current day/hour (this page has no server to ask, so "now" has to be
-// computed correctly client-side or every "leave now" verdict is wrong for
-// anyone not already in IST).
+// IST TIME
 // ─────────────────────────────────────────────────────────────────────────
 function nowIST(){
   const now = new Date();
-  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000; // -> true UTC instant
-  const ist = new Date(utcMs + 5.5 * 60 * 60000);                // UTC+5:30, no DST
-  // ist's UTC* getters now read out IST wall-clock fields
-  const day = (ist.getUTCDay() + 6) % 7; // JS Sun=0..Sat=6 -> contract Mon=0..Sun=6 (Python weekday())
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utcMs + 5.5 * 60 * 60000);
+  const day = (ist.getUTCDay() + 6) % 7;
   const hour = ist.getUTCHours();
   const p2 = n => String(n).padStart(2,'0');
   const iso = `${ist.getUTCFullYear()}-${p2(ist.getUTCMonth()+1)}-${p2(ist.getUTCDate())}T${p2(hour)}:${p2(ist.getUTCMinutes())}:${p2(ist.getUTCSeconds())}+05:30`;
@@ -470,53 +426,41 @@ function fmtAmpm(h){
 // ─────────────────────────────────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────────────────────────────────
-let CORRIDORS = [];           // from GET /corridors — never hardcoded
-let health = null;            // GET /health
+let CORRIDORS = [];
+let health = null;
 const _bootIST = nowIST();
-let curDay = _bootIST.day;    // IST, not the visitor's local timezone
+let curDay = _bootIST.day;
 let curHour = _bootIST.hour;
 let selCorridor = null;
-let BUNDLE = null;            // parsed frontend/data/bundle.json, once loaded
-let BUNDLE_MODE = false;      // true once the bundle is the active data source
-const adviceCache = {};       // `${corridorId}_${day}` -> /advice response
-let nowData = null;           // GET /now
-let apiReachable = null;      // null=unknown, true/false
+let curPeriod = 'day'; // 'day' | 'night' — defaults to day (primary audience); night kept for shift/truck drivers
+let BUNDLE = null;
+let BUNDLE_MODE = false;
+const adviceCache = {};
+let apiReachable = null;
 let corridorsFailed = false;
+let activeComboIndex = -1;
 
-// MapLibre real-map state (see "MAPLIBRE REAL MAP" section below for setup)
-// Both confirmed live on OpenFreeMap (fetched and checked for valid style
-// JSON, version:8, before wiring in): 'dark' has 47 layers and a
-// background-color of rgb(12,12,12) — a real dark basemap, not a guess.
-// ('dark-matter', the commonly-assumed vector dark-style name, 404s there —
-// OpenFreeMap's actual dark style is just named 'dark'.)
 const MAP_STYLE_URLS = {
   light: 'https://tiles.openfreemap.org/styles/positron',
   dark: 'https://tiles.openfreemap.org/styles/dark'
 };
 const MAP_LOAD_TIMEOUT_MS = 7000;
-let glMap = null;             // maplibregl.Map instance, or null
-let glMapReady = false;       // true once style+source+layers are up (false while a style swap is in flight)
-let glMapFailed = false;      // true once we've fallen back to the schematic
-let mapInitialLoadDone = false; // true after the very first style has finished loading + corridor layers attached
-let glMapStyleKey = null;     // 'light' | 'dark' — which basemap style is currently (or about to be) active
-let glListenersAttached = false; // click/hover handlers are attached once — setStyle() doesn't drop them, so re-adding would double-fire
-let corridorGeoJSON = null;   // frontend/corridors.geojson, fetched once
-let glPopup = null;           // single reusable maplibregl.Popup
-let lastFlownCorridor = undefined; // avoid re-flying the camera on every render
+let glMap = null;
+let glMapReady = false;
+let glMapFailed = false;
+let mapInitialLoadDone = false;
+let glMapStyleKey = null;
+let glListenersAttached = false;
+let corridorGeoJSON = null;
+let glPopup = null;
+let lastFlownCorridor = undefined;
 
 function currentMapStyleKey(){
   return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// LABEL / COLOR — derived from the documented thresholds in api_contract.md.
-// RECALIBRATED 2026-08-16: real bootstrap data peaks at 0.435, so the old
-// 0.35/0.60/0.80 bands (tuned to synthetic data that ran up to 0.92) made
-// Heavy/Severe unreachable and painted every corridor "Free". Must match
-// the server exactly or a bar's colour will contradict its own label text.
-// Server-provided `label` is always preferred when a response includes one;
-// this is only the client-side derivation for values without one attached
-// (e.g. points inside an /advice profile array).
+// LABEL / COLOR
 // ─────────────────────────────────────────────────────────────────────────
 function labelFor(v){ return v<0.091?'Free':v<0.200?'Moderate':v<0.310?'Heavy':'Severe'; }
 function colorFor(v){ return v<0.091?'var(--green)':v<0.200?'var(--amber)':v<0.310?'var(--orange)':'var(--magenta)'; }
@@ -525,24 +469,19 @@ function badgeBg(v){ return v<0.091?'rgba(0,255,157,0.1)':v<0.200?'rgba(255,184,
 function pad2(n){ return String(n).padStart(2,'0'); }
 function fmtHour(h){ return pad2(((h%24)+24)%24) + ':00'; }
 
-// Real congestion_index values cluster 0–0.435 (documented peak), not 0–1.
-// Bar widths / chart bar heights are VISUAL elements — rescale them to this
-// realistic ceiling so the map/sidebar actually differentiate hours instead
-// of every bar looking short and washed out. Labels/thresholds above stay
-// on the absolute contract scale; only pixel/percent sizing uses this.
 const VISUAL_MAX = 0.45;
 function visualFrac(v){ return Math.max(0, Math.min(1, v / VISUAL_MAX)); }
 
 // ─────────────────────────────────────────────────────────────────────────
-// MOCK FIXTURES (only used with ?mock=1 — lets the UI be verified without a
-// running backend, and it's also how the GitHub Pages demo runs, since
-// Pages can't host the Flask API. Every corridor-count assumption here is
-// derived, never hardcoded: loadMockCorridors() below overwrites this
-// array from frontend/corridors.geojson (the same file the real map reads,
-// kept in sync by tools/build_corridor_geojson.py) as soon as it can fetch
-// it. This literal is only the fallback for the one case that fetch can't
-// cover — ?mock=1 opened directly over file:// — snapshotted from that
-// geojson at the time of writing so it doesn't quietly drift stale.
+// DAY/NIGHT PERIOD HOURS — mirrors docs/api_contract.md's DAY_HOURS/NIGHT_HOURS
+// (06:00-21:59 day, 22:00-05:59 night), derived from the same measured-grid
+// boundary the backend uses, not an independent guess.
+// ─────────────────────────────────────────────────────────────────────────
+function rangeHours(a,b){ const out=[]; for(let h=a;h<b;h++) out.push(h); return out; }
+function periodHours(period){ return period==='day' ? rangeHours(6,22) : [...rangeHours(22,24), ...rangeHours(0,6)]; }
+
+// ─────────────────────────────────────────────────────────────────────────
+// MOCK FIXTURES (?mock=1)
 // ─────────────────────────────────────────────────────────────────────────
 let MOCK_CORRIDORS = [
   {id:0,name:"NH-48 Delhi-Gurgaon Expressway",sub:"Rajiv Chowk -> Manesar",road_class:"highway",start:[28.44746,77.03282],end:[28.32474,76.92608],length_km:21.93},
@@ -559,9 +498,6 @@ let MOCK_CORRIDORS = [
   {id:11,name:"Old Delhi-Gurgaon Road",sub:"Kapashera Border -> Hero Honda Chowk",road_class:"highway",start:[28.52195,77.08910],end:[28.46033,77.04983],length_km:15.28},
   {id:12,name:"Pataudi Road",sub:"Basai Chowk -> Pataudi Chowk",road_class:"highway",start:[28.45519,76.98796],end:[28.32822,76.77771],length_km:30.05},
 ];
-// Overwrites MOCK_CORRIDORS from the real corridors.geojson so the demo
-// never silently falls behind the actual corridor set. Safe to call even
-// when it can't fetch (file://) — the literal above stays in place.
 async function loadMockCorridors(){
   try{
     const res = await fetch('corridors.geojson');
@@ -577,9 +513,6 @@ async function loadMockCorridors(){
     });
   }catch(e){ /* file:// or offline — keep the embedded fallback above */ }
 }
-// Realistic generator: matches the real bootstrap sweep's documented range
-// (peak 0.435). Produces visible Free/Moderate/Heavy/Severe variation across
-// the day under the recalibrated thresholds instead of clustering at "Free".
 function mockProfileReal(cid, day){
   const rc = MOCK_CORRIDORS[cid].road_class;
   const base = {highway:0.05, expressway:0.045, arterial:0.04}[rc];
@@ -596,9 +529,6 @@ function mockProfileReal(cid, day){
   }
   return vals;
 }
-// Reproduces the OLD synthetic-data-generator bug on purpose (values up to
-// ~0.92) so ?mock=1&synth=1 demonstrates exactly why provenance:"synthetic"
-// must be visibly flagged rather than presented as if it were measured.
 function mockProfileSynthetic(cid, day){
   const base = 0.5;
   const weekend = day>=5;
@@ -614,14 +544,35 @@ function mockProfileSynthetic(cid, day){
 }
 function mockProfile(cid, day){ return FORCE_SYNTHETIC ? mockProfileSynthetic(cid, day) : mockProfileReal(cid, day); }
 
+// Builds a day_period/night_period-shaped block from a 24h mock profile,
+// mirroring the real API's day/night split (docs/api_contract.md) so mock
+// mode exercises the same UI path as the bundle/live API.
+function buildPeriodBlock(prof, period, confidence){
+  const hours = periodHours(period);
+  const idxOf = h=>prof[h];
+  const bestH = hours.reduce((a,h)=> idxOf(h)<idxOf(a)?h:a, hours[0]);
+  const worstH = hours.reduce((a,h)=> idxOf(h)>idxOf(a)?h:a, hours[0]);
+  const bestDelay = Math.round(prof[bestH]*20*10)/10;
+  const worstDelay = Math.round(prof[worstH]*20*10)/10;
+  const saving = Math.round((worstDelay-bestDelay)*10)/10;
+  const savingPct = worstDelay>0 ? Math.round((saving/worstDelay)*1000)/10 : 0;
+  const worstPct = Math.round((worstDelay/16.1)*1000)/10;
+  const label = labelFor(prof[bestH]), worstLabel = labelFor(prof[worstH]);
+  const periodName = period==='day' ? 'daytime' : 'nighttime';
+  const summary = saving>=0.5
+    ? `Best ${periodName} departure: ${fmtHour(bestH)}. Avoid ${fmtHour(worstH)} (+${Math.round(worstDelay)} min, ${Math.round(worstPct)}% longer).`
+    : `Traffic barely varies across ${periodName} hours today.`;
+  return {period, start_hour:hours[0], end_hour:hours[hours.length-1], best_hour:bestH, worst_hour:worstH,
+    best_hour_delay_minutes:bestDelay, worst_hour_delay_minutes:worstDelay, worst_hour_delay_pct:worstPct,
+    saving_minutes:saving, saving_pct:savingPct,
+    best_windows:[{start_hour:bestH,end_hour:bestH,avg_index:prof[bestH],label,text:`Clear around ${fmtHour(bestH)}`}],
+    worst_windows:[{start_hour:worstH,end_hour:worstH,avg_index:prof[worstH],label:worstLabel,text:`Avoid around ${fmtHour(worstH)}`}],
+    summary, confidence};
+}
+
 function mockFetch(path, params){
   const p = params || {};
-  // 'demo' is its own provenance value — fixture data must never render
-  // under 'bootstrap'/'observed' (real-data labels) or be confused with
-  // 'synthetic' (a real model trained on synthetic data — a different,
-  // narrower warning). ?mock=1&synth=1 still opts into 'synthetic' to
-  // demo that specific badge/warning, unchanged.
-  const PROV = FORCE_SYNTHETIC ? 'synthetic' : 'demo'; // response-level, per contract — never per-corridor
+  const PROV = FORCE_SYNTHETIC ? 'synthetic' : 'demo';
   if(path==='/health') return {status:'ok',model_version:'gbt-2026-08-16-mock',provenance:PROV,corridors:MOCK_CORRIDORS.length,trained_rows:1344};
   if(path==='/corridors') return {corridors: MOCK_CORRIDORS};
   if(path==='/advice'){
@@ -629,12 +580,13 @@ function mockFetch(path, params){
     const prof = mockProfile(cid, day);
     const bestHour = prof.indexOf(Math.min(...prof));
     const peakHour = prof.indexOf(Math.max(...prof));
-    const confidence = cid===6 ? 0.32 : 0.9; // simulates a corridor with thin real-data coverage
+    const confidence = cid===6 ? 0.32 : 0.9;
     return {corridor_id:cid, day, profile:prof,
       best_windows:[{start_hour:22,end_hour:5,avg_index:Math.min(...prof),label:labelFor(Math.min(...prof)),text:'Clear after 10 PM'}],
       worst_windows:[{start_hour:17,end_hour:20,avg_index:prof[18],label:labelFor(prof[18]),text:'Avoid 5-8 PM'}],
       best_hour:bestHour, peak_hour:peakHour,
       summary:`Leave before 7 AM or after 9 PM. Worst is ${peakHour}:00 (+${Math.round(prof[peakHour]*20)} min).`,
+      day_period: buildPeriodBlock(prof,'day',confidence), night_period: buildPeriodBlock(prof,'night',confidence),
       provenance: PROV, confidence};
   }
   if(path==='/advice/all'){
@@ -649,6 +601,7 @@ function mockFetch(path, params){
         worst_windows:[{start_hour:17,end_hour:20,avg_index:prof[18],label:labelFor(prof[18]),text:'Avoid 5-8 PM'}],
         best_hour:bestHour, peak_hour:peakHour,
         summary:`Leave before 7 AM or after 9 PM. Worst is ${peakHour}:00 (+${Math.round(prof[peakHour]*20)} min).`,
+        day_period: buildPeriodBlock(prof,'day',confidence), night_period: buildPeriodBlock(prof,'night',confidence),
         confidence};
     });
     return {day, corridors, provenance: PROV, model_version:'gbt-2026-08-16-mock'};
@@ -676,30 +629,11 @@ function mockFetch(path, params){
       alternatives: alts, summary:`Of ${fmtHour(earliest)}-${fmtHour(latest)}, leave at ${fmtHour(bestH)}.`,
       provenance: PROV, confidence};
   }
-  if(path==='/now'){
-    const corridors = MOCK_CORRIDORS.map(c=>{
-      const v = mockProfile(c.id, curDay)[curHour];
-      return {id:c.id, name:c.name, congestion_index:v, label:labelFor(v), delay_minutes:Math.round(v*20*10)/10,
-        trend:'flat', verdict: v<0.091?'go_now':v<0.200?'wait':'avoid', text: v<0.091?'Clear. Good time to travel.':'Some delay expected.'};
-    });
-    const worst = corridors.reduce((a,c)=>c.congestion_index>a.congestion_index?c:a, corridors[0]);
-    return {now_ist:new Date().toISOString(), day:curDay, hour:curHour, corridors,
-      summary:{avg_congestion: corridors.reduce((a,c)=>a+c.congestion_index,0)/corridors.length, worst_corridor: worst.name,
-               clear_count: corridors.filter(c=>c.label==='Free').length},
-      provenance:PROV};
-  }
   throw Object.assign(new Error('mock: unknown path'), {status:404});
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// STATIC BUNDLE (frontend/data/bundle.json) — the default, no-backend data
-// source. Serves every endpoint the page uses (health/corridors/advice/
-// advice-all/best-time/predict/now) from the precomputed grid so the whole
-// app works from a plain static file host (GitHub Pages). Reimplements the
-// same math as backend/app.py's route handlers (minutes_from_index,
-// find_windows are already baked into bundle.advice — only /predict,
-// /best-time and /now need to be computed here) — kept line-for-line close
-// to app.py so the two can't quietly drift apart.
+// STATIC BUNDLE (frontend/data/bundle.json) — the default, no-backend data source.
 // ─────────────────────────────────────────────────────────────────────────
 async function loadBundleJson(){
   try{
@@ -711,7 +645,6 @@ async function loadBundleJson(){
     return null;
   }
 }
-// Mirrors backend/app.py's minutes_from_index() exactly.
 function minutesFromIndex(freeFlowMinutes, idx){
   const idxSafe = Math.min(idx, 0.97);
   const typical = freeFlowMinutes / (1 - idxSafe);
@@ -719,9 +652,6 @@ function minutesFromIndex(freeFlowMinutes, idx){
   return [Math.round(typical*10)/10, Math.round(delay*10)/10];
 }
 function bundleCorridor(cid){ return BUNDLE.corridors.find(c=>c.id===cid); }
-// One GRID[(corridor_id, day, hour)] cell, built from grid.congestion_index/
-// confidence/origin — the bundle's per-cell arrays (indexed by corridor id,
-// per its own `conventions.grid_axes`).
 function bundleCell(cid, day, hour){
   const idx = BUNDLE.grid.congestion_index[cid][day][hour];
   const conf = BUNDLE.grid.confidence[cid][day][hour];
@@ -733,28 +663,6 @@ function bundleCell(cid, day, hour){
           confidence: conf, origin};
 }
 function bundleAdvice(cid, day){ return BUNDLE.advice.find(a=>a.corridor_id===cid && a.day===day); }
-function rangeHours(a,b){ const out=[]; for(let h=a;h<b;h++) out.push(h); return out; }
-// Mirrors backend/app.py's _trend_for / _verdict_for / _now_text exactly.
-function bundleTrend(cid, day, hour){
-  const cur = BUNDLE.grid.congestion_index[cid][day][hour];
-  let nd=day, nh=hour+1;
-  if(hour>=23){ nd=(day+1)%7; nh=0; }
-  const nxt = BUNDLE.grid.congestion_index[cid][nd][nh];
-  if(nxt-cur>0.01) return 'rising';
-  if(cur-nxt>0.01) return 'falling';
-  return 'flat';
-}
-function bundleVerdict(label, trend){
-  if(label==='Severe') return 'avoid';
-  if(label==='Heavy') return trend==='falling' ? 'wait' : 'avoid';
-  if(label==='Moderate') return trend==='rising' ? 'wait' : 'go_now';
-  return 'go_now';
-}
-function bundleNowText(label, verdict){
-  if(verdict==='go_now') return label==='Free' ? 'Clear. Good time to travel.' : `${label} but manageable. Good time to travel.`;
-  if(verdict==='wait') return `${label} now, easing soon. Consider waiting a bit.`;
-  return `Avoid — ${label.toLowerCase()} congestion right now.`;
-}
 function bundleFetch(path, params){
   const p = params || {};
   if(path==='/health') return {status:'ok', model_version: BUNDLE.model_version, provenance: BUNDLE.provenance,
@@ -770,7 +678,7 @@ function bundleFetch(path, params){
     const day=+p.day;
     const corridors = BUNDLE.corridors.map(c=>{
       const a = bundleAdvice(c.id, day);
-      return Object.assign({}, a); // includes corridor_id, profile, windows, best/peak_hour, summary, confidence, day
+      return Object.assign({}, a);
     });
     return {day, corridors, provenance: BUNDLE.provenance, model_version: BUNDLE.model_version};
   }
@@ -802,25 +710,6 @@ function bundleFetch(path, params){
       saving_vs_worst_minutes:saving, alternatives, summary,
       provenance: BUNDLE.provenance, confidence:recCell.confidence};
   }
-  if(path==='/now'){
-    const t = nowIST();
-    const day = t.day, hour = t.hour;
-    const results = BUNDLE.corridors.map(c=>{
-      const cell = bundleCell(c.id, day, hour);
-      const trend = bundleTrend(c.id, day, hour);
-      const verdict = bundleVerdict(cell.label, trend);
-      return {id:c.id, name:c.name, congestion_index:cell.congestion_index, label:cell.label,
-        delay_minutes:cell.delay_minutes, trend, verdict, text: bundleNowText(cell.label, verdict)};
-    });
-    const vals = results.map(r=>r.congestion_index);
-    const avg = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*1000)/1000;
-    let worstIdx = 0;
-    for(let i=1;i<vals.length;i++) if(vals[i]>vals[worstIdx]) worstIdx = i;
-    return {now_ist: t.iso, day, hour, corridors: results,
-      summary:{avg_congestion:avg, worst_corridor: results[worstIdx].name,
-               clear_count: results.filter(r=>r.label==='Free').length},
-      provenance: BUNDLE.provenance};
-  }
   throw Object.assign(new Error('bundle: unknown path ' + path), {status:404});
 }
 
@@ -830,7 +719,6 @@ function bundleFetch(path, params){
 async function apiGet(path, params){
   const qs = params ? '?' + new URLSearchParams(params).toString() : '';
   if(MOCK){
-    // simulate latency slightly so loading states are visible
     await new Promise(r=>setTimeout(r, 40));
     return mockFetch(path, params);
   }
@@ -841,9 +729,6 @@ async function apiGet(path, params){
   try{
     res = await fetch(API_BASE + path + qs);
   }catch(e){
-    // The request never reached a server at all (connection refused, DNS
-    // failure, or blocked by the file:// origin) — distinct from the server
-    // responding with an error status below. Give the exact fix.
     const err = new Error("Can't reach the API at " + API_BASE + ' — start it with ./run.sh');
     err.status = 0;
     err.kind = 'network';
@@ -867,7 +752,7 @@ async function apiGet(path, params){
 function showErrorBanner(msg){
   document.getElementById('errBannerText').textContent = msg;
   document.getElementById('errBanner').classList.add('show');
-  setConnPill(false, msg);
+  setConnPill(false);
 }
 function hideErrorBanner(){ document.getElementById('errBanner').classList.remove('show'); }
 function showWarnBanner(msg){
@@ -876,15 +761,12 @@ function showWarnBanner(msg){
 }
 function hideWarnBanner(){ document.getElementById('warnBanner').classList.remove('show'); }
 
-function setConnPill(ok, text){
-  const dot = document.getElementById('apiDot');
-  const txt = document.getElementById('apiPillText');
-  dot.classList.toggle('off', !ok);
-  if(MOCK) txt.textContent = 'API: mock mode';
-  else if(BUNDLE_MODE) txt.textContent = ok ? 'DATA: static bundle' : 'DATA: bundle unreachable';
-  else txt.textContent = ok ? ('API: ' + API_BASE) : (IS_FILE_PROTOCOL ? 'API: blocked (file://)' : 'API: unreachable');
-  document.getElementById('fsSystem').textContent = ok ? 'ONLINE' : 'OFFLINE';
-  document.getElementById('fsApi').textContent = MOCK ? 'MOCK FIXTURES' : (BUNDLE_MODE ? 'STATIC BUNDLE' : API_BASE);
+// Small connectivity dot on the footer's "Data & model" button — the only
+// surviving trace of the old header API pill, since connectivity failures
+// are already surfaced loudly via showErrorBanner()/showWarnBanner() above.
+function setConnPill(ok){
+  const dot = document.getElementById('infoDot');
+  if(dot) dot.classList.toggle('off', !ok);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -894,18 +776,13 @@ function provBadgeHtml(prov, conf){
   const cls = prov==='synthetic' ? 'prov-synthetic' : prov==='observed' ? 'prov-observed' : prov==='demo' ? 'prov-demo' : 'prov-bootstrap';
   const icon = prov==='synthetic' ? '⚠ ' : prov==='demo' ? '◆ ' : '';
   const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : prov==='model_inferred' ? 'MODEL-INFERRED (estimated)' : 'BOOTSTRAP (TomTom history)';
-  let html = `<span class="prov-badge ${cls}">${icon}${label}</span>`;
-  if(typeof conf === 'number'){
-    const low = conf < 0.5;
-    html += `<span class="conf-badge${low?' low':''}">${low?'⚠ ':''}confidence ${(conf*100).toFixed(0)}%${low?' — LOW':''}</span>`;
-  }
-  return html;
+  return `<span class="prov-badge ${cls}">${icon}${label}</span>`;
 }
 function isDegraded(conf){ return typeof conf === 'number' && conf < 0.5; }
 
 // ─────────────────────────────────────────────────────────────────────────
-// MAP PROJECTION (custom SVG — no tile server / no external map library,
-// per the "no CDN dependencies" requirement; schematic, not to scale)
+// MAP PROJECTION (schematic SVG fallback — no tile server / no external map
+// library dependency in this path)
 // ─────────────────────────────────────────────────────────────────────────
 let proj = null;
 function buildProjection(){
@@ -928,18 +805,15 @@ function buildProjection(){
   const offX = (W-usedW)/2, offY = (H-usedH)/2;
   return function(lat, lon){
     const x = (lon-lon0)*lonScale*scale + offX;
-    const y = H - ((lat-lat0)*scale + offY); // invert so higher lat is up
+    const y = H - ((lat-lat0)*scale + offY);
     return [x,y];
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// RENDER: MAP
+// RENDER: MAP (schematic + shared value lookup)
 // ─────────────────────────────────────────────────────────────────────────
 function currentValueFor(cid, day, hour){
-  // Bundle mode has real per-cell confidence/origin (grid.confidence,
-  // grid.origin) — finer-grained than the single peak-hour confidence
-  // attached to a whole day's /advice profile, so prefer it when available.
   if(BUNDLE_MODE && BUNDLE){
     const byDay = BUNDLE.grid.congestion_index[cid];
     const v = byDay && byDay[day] ? byDay[day][hour] : undefined;
@@ -1004,18 +878,10 @@ function drawMap(){
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// MAPLIBRE REAL MAP — real road geometry (frontend/corridors.geojson, built
-// offline by tools/build_corridor_geojson.py) styled with a data-driven
-// line-color expression keyed to the SAME thresholds/colors as colorFor()/
-// labelFor() above (read live off the CSS custom properties so the map can
-// never drift from the sidebar). Falls back to the schematic SVG (#road-svg,
-// left fully intact) if the tile/style network is unreachable.
+// MAPLIBRE REAL MAP
 // ─────────────────────────────────────────────────────────────────────────
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
-// Mirrors labelFor/colorFor's exact breakpoints (0.091 / 0.200 / 0.310) from
-// docs/api_contract.md. `step` semantics: output_0 applies below stop_1, so
-// a sentinel of -1 (no data loaded yet) falls into the muted "no data" color.
 function glLineColorExpr(){
   return ['step', ['to-number', ['feature-state','congestion'], -1],
     cssVar('--muted'),
@@ -1031,7 +897,7 @@ function glLineWidthExpr(){ return ['case', glSelectedExpr, ['+', glBaseWidthExp
 function glGlowWidthExpr(){ return ['+', glBaseWidthExpr(), 14]; }
 
 function fallbackToSchematic(reason){
-  if(glMapFailed) return; // already handled
+  if(glMapFailed) return;
   glMapFailed = true;
   glMapReady = false;
   console.warn('[map] falling back to schematic view:', reason);
@@ -1049,19 +915,9 @@ function showGlMap(){
   document.getElementById('glMap').style.display = '';
   document.getElementById('road-svg').style.display = 'none';
   document.getElementById('mapOfflineNotice').style.display = 'none';
-  document.getElementById('mapAttribution').style.display = 'none'; // MapLibre's own AttributionControl covers this
+  document.getElementById('mapAttribution').style.display = 'none';
 }
 
-// Re-runs from scratch every time the basemap style is swapped (light<->dark)
-// — map.setStyle() destroys every source/layer that isn't part of the new
-// style JSON, so the corridors source, glow layer, main line layer and their
-// data-driven line-color expressions all have to be rebuilt here each time.
-// Click/hover listeners registered with the delegated map.on(type, layerId, cb)
-// form live on the Map instance, not the style, so they survive setStyle() —
-// attachGlEventListenersOnce() guards against re-registering (and thus
-// double-firing) them on every swap. `opts.fit` is only true for the very
-// first style load; re-fitting the camera on every theme toggle would yank
-// the view back to the full corridor bounds and lose the user's pan/zoom.
 async function setupCorridorLayers(opts){
   opts = opts || {};
   if(!corridorGeoJSON){
@@ -1071,7 +927,6 @@ async function setupCorridorLayers(opts){
   }
   glMap.addSource('corridors', {type:'geojson', data: corridorGeoJSON, promoteId: 'corridor_id'});
 
-  // Wider, blurred glow underneath — preserves the glow effect from the old schematic
   glMap.addLayer({
     id: 'corridor-glow', type: 'line', source: 'corridors',
     layout: {'line-cap':'round','line-join':'round'},
@@ -1095,9 +950,7 @@ async function setupCorridorLayers(opts){
   attachGlEventListenersOnce();
 
   if(opts.fit){
-    const bounds = new maplibregl.LngLatBounds();
-    corridorGeoJSON.features.forEach(f=> f.geometry.coordinates.forEach(c=> bounds.extend(c)));
-    if(!bounds.isEmpty()) glMap.fitBounds(bounds, {padding: 36, duration: 0});
+    recenterMap(0);
   }
 }
 
@@ -1139,7 +992,7 @@ function getCorridorMidpoint(cid){
   const f = getCorridorFeature(cid);
   if(!f) return null;
   const coords = f.geometry.coordinates;
-  return coords[Math.floor(coords.length/2)]; // [lon,lat] == maplibre LngLat order
+  return coords[Math.floor(coords.length/2)];
 }
 function getCorridorBounds(cid){
   const f = getCorridorFeature(cid);
@@ -1149,12 +1002,54 @@ function getCorridorBounds(cid){
   return b;
 }
 
+// Full corridor-set bounds — used both for the very first camera fit and for
+// the recenter button. Prefers real corridor geometry (corridors.geojson);
+// falls back to the /corridors start/end points if the geometry hasn't
+// loaded yet, so the button still works before setupCorridorLayers() runs.
+function getAllCorridorsBounds(){
+  const b = new maplibregl.LngLatBounds();
+  if(corridorGeoJSON && corridorGeoJSON.features && corridorGeoJSON.features.length){
+    corridorGeoJSON.features.forEach(f=> f.geometry.coordinates.forEach(c=> b.extend(c)));
+  } else {
+    CORRIDORS.forEach(c=>{ b.extend([c.start[1],c.start[0]]); b.extend([c.end[1],c.end[0]]); });
+  }
+  return b.isEmpty() ? null : b;
+}
+function recenterMap(duration){
+  if(!glMap) return;
+  const bounds = getAllCorridorsBounds();
+  if(bounds) glMap.fitBounds(bounds, {padding: 40, duration: duration===undefined?600:duration});
+}
+
+// Custom MapLibre control, placed under the NavigationControl, so "reset
+// view" matches the zoom/compass buttons visually and sits right next to them.
+function RecenterControl(){}
+RecenterControl.prototype.onAdd = function(map){
+  this._map = map;
+  this._container = document.createElement('div');
+  this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'recenter-btn';
+  btn.title = 'Recenter map';
+  btn.setAttribute('aria-label', 'Recenter map to show all corridors');
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>';
+  btn.onclick = () => recenterMap();
+  this._container.appendChild(btn);
+  return this._container;
+};
+RecenterControl.prototype.onRemove = function(){
+  if(this._container && this._container.parentNode) this._container.parentNode.removeChild(this._container);
+  this._map = undefined;
+};
+
 function glPopupHtml(cid){
   const c = CORRIDORS.find(x=>x.id===cid);
   if(!c) return '';
   const info = currentValueFor(cid, curDay, curHour);
   const a = adviceCache[cid+'_'+curDay];
-  const bestWin = a && (a.best_windows||[])[0];
+  const pb = a ? (a.day_period || a.night_period) : null;
+  const bestWin = pb && (pb.best_windows||[])[0];
   let html = `<div class="gl-popup-title">${c.name}</div><div class="gl-popup-sub">${c.sub}</div>`;
   if(info){
     const col = colorFor(info.v);
@@ -1164,13 +1059,10 @@ function glPopupHtml(cid){
     html += `<div class="gl-popup-muted">Loading congestion…</div>`;
   }
   if(bestWin) html += `<div class="gl-popup-window">&#10003; Best window: ${windowText(bestWin)}</div>`;
-  if(a) html += `<div style="margin-top:6px">${provBadgeHtml(a.provenance, a.confidence)}</div>`;
+  if(a) html += `<div style="margin-top:6px">confidence ${Math.round((a.confidence||0)*100)}%</div>`;
   return html;
 }
 
-// Keeps the popup + camera in sync with selCorridor, from *any* selection
-// source (map click, sidebar click) — this is what makes the selected
-// corridor visually obvious on both the map and the sidebar simultaneously.
 function syncGlSelection(){
   if(!glMapReady) return;
   if(selCorridor === null){
@@ -1214,9 +1106,10 @@ function initGlMap(){
     return;
   }
   glMap.addControl(new maplibregl.NavigationControl(), 'top-right');
+  glMap.addControl(new RecenterControl(), 'top-right');
 
   glMap.on('error', (e)=>{
-    if(settled) return; // ignore transient errors once we've successfully loaded
+    if(settled) return;
     settled = true;
     clearTimeout(timeoutId);
     const msg = (e && e.error && e.error.message) || 'unknown map error';
@@ -1224,7 +1117,7 @@ function initGlMap(){
   });
 
   glMap.on('load', async ()=>{
-    if(settled) return; // timeout (or an error) already resolved this
+    if(settled) return;
     try{
       await setupCorridorLayers({fit: true});
       settled = true;
@@ -1240,11 +1133,6 @@ function initGlMap(){
     }
   });
 
-  // Fires every time a style finishes loading, including after setStyle() —
-  // i.e. every theme toggle. Guarded on mapInitialLoadDone so the very first
-  // style load (already handled by the 'load' listener above, which also
-  // needs the settled/timeout/fallback dance this one doesn't do) doesn't
-  // double-run the setup.
   glMap.on('style.load', ()=>{
     if(!mapInitialLoadDone) return;
     setupCorridorLayers({fit: false}).then(()=>{
@@ -1257,26 +1145,14 @@ function initGlMap(){
   });
 }
 
-// Swaps the MapLibre basemap style to match the site theme. Called on every
-// theme toggle (and would be a no-op harmlessly-skipped call on init, since
-// initGlMap() already constructs the map with the correct initial style).
 function applyMapStyleForTheme(){
-  if(!glMap || glMapFailed || !mapInitialLoadDone) return; // no live map to restyle (schematic fallback, or still connecting)
+  if(!glMap || glMapFailed || !mapInitialLoadDone) return;
   const key = currentMapStyleKey();
-  if(key === glMapStyleKey) return; // already showing this basemap
+  if(key === glMapStyleKey) return;
   const prevKey = glMapStyleKey;
   glMapStyleKey = key;
-  glMapReady = false; // layers are gone until the 'style.load' handler above re-adds them
+  glMapReady = false;
   try{
-    // {diff:false} forces a full style reload instead of MapLibre's default
-    // diff-based setState() patch. The default diff path patches the existing
-    // Style object in place and never re-fires 'style.load' (it only fires
-    // from the loadURL/loadJSON path a fresh Style object goes through) —
-    // so without this our corridors source/layers, which the diff silently
-    // drops because they're absent from both style JSONs, would never come
-    // back and glMapReady would be stuck false. Confirmed by instrumenting:
-    // with the default diff, 'style.load' fired once at map construction and
-    // never again after setStyle(), even after waiting 12s.
     glMap.setStyle(MAP_STYLE_URLS[key], {diff: false});
   }catch(e){
     console.warn('[map] setStyle failed, keeping previous basemap:', e.message);
@@ -1286,89 +1162,137 @@ function applyMapStyleForTheme(){
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// RENDER: SIDEBAR CORRIDOR LIST
+// RENDER: CORRIDOR COMBOBOX (searchable dropdown, replaces the old full list)
 // ─────────────────────────────────────────────────────────────────────────
-function renderCorridorList(){
-  const list = document.getElementById('corridorList');
-  list.innerHTML = '';
-  CORRIDORS.forEach(c=>{
-    const info = currentValueFor(c.id, curDay, curHour);
-    const div = document.createElement('div');
-    div.className = 'corridor-item' + (selCorridor===c.id?' sel':'');
-    if(info){
-      const col = colorFor(info.v);
-      div.style.setProperty('--c', col);
-      const degraded = isDegraded(info.conf);
-      div.innerHTML = `
-        <div class="ci-name">${c.name}</div>
-        <div class="ci-sub">${c.sub}</div>
-        <div class="ci-bottom">
-          <div class="ci-bar-wrap"><div class="ci-bar" style="width:${Math.round(visualFrac(info.v)*100)}%;background:${col};${degraded?'opacity:.55':''}"></div></div>
-          <div class="ci-pct" style="color:${col}">${Math.round(info.v*100)}%</div>
-          <div class="ci-badge" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</div>
-        </div>
-        ${info.prov==='synthetic'?'<div class="low-conf-note">⚠ synthetic data</div>':''}
-        ${degraded?'<div class="low-conf-note">low confidence</div>':''}`;
-    } else {
-      div.innerHTML = `<div class="ci-name">${c.name}</div><div class="ci-sub">${c.sub}</div><div class="ci-skel">loading…</div>`;
-    }
-    div.onclick = ()=>{ selCorridor = (selCorridor===c.id?null:c.id); onSelectionChanged(); };
-    list.appendChild(div);
+function corridorOptionHtml(c){
+  const info = currentValueFor(c.id, curDay, curHour);
+  const col = info ? colorFor(info.v) : 'var(--muted)';
+  const label = info ? labelFor(info.v) : '';
+  const pct = info ? Math.round(info.v*100)+'%' : '';
+  return `<div class="combo-opt${selCorridor===c.id?' sel':''}" role="option" aria-selected="${selCorridor===c.id}" data-id="${c.id}" id="combo-opt-${c.id}">
+    <span class="combo-dot" style="background:${col}"></span>
+    <span class="combo-name">${c.name}</span>
+    <span class="combo-meta">${info?`<span class="combo-pct" style="color:${col}">${pct}</span><span class="combo-badge" style="background:${badgeBg(info.v)};color:${col}">${label.toUpperCase()}</span>`:'<span class="combo-skel">…</span>'}</span>
+  </div>`;
+}
+function renderCorridorCombo(){
+  const box = document.getElementById('corridorListbox');
+  const q = (document.getElementById('corridorInput').value||'').trim().toLowerCase();
+  const c = CORRIDORS.find(x=>x.id===selCorridor);
+  const showingSelected = c && q && c.name.toLowerCase()===q;
+  const items = CORRIDORS.filter(x=> !q || showingSelected || x.name.toLowerCase().includes(q));
+  box.innerHTML = items.length ? items.map(corridorOptionHtml).join('') : '<div class="combo-empty">No matching corridors</div>';
+  box.querySelectorAll('.combo-opt').forEach(el=>{
+    el.onclick = ()=> selectCorridor(parseInt(el.dataset.id,10));
   });
+  activeComboIndex = -1;
+}
+function selectCorridor(id){
+  selCorridor = id;
+  const c = CORRIDORS.find(x=>x.id===id);
+  document.getElementById('corridorInput').value = c ? c.name : '';
+  closeCombo();
+  onSelectionChanged();
+}
+function openCombo(){
+  document.getElementById('corridorListbox').style.display='block';
+  document.getElementById('corridorInput').setAttribute('aria-expanded','true');
+  renderCorridorCombo();
+}
+function closeCombo(){
+  document.getElementById('corridorListbox').style.display='none';
+  document.getElementById('corridorInput').setAttribute('aria-expanded','false');
+}
+function highlightCombo(opts){
+  opts.forEach((o,i)=> o.classList.toggle('active', i===activeComboIndex));
+  if(opts[activeComboIndex]) opts[activeComboIndex].scrollIntoView({block:'nearest'});
+}
+// Reflects the current selection into the search box without clobbering
+// in-progress typing (only writes when the input isn't focused).
+function syncComboInput(){
+  const input = document.getElementById('corridorInput');
+  if(document.activeElement === input) return;
+  const c = CORRIDORS.find(x=>x.id===selCorridor);
+  input.value = c ? c.name : '';
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// RENDER: ADVICE BANNER (the centerpiece — "when should I go?")
+// RENDER: HERO ADVICE BANNER — "when should I go?" with the day/night split
 // ─────────────────────────────────────────────────────────────────────────
 function windowText(w){
   const wrap = w.start_hour > w.end_hour;
   return `${fmtHour(w.start_hour)}–${fmtHour(w.end_hour)}${wrap?' (overnight)':''}`;
 }
+function updatePeriodButtons(a){
+  const dayBtn = document.querySelector('.period-btn[data-period="day"]');
+  const nightBtn = document.querySelector('.period-btn[data-period="night"]');
+  if(a && a.day_period) dayBtn.innerHTML = `Day <span class="period-range">${fmtHour(a.day_period.start_hour)}–${fmtHour(a.day_period.end_hour)}</span>`;
+  else dayBtn.textContent = 'Day';
+  if(a && a.night_period) nightBtn.innerHTML = `Night <span class="period-range">${fmtHour(a.night_period.start_hour)}–${fmtHour(a.night_period.end_hour)}</span>`;
+  else nightBtn.textContent = 'Night';
+}
 function renderAdvice(){
   const nameEl = document.getElementById('adviceCorridorName');
   const sumEl = document.getElementById('adviceSummary');
-  const badgesEl = document.getElementById('adviceBadges');
   const chipsEl = document.getElementById('windowChips');
+  const hsBest = document.getElementById('hsBest');
+  const hsSave = document.getElementById('hsSave');
+  const hsConf = document.getElementById('hsConf');
+  const hsConfWrap = document.getElementById('hsConfWrap');
 
   if(selCorridor===null || !CORRIDORS.length){
     nameEl.textContent = CORRIDORS.length ? 'Select a corridor' : 'Loading corridors…';
-    sumEl.textContent = CORRIDORS.length ? 'Click a road on the map or in the corridor list to get a departure recommendation.' : '';
-    badgesEl.innerHTML = ''; chipsEl.innerHTML = '';
+    sumEl.textContent = CORRIDORS.length ? 'Search for a road above, or click one on the map, to get a departure recommendation.' : '';
+    chipsEl.innerHTML = '';
+    hsBest.textContent = '--'; hsSave.textContent = '--'; hsConf.textContent = '--';
+    hsConfWrap.classList.remove('low');
+    updatePeriodButtons(null);
     return;
   }
   const c = CORRIDORS.find(x=>x.id===selCorridor);
   const key = selCorridor+'_'+curDay;
   const a = adviceCache[key];
-  nameEl.textContent = c.name + ' — ' + ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][curDay];
+  nameEl.textContent = c.name;
   if(!a){
     sumEl.textContent = 'Fetching advice…';
-    badgesEl.innerHTML = ''; chipsEl.innerHTML = '';
+    chipsEl.innerHTML = '';
+    hsBest.textContent = '--'; hsSave.textContent = '--'; hsConf.textContent = '--';
+    hsConfWrap.classList.remove('low');
+    updatePeriodButtons(null);
     return;
   }
-  sumEl.textContent = a.summary || '';
-  badgesEl.innerHTML = provBadgeHtml(a.provenance, a.confidence);
+  updatePeriodButtons(a);
+  const pb = (curPeriod==='day' ? a.day_period : a.night_period) || a;
+  const conf = typeof pb.confidence === 'number' ? pb.confidence : a.confidence;
+
+  sumEl.textContent = pb.summary || a.summary || '';
+  sumEl.classList.toggle('degraded', isDegraded(conf));
+
   chipsEl.innerHTML = '';
-  (a.best_windows||[]).forEach(w=>{
+  (pb.best_windows||[]).forEach(w=>{
     chipsEl.innerHTML += `<span class="chip best">✓ BEST ${windowText(w)} — ${w.text||w.label}</span>`;
   });
-  (a.worst_windows||[]).forEach(w=>{
+  (pb.worst_windows||[]).forEach(w=>{
     chipsEl.innerHTML += `<span class="chip worst">✕ AVOID ${windowText(w)} — ${w.text||w.label}</span>`;
   });
-  if(!(a.best_windows||[]).length && !(a.worst_windows||[]).length){
-    chipsEl.innerHTML = '<span class="advice-empty">No strong pattern detected for this corridor/day.</span>';
+  if(!(pb.best_windows||[]).length && !(pb.worst_windows||[]).length){
+    chipsEl.innerHTML = '<span class="advice-empty">No strong pattern detected for this period.</span>';
   }
+
+  hsBest.textContent = typeof pb.best_hour === 'number' ? fmtHour(pb.best_hour) : '--';
+  const saveMin = pb.saving_minutes, savePct = pb.saving_pct;
+  hsSave.textContent = (typeof saveMin === 'number') ? `${Math.round(saveMin)} min` : '--';
+  hsSave.title = (typeof savePct === 'number') ? `${Math.round(savePct)}% shorter than the worst hour` : '';
+  const confPct = typeof conf === 'number' ? Math.round(conf*100) : null;
+  hsConf.textContent = confPct===null ? '--' : confPct+'%';
+  hsConfWrap.classList.toggle('low', isDegraded(conf));
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// RENDER: DETAIL FLOAT (per-corridor 24h chart, from cached /advice profile)
+// RENDER: DETAIL FLOAT (schematic-fallback only)
 // ─────────────────────────────────────────────────────────────────────────
 function renderDetail(){
   const el = document.getElementById('detailFloat');
-  // When the real MapLibre map is live, the corridor popup (glPopupHtml) already
-  // shows name/congestion/label/confidence/provenance/best-window anchored on the
-  // corridor itself — this bottom-centered float is redundant screen space and,
-  // worse, visually overlaps the popup (very visible at mobile widths). Only the
-  // schematic SVG fallback (no per-corridor popup) needs this panel.
   if(glMapReady){ el.style.display='none'; return; }
   if(selCorridor===null){ el.style.display='none'; return; }
   const c = CORRIDORS.find(x=>x.id===selCorridor);
@@ -1395,77 +1319,28 @@ function renderDetail(){
       <div class="df-stat"><div class="l">Now (${fmtHour(curHour)})</div><div class="v" style="color:${colorFor(prof[curHour])}">${labelFor(prof[curHour])}</div></div>
       <div class="df-stat"><div class="l">Peak hour</div><div class="v">${fmtHour(a.peak_hour)}</div></div>
       <div class="df-stat"><div class="l">Best hour</div><div class="v" style="color:var(--green)">${fmtHour(a.best_hour)}</div></div>
-    </div>
-    <div style="margin-top:8px">${provBadgeHtml(a.provenance, a.confidence)}</div>`;
+    </div>`;
   document.getElementById('dfClose').onclick = ()=>{ selCorridor=null; onSelectionChanged(); };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// RENDER: RIGHT PANEL — live "now" stats, model/provenance card, best windows
+// RENDER: DATA & MODEL INFO POPOVER (footer)
 // ─────────────────────────────────────────────────────────────────────────
-function renderNowStats(){
-  const avgEl = document.getElementById('statAvg');
-  const freeEl = document.getElementById('statFree');
-  const worstEl = document.getElementById('statWorst');
-  if(!nowData){ avgEl.textContent='--'; freeEl.textContent='--'; worstEl.textContent='--'; return; }
-  const avg = nowData.summary.avg_congestion;
-  avgEl.textContent = Math.round(avg*100)+'%';
-  avgEl.style.color = colorFor(avg);
-  freeEl.textContent = nowData.summary.clear_count + '/' + nowData.corridors.length;
-  worstEl.textContent = nowData.summary.worst_corridor;
-}
-
-// "17 Aug 2026" — used both in the model card and the always-visible header
-// pill, so a static bundle can never be silently presented as if it were live.
 function fmtGeneratedAt(iso){
   try{
     return new Date(iso).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric', timeZone:'Asia/Kolkata'});
   }catch(e){ return iso; }
 }
-function renderModelCard(){
+function renderInfoPopover(){
   document.getElementById('mHealth').textContent = health ? health.status : (apiReachable===false ? 'unreachable' : '--');
   document.getElementById('mVersion').textContent = health ? health.model_version : '--';
-  const provEl = document.getElementById('mProv');
-  provEl.innerHTML = health ? provBadgeHtml(health.provenance) : '--';
-  document.getElementById('mCorridors').textContent = health ? health.corridors : (CORRIDORS.length || '--');
+  document.getElementById('mProv').innerHTML = health ? provBadgeHtml(health.provenance) : '--';
   document.getElementById('mRows').textContent = health ? health.trained_rows : '--';
-  document.getElementById('fsModel').textContent = health ? health.model_version : '--';
-  document.getElementById('fsCorridors').textContent = CORRIDORS.length || '--';
-  const pill = document.getElementById('modelPill');
-  if(health){
-    pill.style.display='flex';
-    pill.innerHTML = `<div class="dot-live"></div>${health.model_version}`;
-  }
   const genEl = document.getElementById('mGeneratedAt');
-  const dataAsOfPill = document.getElementById('dataAsOfPill');
-  if(BUNDLE_MODE && BUNDLE && BUNDLE.generated_at){
-    const dateStr = fmtGeneratedAt(BUNDLE.generated_at) + ' IST';
-    genEl.textContent = dateStr;
-    dataAsOfPill.style.display = 'flex';
-    dataAsOfPill.innerHTML = `<div class="dot-live"></div>data as of ${dateStr}`;
-  } else {
-    genEl.textContent = '--';
-    dataAsOfPill.style.display = 'none';
-  }
-}
-
-async function renderTravelWindows(){
-  const el = document.getElementById('travelWindows');
-  el.innerHTML = '';
-  for(const c of CORRIDORS){
-    const a = adviceCache[c.id+'_'+curDay];
-    const div = document.createElement('div');
-    div.className = 'win-row';
-    if(a){
-      const col = colorFor(a.profile[a.best_hour]);
-      div.innerHTML = `
-        <div><div class="win-name">${c.name}</div><div class="win-sub">${c.sub}</div></div>
-        <div><div class="win-time" style="color:${col}">${fmtHour(a.best_hour)}</div><div class="win-lbl">${labelFor(a.profile[a.best_hour])}${a.provenance==='synthetic'?' ⚠':''}</div></div>`;
-    } else {
-      div.innerHTML = `<div><div class="win-name">${c.name}</div><div class="win-sub">${c.sub}</div></div><div class="win-lbl">loading…</div>`;
-    }
-    el.appendChild(div);
-  }
+  genEl.textContent = (BUNDLE_MODE && BUNDLE && BUNDLE.generated_at) ? (fmtGeneratedAt(BUNDLE.generated_at) + ' IST') : '--';
+  const accEl = document.getElementById('mAccuracy');
+  const acc = BUNDLE_MODE && BUNDLE ? BUNDLE.accuracy : null;
+  accEl.textContent = acc ? acc.note : '';
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1473,8 +1348,8 @@ async function renderTravelWindows(){
 // ─────────────────────────────────────────────────────────────────────────
 function renderHud(){
   const hud = document.getElementById('mapHud');
-  if(!nowData){ hud.innerHTML = `SELECTED &nbsp;·&nbsp; ${fmtHour(curHour)}`; return; }
-  hud.innerHTML = `SYS ACTIVE &nbsp;·&nbsp; ${fmtHour(curHour)}<br>AVG ${Math.round(nowData.summary.avg_congestion*100)}% CONGESTION (live)`;
+  const dayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][curDay];
+  hud.textContent = `${dayName} · ${fmtHour(curHour)}`;
 }
 function updateSliderTrack(){
   const sl = document.getElementById('timeSlider');
@@ -1495,12 +1370,11 @@ function updateTimeDesc(){
 function render(){
   document.getElementById('mapEmpty').style.display = CORRIDORS.length ? 'none' : 'flex';
   if(glMapReady){ updateGlFeatureStates(); syncGlSelection(); } else if(!glMapFailed){ /* still connecting */ } else { drawMap(); }
-  renderCorridorList();
+  renderCorridorCombo();
+  syncComboInput();
   renderAdvice();
   renderDetail();
-  renderNowStats();
-  renderModelCard();
-  renderTravelWindows();
+  renderInfoPopover();
   renderHud();
   updateTimeDesc();
 }
@@ -1522,8 +1396,6 @@ async function loadCorridors(){
     corridorsFailed = true;
     apiReachable = false;
     if(e.kind === 'no-model'){
-      // Backend is up and answering, it just has nothing trained yet — a
-      // legitimate, different condition from "can't reach the API at all".
       showWarnBanner('Backend is up but no model has been trained yet (503): ' + (e.message||'no model trained yet'));
     } else if(e.kind === 'network'){
       showErrorBanner(e.message || ("Can't reach the API at " + API_BASE + ' — start it with ./run.sh'));
@@ -1543,41 +1415,23 @@ async function loadHealth(){
   }catch(e){
     health = null;
     if(e.kind === 'no-model') showWarnBanner('No model trained yet (503): ' + (e.message||''));
-    // network/http-error cases are already surfaced by loadCorridors' banner
-    // above (it runs first in refreshAll) — avoid a second, redundant one.
   }
-  renderModelCard();
+  renderInfoPopover();
 }
 
 async function loadAdviceForDay(day){
   if(!CORRIDORS.length) return;
   const key0 = (CORRIDORS[0] && CORRIDORS[0].id) + '_' + day;
-  if(adviceCache[key0]) { render(); return; } // already cached for this day
+  if(adviceCache[key0]) { render(); return; }
   try{
-    // Single bulk call (GET /advice/all?day=) instead of 8 parallel /advice
-    // calls — same per-corridor object shape, wrapped in a `corridors` array.
-    // provenance is response-level per the contract (shared by every
-    // corridor in this response); confidence stays per-corridor.
     const data = await apiGet('/advice/all', {day});
     (data.corridors||[]).forEach(entry=>{
       adviceCache[entry.corridor_id+'_'+day] = Object.assign({}, entry, {provenance: data.provenance, day});
     });
   }catch(e){
-    // Leave uncached -> UI shows "loading/no data" (dashed lines, "loading…"
-    // rows) for every corridor on this day rather than a partial/blank page.
     console.warn('advice/all failed for day', day, e.message);
   }
   render();
-}
-
-async function loadNow(){
-  try{
-    nowData = await apiGet('/now');
-  }catch(e){
-    nowData = null;
-  }
-  renderNowStats();
-  renderHud();
 }
 
 async function refreshAll(){
@@ -1590,21 +1444,17 @@ async function refreshAll(){
       selCorridor = (wanted!==null && CORRIDORS.some(c=>c.id===wanted)) ? wanted : CORRIDORS[0].id;
     }
     await loadAdviceForDay(curDay);
-    await loadNow();
     render();
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// PREDICT (used when hour changes on a selected corridor, for exact delay
-// minutes rather than the coarse per-hour profile point alone — optional
-// enrichment, falls back silently if it fails)
+// PREDICT (enrichment for the schematic-fallback detail float only)
 // ─────────────────────────────────────────────────────────────────────────
 async function maybeEnrichWithPredict(){
   if(selCorridor===null) return;
   try{
     const p = await apiGet('/predict', {corridor:selCorridor, day:curDay, hour:curHour});
-    // Merge exact delay/typical minutes into detail float if still same selection.
     if(selCorridor!==null){
       const el = document.getElementById('detailFloat');
       if(el.style.display==='block'){
@@ -1618,12 +1468,7 @@ async function maybeEnrichWithPredict(){
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// ROUTE PLANNER (kept from the location-aware frontend): geocode two place
-// names via Nominatim, match the nearest corridor by point-to-segment
-// distance to that corridor's real start/end from the API, then call the
-// real /best-time endpoint for the chosen hour window. Geocoding is an
-// optional network enhancement — if it fails (offline / no internet), the
-// tool falls back to using whichever corridor is currently selected.
+// ROUTE PLANNER
 // ─────────────────────────────────────────────────────────────────────────
 async function geocodeLocation(query){
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Gurugram, India')}`;
@@ -1678,6 +1523,7 @@ async function findBestDeparture(){
     if(start && end){
       corridor = matchCorridor(start, end);
       selCorridor = corridor.id;
+      selectCorridor(corridor.id);
     } else {
       result.innerHTML = '<span style="color:var(--warn-text)">Could not geocode one or both locations (offline?). Using selected corridor instead.</span><br>';
     }
@@ -1691,8 +1537,7 @@ async function findBestDeparture(){
       <div style="color:var(--cyan);font-size:12px;font-weight:600;margin-bottom:6px">${corridor.name}</div>
       <div style="font-size:20px;color:${colorForLabel(bt.label)};font-family:var(--mono)" class="${degraded?'degraded':''}">${fmtHour(bt.recommended_hour)}</div>
       <div style="margin:6px 0">${bt.summary}</div>
-      <div>Saves ~${bt.saving_vs_worst_minutes} min vs the worst hour in this window.</div>
-      <div style="margin-top:8px">${provBadgeHtml(bt.provenance, bt.confidence)}</div>`;
+      <div>Saves ~${bt.saving_vs_worst_minutes} min vs the worst hour in this window.</div>`;
     render();
   }catch(e){
     result.innerHTML = `<span style="color:var(--warn-text)">${e.message}</span>`;
@@ -1715,8 +1560,8 @@ document.getElementById('themeBtn').onclick = function(){
   document.documentElement.setAttribute('data-theme', next);
   this.textContent = next==='light' ? '◑' : '◐';
   try{ localStorage.setItem('gtp-theme', next); }catch(e){}
-  refreshGlMapColors(); // congestion colors are read live off CSS vars, which just changed
-  applyMapStyleForTheme(); // swap the MapLibre basemap (light positron <-> dark) to match
+  refreshGlMapColors();
+  applyMapStyleForTheme();
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1725,7 +1570,6 @@ document.getElementById('themeBtn').onclick = function(){
 document.getElementById('timeSlider').oninput = function(){
   curHour = parseInt(this.value);
   document.getElementById('timeDisp').textContent = fmtHour(curHour);
-  document.getElementById('sliderVal').textContent = fmtHour(curHour);
   updateSliderTrack();
   render();
   maybeEnrichWithPredict();
@@ -1741,13 +1585,70 @@ document.querySelectorAll('.day-btn').forEach(btn=>{
   };
 });
 
+document.querySelectorAll('.period-btn').forEach(btn=>{
+  btn.onclick = function(){
+    curPeriod = this.dataset.period;
+    document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('active', b===this));
+    renderAdvice();
+  };
+});
+
+// Corridor combobox interactions
+const corridorInputEl = document.getElementById('corridorInput');
+corridorInputEl.addEventListener('focus', openCombo);
+corridorInputEl.addEventListener('input', openCombo);
+corridorInputEl.addEventListener('keydown', function(e){
+  const box = document.getElementById('corridorListbox');
+  const opts = Array.from(box.querySelectorAll('.combo-opt'));
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    if(box.style.display==='none') openCombo();
+    activeComboIndex = Math.min(activeComboIndex+1, opts.length-1);
+    highlightCombo(opts);
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    activeComboIndex = Math.max(activeComboIndex-1, 0);
+    highlightCombo(opts);
+  } else if(e.key==='Enter'){
+    e.preventDefault();
+    if(activeComboIndex>=0 && opts[activeComboIndex]) selectCorridor(parseInt(opts[activeComboIndex].dataset.id,10));
+  } else if(e.key==='Escape'){
+    closeCombo();
+    this.blur();
+  }
+});
+document.addEventListener('click', function(e){
+  if(!document.getElementById('corridorCombo').contains(e.target)) closeCombo();
+});
+
 document.getElementById('findBtn').onclick = findBestDeparture;
 document.getElementById('errBannerRetry').onclick = refreshAll;
 
-// Explicit Asia/Kolkata timeZone — never the visitor's own OS timezone
-// (header labels this clock "IST", so it must actually show IST).
+// Footer "Data & model" popover
+const dataInfoBtn = document.getElementById('dataInfoBtn');
+const dataInfoPopover = document.getElementById('dataInfoPopover');
+dataInfoBtn.onclick = function(e){
+  e.stopPropagation();
+  const showing = dataInfoPopover.style.display !== 'none';
+  dataInfoPopover.style.display = showing ? 'none' : 'block';
+  dataInfoBtn.setAttribute('aria-expanded', String(!showing));
+};
+document.addEventListener('click', function(e){
+  if(dataInfoPopover.style.display!=='none' && !dataInfoPopover.contains(e.target) && e.target!==dataInfoBtn){
+    dataInfoPopover.style.display = 'none';
+    dataInfoBtn.setAttribute('aria-expanded','false');
+  }
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && dataInfoPopover.style.display!=='none'){
+    dataInfoPopover.style.display = 'none';
+    dataInfoBtn.setAttribute('aria-expanded','false');
+  }
+});
+
+window.addEventListener('resize', function(){ if(glMap) glMap.resize(); });
+
 setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'}); }, 1000);
-setInterval(loadNow, 60000);
 
 // ─────────────────────────────────────────────────────────────────────────
 // INIT
@@ -1759,22 +1660,11 @@ setInterval(loadNow, 60000);
     document.getElementById('protoOverlay').classList.add('show');
   }
   if(MOCK){
-    // Persistent for the page's whole life — never hidden, never a close
-    // button — so fixture numbers can never be mistaken for real ones.
     document.getElementById('demoBanner').classList.add('show');
-    // Pull the real corridor set/geometry before the first render so the
-    // demo never shows a stale or hardcoded corridor count.
     await loadMockCorridors();
   } else if(API_PARAM){
-    // ?api=<url> is an explicit opt-in to a live backend (run.sh passes
-    // this) — skip the bundle entirely and go straight to that API.
+    // ?api=<url> is an explicit opt-in to a live backend
   } else {
-    // Default path (this is what the public GitHub Pages site uses): load
-    // the precomputed static bundle instead of hitting any backend. If it
-    // can't be loaded, BUNDLE_MODE stays false and apiGet() below falls
-    // through to the live-API code path (http://localhost:5000 default),
-    // which — if that also fails — surfaces the existing honest
-    // "can't reach the API" banner. No backend is required either way.
     const loaded = await loadBundleJson();
     if(loaded){ BUNDLE = loaded; BUNDLE_MODE = true; }
   }
@@ -1793,7 +1683,6 @@ setInterval(loadNow, 60000);
   dayBtns[curDay].classList.add('active');
   document.getElementById('timeSlider').value = curHour;
   document.getElementById('timeDisp').textContent = fmtHour(curHour);
-  document.getElementById('sliderVal').textContent = fmtHour(curHour);
   updateSliderTrack();
   render();
   initGlMap();
