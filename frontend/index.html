@@ -484,14 +484,29 @@ let apiReachable = null;      // null=unknown, true/false
 let corridorsFailed = false;
 
 // MapLibre real-map state (see "MAPLIBRE REAL MAP" section below for setup)
-const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+// Both confirmed live on OpenFreeMap (fetched and checked for valid style
+// JSON, version:8, before wiring in): 'dark' has 47 layers and a
+// background-color of rgb(12,12,12) — a real dark basemap, not a guess.
+// ('dark-matter', the commonly-assumed vector dark-style name, 404s there —
+// OpenFreeMap's actual dark style is just named 'dark'.)
+const MAP_STYLE_URLS = {
+  light: 'https://tiles.openfreemap.org/styles/positron',
+  dark: 'https://tiles.openfreemap.org/styles/dark'
+};
 const MAP_LOAD_TIMEOUT_MS = 7000;
 let glMap = null;             // maplibregl.Map instance, or null
-let glMapReady = false;       // true once style+source+layers are up
+let glMapReady = false;       // true once style+source+layers are up (false while a style swap is in flight)
 let glMapFailed = false;      // true once we've fallen back to the schematic
+let mapInitialLoadDone = false; // true after the very first style has finished loading + corridor layers attached
+let glMapStyleKey = null;     // 'light' | 'dark' — which basemap style is currently (or about to be) active
+let glListenersAttached = false; // click/hover handlers are attached once — setStyle() doesn't drop them, so re-adding would double-fire
 let corridorGeoJSON = null;   // frontend/corridors.geojson, fetched once
 let glPopup = null;           // single reusable maplibregl.Popup
 let lastFlownCorridor = undefined; // avoid re-flying the camera on every render
+
+function currentMapStyleKey(){
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // LABEL / COLOR — derived from the documented thresholds in api_contract.md.
@@ -1037,7 +1052,18 @@ function showGlMap(){
   document.getElementById('mapAttribution').style.display = 'none'; // MapLibre's own AttributionControl covers this
 }
 
-async function setupCorridorLayers(){
+// Re-runs from scratch every time the basemap style is swapped (light<->dark)
+// — map.setStyle() destroys every source/layer that isn't part of the new
+// style JSON, so the corridors source, glow layer, main line layer and their
+// data-driven line-color expressions all have to be rebuilt here each time.
+// Click/hover listeners registered with the delegated map.on(type, layerId, cb)
+// form live on the Map instance, not the style, so they survive setStyle() —
+// attachGlEventListenersOnce() guards against re-registering (and thus
+// double-firing) them on every swap. `opts.fit` is only true for the very
+// first style load; re-fitting the camera on every theme toggle would yank
+// the view back to the full corridor bounds and lose the user's pan/zoom.
+async function setupCorridorLayers(opts){
+  opts = opts || {};
   if(!corridorGeoJSON){
     const res = await fetch('corridors.geojson');
     if(!res.ok) throw new Error('corridors.geojson HTTP ' + res.status);
@@ -1066,6 +1092,18 @@ async function setupCorridorLayers(){
     }
   });
 
+  attachGlEventListenersOnce();
+
+  if(opts.fit){
+    const bounds = new maplibregl.LngLatBounds();
+    corridorGeoJSON.features.forEach(f=> f.geometry.coordinates.forEach(c=> bounds.extend(c)));
+    if(!bounds.isEmpty()) glMap.fitBounds(bounds, {padding: 36, duration: 0});
+  }
+}
+
+function attachGlEventListenersOnce(){
+  if(glListenersAttached) return;
+  glListenersAttached = true;
   glMap.on('mouseenter', 'corridor-line', ()=>{ glMap.getCanvas().style.cursor = 'pointer'; });
   glMap.on('mouseleave', 'corridor-line', ()=>{ glMap.getCanvas().style.cursor = ''; });
   glMap.on('click', 'corridor-line', (e)=>{
@@ -1074,10 +1112,6 @@ async function setupCorridorLayers(){
     selCorridor = (selCorridor === cid ? null : cid);
     onSelectionChanged();
   });
-
-  const bounds = new maplibregl.LngLatBounds();
-  corridorGeoJSON.features.forEach(f=> f.geometry.coordinates.forEach(c=> bounds.extend(c)));
-  if(!bounds.isEmpty()) glMap.fitBounds(bounds, {padding: 36, duration: 0});
 }
 
 function refreshGlMapColors(){
@@ -1166,10 +1200,11 @@ function initGlMap(){
     if(!settled){ settled = true; fallbackToSchematic('map load timed out after ' + MAP_LOAD_TIMEOUT_MS + 'ms (offline?)'); }
   }, MAP_LOAD_TIMEOUT_MS);
 
+  glMapStyleKey = currentMapStyleKey();
   try{
     glMap = new maplibregl.Map({
       container: 'glMap',
-      style: MAP_STYLE_URL,
+      style: MAP_STYLE_URLS[glMapStyleKey],
       center: [77.05, 28.45],
       zoom: 11
     });
@@ -1191,10 +1226,11 @@ function initGlMap(){
   glMap.on('load', async ()=>{
     if(settled) return; // timeout (or an error) already resolved this
     try{
-      await setupCorridorLayers();
+      await setupCorridorLayers({fit: true});
       settled = true;
       clearTimeout(timeoutId);
       glMapReady = true;
+      mapInitialLoadDone = true;
       showGlMap();
       render();
     }catch(e){
@@ -1203,6 +1239,50 @@ function initGlMap(){
       fallbackToSchematic('failed to load corridor geometry: ' + e.message);
     }
   });
+
+  // Fires every time a style finishes loading, including after setStyle() —
+  // i.e. every theme toggle. Guarded on mapInitialLoadDone so the very first
+  // style load (already handled by the 'load' listener above, which also
+  // needs the settled/timeout/fallback dance this one doesn't do) doesn't
+  // double-run the setup.
+  glMap.on('style.load', ()=>{
+    if(!mapInitialLoadDone) return;
+    setupCorridorLayers({fit: false}).then(()=>{
+      glMapReady = true;
+      render();
+    }).catch(e=>{
+      console.warn('[map] failed to re-add corridor layers after theme swap:', e.message);
+      fallbackToSchematic('failed to re-add corridor layers after theme swap: ' + e.message);
+    });
+  });
+}
+
+// Swaps the MapLibre basemap style to match the site theme. Called on every
+// theme toggle (and would be a no-op harmlessly-skipped call on init, since
+// initGlMap() already constructs the map with the correct initial style).
+function applyMapStyleForTheme(){
+  if(!glMap || glMapFailed || !mapInitialLoadDone) return; // no live map to restyle (schematic fallback, or still connecting)
+  const key = currentMapStyleKey();
+  if(key === glMapStyleKey) return; // already showing this basemap
+  const prevKey = glMapStyleKey;
+  glMapStyleKey = key;
+  glMapReady = false; // layers are gone until the 'style.load' handler above re-adds them
+  try{
+    // {diff:false} forces a full style reload instead of MapLibre's default
+    // diff-based setState() patch. The default diff path patches the existing
+    // Style object in place and never re-fires 'style.load' (it only fires
+    // from the loadURL/loadJSON path a fresh Style object goes through) —
+    // so without this our corridors source/layers, which the diff silently
+    // drops because they're absent from both style JSONs, would never come
+    // back and glMapReady would be stuck false. Confirmed by instrumenting:
+    // with the default diff, 'style.load' fired once at map construction and
+    // never again after setStyle(), even after waiting 12s.
+    glMap.setStyle(MAP_STYLE_URLS[key], {diff: false});
+  }catch(e){
+    console.warn('[map] setStyle failed, keeping previous basemap:', e.message);
+    glMapStyleKey = prevKey;
+    glMapReady = true;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1636,6 +1716,7 @@ document.getElementById('themeBtn').onclick = function(){
   this.textContent = next==='light' ? '◑' : '◐';
   try{ localStorage.setItem('gtp-theme', next); }catch(e){}
   refreshGlMapColors(); // congestion colors are read live off CSS vars, which just changed
+  applyMapStyleForTheme(); // swap the MapLibre basemap (light positron <-> dark) to match
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1718,6 +1799,17 @@ setInterval(loadNow, 60000);
   initGlMap();
   refreshAll();
 })();
+window.__gtpDebug = function(){
+  return {
+    ready: glMapReady, failed: glMapFailed, styleKey: glMapStyleKey,
+    hasMap: !!glMap,
+    sourceExists: !!(glMap && glMap.getSource && glMap.getSource('corridors')),
+    lineLayerExists: !!(glMap && glMap.getLayer && glMap.getLayer('corridor-line')),
+    glowLayerExists: !!(glMap && glMap.getLayer && glMap.getLayer('corridor-glow')),
+    selCorridor: selCorridor,
+    popupOpen: !!(glPopup && glPopup.isOpen && glPopup.isOpen())
+  };
+};
 </script>
 </body>
 </html>
