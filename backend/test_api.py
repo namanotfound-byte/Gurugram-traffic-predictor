@@ -20,6 +20,16 @@ ROOT_DIR = os.path.join(BACKEND_DIR, "..")
 MODEL_PATH = os.path.join(ROOT_DIR, "models", "traffic_gbt.joblib")
 
 sys.path.insert(0, BACKEND_DIR)
+sys.path.insert(0, ROOT_DIR)
+
+# The frozen single source of truth (corridors.py) -- derive every
+# corridor-count/id expectation from it instead of hardcoding numbers, so
+# the suite doesn't rot every time a corridor is added or removed.
+from corridors import CORRIDORS  # noqa: E402
+
+N_CORRIDORS = len(CORRIDORS)
+VALID_CORRIDOR_IDS = {c["id"] for c in CORRIDORS}
+INVALID_CORRIDOR_ID = max(VALID_CORRIDOR_IDS) + 1  # guaranteed out of range
 
 
 def _fresh_app():
@@ -85,7 +95,7 @@ class TestHealthAndCorridors:
         assert r.status_code == 200
         body = r.get_json()
         assert body["status"] == "ok"
-        assert body["corridors"] == 8
+        assert body["corridors"] == N_CORRIDORS
         for key in ("model_version", "provenance", "trained_rows"):
             assert key in body
 
@@ -93,7 +103,7 @@ class TestHealthAndCorridors:
         r = client.get("/corridors")
         assert r.status_code == 200
         body = r.get_json()
-        assert len(body["corridors"]) == 8
+        assert len(body["corridors"]) == N_CORRIDORS
         c0 = body["corridors"][0]
         for key in ("id", "name", "sub", "road_class", "start", "end", "length_km"):
             assert key in c0
@@ -107,12 +117,13 @@ class TestConfidenceIsHonest:
     """Confidence must never be a flat constant -- it reflects whether the
     served value is a real measurement (and whether that measurement's
     route was stable) or a model-inferred gap-fill. It must NOT be driven
-    by metrics["cv_r2"], which is leave-one-corridor-out and dominated by
-    the two road classes (expressway, highway) that have only one member
-    each -- not representative of confidence in a served value."""
+    by metrics["cv_r2"], which is leave-one-corridor-out and (at the time
+    this was written) was dominated by the two road classes (expressway,
+    highway) that had only one member each -- not representative of
+    confidence in a served value."""
 
     def test_confidence_in_valid_range(self, client):
-        for cid in range(8):
+        for cid in sorted(VALID_CORRIDOR_IDS):
             r = client.get(f"/predict?corridor={cid}&day=1&hour=8")
             conf = r.get_json()["confidence"]
             assert 0.0 <= conf <= 1.0
@@ -185,8 +196,8 @@ class TestMeasuredVsInferredGrid:
         app_module = _fresh_app()
         if not app_module.MEASURED_GRID:
             pytest.skip("no bootstrap CSV available in this environment")
-        # every one of the 8*7*24 cells has a real measurement today
-        assert len(app_module.MEASURED_GRID) == 8 * 7 * 24
+        # every one of the N_CORRIDORS*7*24 cells has a real measurement today
+        assert len(app_module.MEASURED_GRID) == N_CORRIDORS * 7 * 24
         for cell in app_module.GRID.values():
             assert cell["origin"] in ("bootstrap", "observed")
 
@@ -339,9 +350,9 @@ class TestAdviceAll:
         body = r.get_json()
         assert body["day"] == 2
         assert "provenance" in body and "model_version" in body
-        assert len(body["corridors"]) == 8
+        assert len(body["corridors"]) == N_CORRIDORS
         ids = {c["corridor_id"] for c in body["corridors"]}
-        assert ids == set(range(8))
+        assert ids == VALID_CORRIDOR_IDS
         for c in body["corridors"]:
             assert len(c["profile"]) == 24
             assert "day" not in c        # day is top-level only, per contract
@@ -446,7 +457,7 @@ class TestBestTime:
         assert r.status_code == 400
 
     def test_bad_corridor(self, client):
-        r = client.get("/best-time?corridor=8&day=1&earliest=8&latest=12")
+        r = client.get(f"/best-time?corridor={INVALID_CORRIDOR_ID}&day=1&earliest=8&latest=12")
         assert r.status_code == 400
 
 
@@ -461,7 +472,7 @@ class TestNow:
         assert "+05:30" in body["now_ist"]
         assert 0 <= body["day"] <= 6
         assert 0 <= body["hour"] <= 23
-        assert len(body["corridors"]) == 8
+        assert len(body["corridors"]) == N_CORRIDORS
         for c in body["corridors"]:
             for key in ("id", "name", "congestion_index", "label",
                         "delay_minutes", "trend", "verdict", "text"):
@@ -499,7 +510,7 @@ class TestNoModel503:
                 # corridors + health are not model-backed and must still work
                 r_corridors = c.get("/corridors")
                 assert r_corridors.status_code == 200
-                assert len(r_corridors.get_json()["corridors"]) == 8
+                assert len(r_corridors.get_json()["corridors"]) == N_CORRIDORS
 
                 r_health = c.get("/health")
                 assert r_health.status_code == 200
