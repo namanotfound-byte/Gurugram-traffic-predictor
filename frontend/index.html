@@ -42,7 +42,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .header-right{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 .theme-btn{font-family:var(--mono);font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:6px;padding:6px 10px;cursor:pointer}
 .theme-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-#liveTime{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.08em}
+#liveTime{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--cyan);letter-spacing:.08em}
 
 /* GLOBAL BANNERS */
 .g-banner{display:none;padding:10px 24px;font-family:var(--mono);font-size:11px;line-height:1.6;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex:0 0 auto}
@@ -82,31 +82,36 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .proto-fix-sub{font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.5}
 
 /* HERO / ADVICE BANNER — the centerpiece */
-.advice-banner{padding:18px 24px;background:linear-gradient(180deg,var(--cyan-dim),transparent);border-bottom:1px solid var(--border);flex:0 0 auto}
-.advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:6px}
+.advice-banner{padding:12px 24px;background:linear-gradient(180deg,var(--cyan-dim),transparent);border-bottom:1px solid var(--border);flex:0 0 auto}
+.advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
 .advice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-wrap:wrap}
 .advice-main{flex:1 1 420px;min-width:0}
 .advice-corridor{font-size:17px;font-weight:700;color:var(--cyan)}
-.period-toggle{display:inline-flex;gap:4px;margin-top:10px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
-.period-btn{font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.period-toggle{display:inline-flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
+.period-btn{font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
 .period-btn .period-range{font-family:var(--mono);font-size:9px;font-weight:400;opacity:.8}
 .period-btn.active{background:var(--cyan);color:var(--void)}
 .period-btn.active .period-range{color:var(--void)}
-.advice-summary{font-size:clamp(19px,2.5vw,30px);font-weight:700;line-height:1.3;margin-top:14px;letter-spacing:-0.01em}
-.window-chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.advice-summary{font-size:clamp(19px,2.5vw,30px);font-weight:700;line-height:1.3;margin-top:8px;letter-spacing:-0.01em}
+.window-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .chip{font-family:var(--mono);font-size:10px;padding:6px 11px;border-radius:6px;border:1px solid;display:flex;align-items:center;gap:6px}
 .chip.best{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok-text)}
 .chip.worst{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
 .advice-empty{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
-.hero-stats{display:flex;gap:10px;flex:0 0 auto;flex-wrap:wrap}
-.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 18px;min-width:110px;text-align:center}
+.hero-stats{display:flex;gap:10px;flex:0 0 auto;flex-wrap:wrap;align-items:stretch}
+.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:8px 14px;text-align:center}
 .hstat-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;color:var(--text)}
 .hstat-lbl{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:6px;letter-spacing:.1em;text-transform:uppercase}
 .hstat.conf{border-color:var(--ok-border);background:var(--ok-bg)}
 .hstat.conf .hstat-val{color:var(--ok-text)}
 .hstat.conf.low{border-color:var(--warn-border);background:var(--warn-bg)}
 .hstat.conf.low .hstat-val{color:var(--warn-text)}
+/* Day/Night as the hero-stats row's 4th element: no extra box/caption, just
+   the toggle itself, stretched by the row's default align-items to match
+   the (now-compacted) stat cards' height. */
+#heroStats > .period-toggle{margin:0}
+#heroStats > .period-toggle .period-btn{padding:8px 18px;font-size:13px}
 
 /* WORKSPACE — fills remaining viewport height; only .panel-left scrolls internally */
 .workspace{display:flex;flex-direction:row;flex:1 1 auto;min-height:0}
@@ -212,12 +217,12 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .df-close:hover{color:var(--text)}
 
 /* FOOTER — slim, fixed height, houses the "Data & model" provenance popover */
-.footer-strip{background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;padding:6px 16px;flex:0 0 auto}
+.footer-strip{background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-start;padding:4px 16px;flex:0 0 auto}
 .info-btn{font-family:var(--mono);font-size:9px;letter-spacing:.06em;background:transparent;border:1px solid var(--card-border);color:var(--sub);border-radius:20px;padding:5px 12px;cursor:pointer;display:flex;align-items:center}
 .info-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .info-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;margin-right:7px}
 .info-dot.off{background:var(--magenta);box-shadow:0 0 6px var(--magenta)}
-.info-popover{position:fixed;bottom:44px;right:16px;z-index:900;width:min(340px, calc(100vw - 32px));background:var(--panel);border:1px solid var(--card-border);border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,0.45);padding:14px 16px}
+.info-popover{position:fixed;bottom:44px;left:16px;z-index:900;width:min(340px, calc(100vw - 32px));background:var(--panel);border:1px solid var(--card-border);border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,0.45);padding:14px 16px}
 .info-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--sub);padding:5px 0;border-bottom:1px solid var(--border)}
 .info-row:last-of-type{border-bottom:none}
 .info-row b{color:var(--text);font-weight:500}
@@ -236,7 +241,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   .map-zone{flex:none;height:340px;order:-1}
   .advice-top{gap:16px}
   .hero-stats{width:100%}
-  .hstat{flex:1;min-width:90px}
+  .hstat,#heroStats > .period-toggle{flex:1;min-width:90px}
   .time-big{font-size:34px}
 }
 </style>
@@ -295,14 +300,14 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <div class="advice-top">
       <div class="advice-main">
         <div class="advice-corridor" id="adviceCorridorName">Loading…</div>
-        <div class="period-toggle" id="periodToggle">
-          <button class="period-btn active" data-period="day" type="button">Day</button>
-          <button class="period-btn" data-period="night" type="button">Night</button>
-        </div>
         <div class="advice-summary" id="adviceSummary">Fetching advice from the model…</div>
         <div class="window-chips" id="windowChips"></div>
       </div>
       <div class="hero-stats" id="heroStats">
+        <div class="period-toggle" id="periodToggle">
+          <button class="period-btn active" data-period="day" type="button">Day</button>
+          <button class="period-btn" data-period="night" type="button">Night</button>
+        </div>
         <div class="hstat"><div class="hstat-val" id="hsBest">--</div><div class="hstat-lbl">Best time</div></div>
         <div class="hstat"><div class="hstat-val" id="hsSave">--</div><div class="hstat-lbl">You save</div></div>
         <div class="hstat conf" id="hsConfWrap"><div class="hstat-val" id="hsConf">--</div><div class="hstat-lbl">Confidence</div></div>
@@ -1098,7 +1103,8 @@ function initGlMap(){
       container: 'glMap',
       style: MAP_STYLE_URLS[glMapStyleKey],
       center: [77.05, 28.45],
-      zoom: 11
+      zoom: 11,
+      attributionControl: false
     });
   }catch(e){
     clearTimeout(timeoutId);
@@ -1107,6 +1113,33 @@ function initGlMap(){
   }
   glMap.addControl(new maplibregl.NavigationControl(), 'top-right');
   glMap.addControl(new RecenterControl(), 'top-right');
+  // Compact attribution: collapsed to a small info button by default,
+  // required OSM/MapLibre credit revealed on click — required, not decorative.
+  // MapLibre's compact control starts collapsed (no attribution text has
+  // arrived yet), but auto-EXPANDS itself once, the first time real
+  // attribution text loads in (a few hundred ms after style/tiles arrive) —
+  // that's the "visible by default" behaviour being fixed. A one-shot
+  // MutationObserver catches exactly that auto-expand and closes it again,
+  // then gets out of the way so the user's own clicks (native
+  // <details>/<summary> toggle) are never interfered with.
+  glMap.addControl(new maplibregl.AttributionControl({compact: true}), 'bottom-right');
+  {
+    const attribEl = document.querySelector('.maplibregl-ctrl-attrib');
+    const attribBtn = document.querySelector('.maplibregl-ctrl-attrib-button');
+    if(attribEl){
+      const collapseAutoOpen = new MutationObserver(()=>{
+        if(attribEl.classList.contains('maplibregl-compact-show')){
+          attribEl.removeAttribute('open');
+          attribEl.classList.remove('maplibregl-compact-show');
+          collapseAutoOpen.disconnect();
+        }
+      });
+      collapseAutoOpen.observe(attribEl, {attributes: true, attributeFilter: ['class', 'open']});
+      // A real user click always wins, even if it lands before the
+      // library's own one-time auto-expand has happened yet.
+      if(attribBtn) attribBtn.addEventListener('click', () => collapseAutoOpen.disconnect(), {once: true});
+    }
+  }
 
   glMap.on('error', (e)=>{
     if(settled) return;
