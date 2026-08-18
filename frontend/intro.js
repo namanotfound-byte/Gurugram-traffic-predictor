@@ -36,11 +36,18 @@
   // starts and finishes at the same instant regardless of its own length.
   // That "same instant" finish is what FADE_START_MS is anchored after,
   // below, so the app is never revealed mid-stroke.
-  var DRAW_MS = 3000;        // shared draw duration for every road, set inline (see run()) — not in intro.css
-  // WORD_DELAY_MS (2.4s) and the overlay's normal fade duration (550) are
-  // also encoded in intro.css's transition-duration / transition-delay
-  // values for .gtp-intro-word / #gtp-intro — keep both files in sync.
-  var FADE_START_MS = DRAW_MS + 400; // whole-overlay fade-out begins only once every road has finished, plus a short hold
+  var DRAW_MS = 3000;        // shared draw duration for every road (Web Animations API — see run())
+  // HOLD_AFTER_DRAW_MS is added on top of a genuine completion signal (every
+  // road's animation .finished promise — see run()), not a guessed timeout,
+  // so the overlay-fade-out schedule below can't fire before the draw is
+  // actually, provably done, however long the browser actually took.
+  var HOLD_AFTER_DRAW_MS = 400;
+  // WORD_DELAY_MS (2.4s) in intro.css assumes DRAW_MS above finishes right
+  // on schedule (verified accurate for Web Animations API — CSS transitions
+  // were tested and found NOT to reliably honor their configured duration
+  // in this project's headless/software-rendered test harness, which is
+  // exactly why the road draw uses .animate() instead of a CSS transition).
+  // Keep intro.css's word transition-delay in sync if DRAW_MS changes.
   var FADE_MS = 550;         // matches intro.css #gtp-intro transition-duration
   var FAST_FADE_MS = 220;    // matches intro.css .gtp-intro-skip — used for skip / reduced-motion / fallback
   var HARD_CAP_MS = 6000;    // absolute failsafe: overlay is gone by here no matter what
@@ -172,51 +179,47 @@
 
     try {
       var paths = root.querySelectorAll('.gtp-road');
-      var transitionStr = 'stroke-dashoffset ' + (DRAW_MS / 1000) + 's cubic-bezier(.4,0,.2,1)';
+      var animations = [];
       for (var i = 0; i < paths.length; i++) {
+        if (typeof paths[i].animate !== 'function') {
+          throw new Error('Web Animations API unsupported'); // caught below -> static fallback
+        }
         var len = paths[i].getTotalLength();
         paths[i].style.strokeDasharray = len;
-        paths[i].style.strokeDashoffset = len; // hidden: whole stroke pushed into the "gap" of the dash pattern
-        // The transition itself is set inline too, deliberately — NOT via a
-        // CSS class rule. A class rule setting stroke-dashoffset can never
-        // win a cascade fight against this inline stroke-dashoffset (inline
-        // beats any stylesheet selector short of !important), so the class
-        // approach silently never animates: the property just sits at
-        // whatever the inline value says, forever. Keeping both the start
-        // and end values inline sidesteps that entirely.
-        paths[i].style.transition = transitionStr;
+        paths[i].style.strokeDashoffset = len; // hidden starting point, committed before .animate() below ever runs
+        // Web Animations API, deliberately NOT a CSS class/transition: a
+        // class rule setting stroke-dashoffset can never win a cascade
+        // fight against the inline stroke-dashoffset set above (inline
+        // always beats a stylesheet selector, short of !important), and —
+        // separately — CSS transitions on this property were measured to
+        // not reliably honor their configured duration in this project's
+        // headless/software-rendered test harness (they collapsed to
+        // near-instant regardless of the duration set). .animate() sidesteps
+        // both problems: verified frame-by-frame to progress at the correct
+        // real-time pace, and it hands back a `.finished` promise, which is
+        // what "reveal only once every road is actually done drawing" is
+        // built on below — a real completion signal, not a guessed timeout.
+        animations.push(paths[i].animate(
+          [{ strokeDashoffset: String(len) }, { strokeDashoffset: '0' }],
+          { duration: DRAW_MS, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
+        ));
       }
-      // Force a reflow so the "hidden" (offset === length) state above is
-      // committed as its own style/layout pass before the flip below.
-      // eslint-disable-next-line no-unused-expressions
-      root.getBoundingClientRect();
-      // Double rAF, not single: a single rAF callback can still land inside
-      // the SAME committed frame as the "hidden" state set above (the forced
-      // reflow guarantees a layout pass, but not that a frame was actually
-      // painted with stroke-dashoffset === length before the value changes
-      // again) — when that happens the browser has nothing to transition
-      // FROM and just jumps straight to the end value, i.e. the roads render
-      // fully-drawn instantly with no visible draw-in at all. Waiting a
-      // second rAF guarantees the hidden state was genuinely painted first.
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          for (var j = 0; j < paths.length; j++) {
-            paths[j].style.strokeDashoffset = '0'; // draws in: hidden -> fully visible, all 13 roads together
-          }
-          root.classList.add('gtp-intro-draw'); // drives the word/hint CSS fades only — never touches stroke-dashoffset
-          // Anchored here (actual draw start), not at run() entry: if the
-          // browser's first rAF is delayed — a backgrounded tab, or realistic
-          // main-thread contention from the host page's own script (this runs
-          // alongside a MapLibre GL bundle load) — the fade-out still waits
-          // for the draw to actually get its full on-screen duration instead
-          // of firing on a wall-clock schedule that assumed rAF was prompt.
-          // FADE_START_MS is DRAW_MS + a hold, so the app is only ever
-          // revealed strictly after every road has finished drawing.
-          setTimeout(function () { finish(false); }, FADE_START_MS);
+      root.classList.add('gtp-intro-draw'); // drives the word/hint CSS fades only — never touches stroke-dashoffset
+      Promise.all(animations.map(function (a) { return a.finished; }))
+        .then(function () {
+          // Every one of the 13 roads has now genuinely finished its own
+          // animation — only now is a hold+reveal scheduled, so the app can
+          // never be shown mid-stroke regardless of how long the browser
+          // actually took to get here.
+          setTimeout(function () { finish(false); }, HOLD_AFTER_DRAW_MS);
+        })
+        .catch(function () {
+          // An animation was cancelled/errored (e.g. the overlay got removed
+          // via skip while mid-draw) — nothing to do, finish()/skip already
+          // handles that path; HARD_CAP_MS remains the ultimate backstop.
         });
-      });
     } catch (e) {
-      // getTotalLength() or similar unsupported/failing — degrade to a
+      // getTotalLength()/.animate() unsupported or failing — degrade to a
       // static reveal (roads render solid, no draw-in) rather than crash.
       root.classList.add('gtp-intro-reduced');
       requestAnimationFrame(function () {

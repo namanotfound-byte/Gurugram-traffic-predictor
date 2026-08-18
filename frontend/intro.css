@@ -79,18 +79,21 @@
 .gtp-road-highway{ stroke-width:2.6; opacity:.92; }
 .gtp-road-arterial{ stroke-width:1.7; opacity:.6; }
 
-/* Draw-in: deliberately NOT done here as a class-based rule. intro.js sets
-   stroke-dasharray, the starting stroke-dashoffset (= path length, fully
-   hidden) AND the transition itself all as inline styles on each <path>,
-   then flips stroke-dashoffset to 0 inline one frame later — an inline
-   style always wins a cascade fight against a class selector (short of
-   !important), so a class-based "stroke-dashoffset:0" rule here would
-   silently never apply against those inline values; keeping both ends of
-   the animation inline is what makes it actually run. All 13 roads share
-   one fixed 3s duration and start together on the same frame (no stagger),
-   set via intro.js's DRAW_MS — draws from a blank screen, unhurried,
-   meant to be watched. Keep DRAW_MS in intro.js in sync with the numbers
-   below (word delay, fade-start) if either changes. */
+/* Draw-in: deliberately NOT done here as a CSS rule/transition at all.
+   intro.js sets stroke-dasharray + the starting stroke-dashoffset (= path
+   length, fully hidden) inline, then animates stroke-dashoffset to 0 via the
+   Web Animations API (path.animate(...)), not a CSS transition. Two reasons:
+   (1) a class-based "stroke-dashoffset:0" rule here could never win a
+   cascade fight against that inline value anyway (inline always beats a
+   stylesheet selector, short of !important); (2) CSS transitions on this
+   property were measured to not reliably honor their configured duration in
+   this project's headless/software-rendered test harness (collapsed to
+   near-instant regardless of duration set), where .animate() was verified
+   frame-by-frame to progress at the correct real-time pace. All 13 roads
+   share one fixed 3s duration (intro.js's DRAW_MS) and start together on the
+   same frame (no stagger) — draws from a blank screen, unhurried, meant to
+   be watched. Keep DRAW_MS in intro.js in sync with the word-delay number
+   below if either changes. */
 
 .gtp-intro-word{
   display:flex;
