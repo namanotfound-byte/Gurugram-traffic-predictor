@@ -290,9 +290,6 @@ Gurugram-traffic-predictor/
 │   ├── refresh_bundle.yml       # daily static-bundle rebuild
 │   └── retrain.yml              # weekly model retrain
 │
-├── report/
-│   └── traffic_predictor_report.docx
-│
 ├── PROJECT_EXPLAINER.md         # full technical writeup, file-by-file
 └── README.md
 ```
