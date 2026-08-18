@@ -1,0 +1,162 @@
+/* GTP intro / loading animation — standalone, self-removing overlay.
+   Reads the host page's existing theme tokens (--void, --cyan, etc, defined
+   in index.html's :root / :root[data-theme="light"]) via var(...) with
+   literal fallbacks, so it renders correctly even if it happens to paint
+   before the host stylesheet, and still degrades sanely if the token names
+   ever change. Does not assume anything else about the page's DOM/layout —
+   this file only styles the #gtp-intro subtree that intro.js creates itself.
+
+   Timing note: the ~4s unhurried draw (product decision — an earlier ~1.2s
+   cut felt rushed) plays in full on every single page load (no
+   sessionStorage gate) — which is exactly why intro.js has a
+   skip-on-any-interaction path. A multi-second overlay that can't be
+   gotten out of, on every load, would be a real regression, not polish. */
+
+#gtp-intro{
+  position:fixed;
+  inset:0;
+  z-index:100000; /* above the host page's proto-overlay (10000) and every in-page z-index */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--void,#020408);
+  overflow:hidden;
+  opacity:1;
+  cursor:pointer; /* the whole overlay is a skip target */
+  transition:opacity .55s cubic-bezier(.4,0,.2,1);
+}
+#gtp-intro::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at 50% 45%, var(--cyan-glow,rgba(0,229,255,.18)) 0%, transparent 62%);
+  opacity:.55;
+  pointer-events:none;
+}
+#gtp-intro.gtp-intro-out{
+  opacity:0;
+  pointer-events:none; /* stop intercepting clicks the instant fade-out begins, not when it finishes */
+}
+/* Fast variant of the fade-out: used both when the user skips (click/tap/key)
+   and for the reduced-motion / unsupported-SVG-API fallback paths, where a
+   full 550ms opacity animation would be a needlessly long thing to force
+   someone to sit through when they've asked to leave or opted out of motion. */
+#gtp-intro.gtp-intro-out.gtp-intro-skip{
+  transition-duration:.22s;
+}
+
+.gtp-intro-inner{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:22px;
+}
+
+/* Fixed box, not "width:100%;height:auto" — guarantees the SVG can never
+   overflow the viewport (incl. at 390px wide) regardless of its own
+   intrinsic aspect ratio; preserveAspectRatio does the internal letterboxing. */
+.gtp-intro-svg-wrap{
+  width:min(78vw,380px);
+  height:min(54vh,500px);
+}
+.gtp-intro-svg{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+
+.gtp-road{
+  fill:none;
+  stroke:var(--cyan,#00e5ff);
+  stroke-width:2.4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.85;
+}
+.gtp-road-expressway{ stroke-width:3; opacity:1; }
+.gtp-road-highway{ stroke-width:2.6; opacity:.92; }
+.gtp-road-arterial{ stroke-width:1.7; opacity:.6; }
+
+/* Draw-in: deliberately NOT done here as a class-based rule. intro.js sets
+   stroke-dasharray, the starting stroke-dashoffset (= path length, fully
+   hidden) AND the transition itself all as inline styles on each <path>,
+   then flips stroke-dashoffset to 0 inline one frame later — an inline
+   style always wins a cascade fight against a class selector (short of
+   !important), so a class-based "stroke-dashoffset:0" rule here would
+   silently never apply against those inline values; keeping both ends of
+   the animation inline is what makes it actually run. All 13 roads share
+   one fixed 3s duration and start together on the same frame (no stagger),
+   set via intro.js's DRAW_MS — draws from a blank screen, unhurried,
+   meant to be watched. Keep DRAW_MS in intro.js in sync with the numbers
+   below (word delay, fade-start) if either changes. */
+
+.gtp-intro-word{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  opacity:0;
+  transform:translateY(6px);
+  transition:opacity .6s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.4,0,.2,1);
+  transition-delay:2.4s; /* lands right as the roads finish their 3s draw */
+}
+#gtp-intro.gtp-intro-draw .gtp-intro-word{
+  opacity:1;
+  transform:translateY(0);
+}
+.gtp-intro-title{
+  font-family:var(--display,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif);
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:.32em;
+  color:var(--text,#dff0f8);
+}
+.gtp-intro-sub{
+  font-family:var(--mono,'SF Mono','Cascadia Code','Consolas','Menlo',monospace);
+  font-size:9px;
+  letter-spacing:.18em;
+  color:var(--sub,#8ab4cc);
+  text-transform:uppercase;
+}
+
+/* Skip hint: small, quiet, bottom-center. Fades in late (1.2s) so it never
+   competes with the opening moment, and never claims real visual weight —
+   restrained on purpose, this is a courtesy not a call to action. */
+.gtp-intro-hint{
+  position:absolute;
+  left:50%;
+  bottom:28px;
+  transform:translateX(-50%);
+  font-family:var(--mono,'SF Mono','Cascadia Code','Consolas','Menlo',monospace);
+  font-size:9px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted,#4a6a82);
+  opacity:0;
+  transition:opacity .6s cubic-bezier(.4,0,.2,1);
+  transition-delay:1.2s;
+  white-space:nowrap;
+}
+#gtp-intro.gtp-intro-draw .gtp-intro-hint{
+  opacity:.55;
+}
+
+/* prefers-reduced-motion / unsupported-SVG-API fallback: no drawing, no
+   movement — roads and word render fully-formed on the very first frame;
+   these rules just make sure nothing is left invisible waiting on a
+   transition that will never be triggered (.gtp-intro-draw is never added
+   in this branch), and the skip hint (moot when there's nothing to skip
+   through) stays hidden.  */
+#gtp-intro.gtp-intro-reduced .gtp-intro-word{
+  opacity:1;
+  transform:none;
+  transition:none;
+}
+#gtp-intro.gtp-intro-reduced .gtp-intro-hint{
+  display:none;
+}
+@media (prefers-reduced-motion: reduce){
+  #gtp-intro{ transition-duration:.15s; }
+}

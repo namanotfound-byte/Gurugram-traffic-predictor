@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<!--
+  DEV HARNESS — not part of the shipped site. Exists only so the intro can be
+  built/screenshotted in isolation while frontend/index.html is being rewritten
+  by another agent. Safe to delete once the intro is integrated and verified
+  in the real page; kept for now as a quick regression check / demo page.
+
+  Reproduces just enough of index.html's real :root token block (same names
+  and same values, copied by hand from frontend/index.html on 2026-08-17) so
+  intro.css's var(--token, fallback) reads resolve to the *real* palette
+  instead of falling back to the literals baked into intro.css. Everything
+  else here (buttons, layout) is throwaway harness chrome, not page markup.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gtp-intro dev harness</title>
+<link rel="stylesheet" href="intro.css">
+<script>
+// Test-only convenience: ?theme=light|dark sets data-theme before intro.js
+// (loaded right after body opens below) reads it. Not part of the real
+// integration — the real page's own initTheme() does this instead.
+(function(){
+  var t = new URLSearchParams(location.search).get('theme');
+  if(t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#020408;--panel:rgba(2,5,12,0.92);--glass:rgba(3,8,18,0.90);
+  --cyan:#00e5ff;--cyan-dim:rgba(0,229,255,0.12);--cyan-glow:rgba(0,229,255,0.35);
+  --magenta:#ff2d6b;--amber:#ffb800;--orange:#ff8c00;--green:#00ff9d;
+  --text:#dff0f8;--sub:#8ab4cc;--muted:#4a6a82;--border:rgba(0,229,255,0.1);
+  --mono:'SF Mono','Cascadia Code','Consolas','Menlo',monospace;
+  --display:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --card-bg:rgba(0,229,255,0.04);--card-border:rgba(0,229,255,0.08);
+}
+:root[data-theme="light"]{
+  --void:#eef3f7;--panel:rgba(255,255,255,0.92);--glass:rgba(255,255,255,0.92);
+  --cyan:#0086a8;--cyan-dim:rgba(0,134,168,0.10);--cyan-glow:rgba(0,134,168,0.25);
+  --magenta:#c41e5c;--amber:#a15c00;--orange:#b45300;--green:#0a8f5b;
+  --text:#0b1e28;--sub:#3f6a80;--muted:#5c7f92;--border:rgba(0,90,120,0.15);
+  --card-bg:rgba(0,90,120,0.05);--card-border:rgba(0,90,120,0.12);
+}
+html,body{width:100%;min-height:100%;background:var(--void);color:var(--text);font-family:var(--display)}
+body{overflow-x:hidden}
+.stage{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px}
+.stage h1{font-size:20px}
+.stage p{font-family:var(--mono);font-size:12px;color:var(--sub);max-width:520px;text-align:center;line-height:1.6}
+.hud{position:fixed;top:12px;left:12px;display:flex;gap:8px;flex-wrap:wrap;z-index:200000;font-family:var(--mono);font-size:11px}
+.hud button{background:var(--card-bg);border:1px solid var(--card-border);color:var(--text);padding:7px 11px;border-radius:6px;cursor:pointer}
+.hud button:hover{border-color:var(--cyan);color:var(--cyan)}
+.fake-app{border:1px dashed var(--border);border-radius:10px;padding:16px 22px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<!-- Integration point 1 of 2 in the real page: right after <body> opens, before
+     anything else, so the overlay is inserted (and starts covering the
+     viewport) as early as possible. -->
+<script src="intro.js"></script>
+
+<div class="hud">
+  <button id="btnReplay">Reload (plays intro again — no session gate)</button>
+  <button id="btnTheme">Toggle theme</button>
+  <span id="themeLabel"></span>
+</div>
+
+<div class="stage">
+  <h1>gtp-intro dev harness</h1>
+  <p>This page is not part of the shipped site. It exists only to build and screenshot the intro overlay in isolation. The intro plays in full on every load (by design — no sessionStorage gate) and is skippable via click/tap/keypress. The box below stands in for the real app shell that appears once the overlay clears.</p>
+  <div class="fake-app">app shell placeholder — if you can read this and click the buttons above, the overlay has fully cleared (pointer-events unblocked, node removed from DOM)</div>
+</div>
+
+<script>
+document.getElementById('btnReplay').onclick = function(){
+  location.reload();
+};
+function paintThemeLabel(){
+  document.getElementById('themeLabel').textContent =
+    '(' + (document.documentElement.getAttribute('data-theme') || 'dark') + ')';
+}
+document.getElementById('btnTheme').onclick = function(){
+  var cur = document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme', cur === 'light' ? 'dark' : 'light');
+  paintThemeLabel();
+};
+paintThemeLabel();
+</script>
+</body>
+</html>
