@@ -727,16 +727,22 @@ anywhere, only a comment at its own top noting the removal. Every metric
 anywhere else in this document is computed against real, TomTom-sourced
 rows collected after that rebuild.
 
-**A live documentation-drift example, not a hypothetical one**: `README.md`
-at the current commit (checked directly while writing this, not from
-memory) still opens with *"This repo is a working pipeline with no real
-traffic data in it yet"* and still quotes the original synthetic-data
-R²=0.83 figures. It was never rewritten after the real-data pipeline
-replaced it. If a teacher asks "is your README accurate," the honest
-answer is *no, it describes the project's very first state* — this file
-(`PROJECT_EXPLAINER.md`) is the document that gets re-derived from the
-actual code and data each time it's touched, which is exactly why it,
-and not the README, is what you should walk through in a viva.
+**A documentation-drift example that has since been fixed** — kept here
+because an earlier draft of this document flagged it as still broken, and
+that claim is itself now stale: `README.md` used to open with *"This repo
+is a working pipeline with no real traffic data in it yet"* and quote the
+original synthetic-data R²=0.83 figures, unrewritten after the real-data
+pipeline replaced it. Checked directly against the current commit while
+writing this: that's no longer true. `README.md` now opens *"the whole
+pipeline runs on real, measured data, not synthetic samples"* (fixed in
+`22e9e78`, "Rewrite README to match the working system, not the
+synthetic-era draft") and its own "Accuracy" section quotes the same
+58.3%/89.4% figures as §12.3 below. The lesson still stands even though
+the specific example doesn't anymore: this file gets re-derived from the
+actual code and data every time it's touched — and the proof is that its
+own claims about *other* files can go stale too, and did, which is exactly
+why "recompute, don't trust a cached document" has to apply recursively,
+including to this document.
 
 ### 9.1 The original data collector never worked
 
@@ -832,6 +838,89 @@ Covered in full in §4.2. Worth restating here as its own bug: scheduling
 `*/15 * * * *` measurably delivered ~37% of the nominal 96 rounds/day.
 Fixed by triggering hourly (an interval GitHub honors reliably) and moving
 the 15-minute spacing into the collector's own internal loop.
+
+### 9.8 Whole-day "best time" was midnight for almost every corridor, and minutes-only savings undersold the product
+
+Two real user complaints prompted `7d32d12` ("Communicate time savings
+honestly and split best-time by day/night"): the site's "saves ~6 min"
+framing read as too small to matter, and the whole-day best-hour advice
+sometimes recommended midnight — technically correct, useless to someone
+who has to leave for work in daylight.
+
+**The midnight problem, re-verified against the live grid for this
+document, not just the commit message.** Averaging `congestion_index`
+across all 13 corridors × 7 days at each hour:
+
+| hour | avg `congestion_index` | max |
+|---|---:|---:|
+| 20:00 | 0.151 | 0.322 |
+| 21:00 | 0.075 | 0.150 |
+| **22:00** | **0.0008** | 0.031 |
+| 23:00 | 0.0006 | 0.010 |
+| 06:00 | 0.019 | 0.053 |
+
+21:00 → 22:00 is roughly a **93× collapse** in the hourly average — the
+commit's own inline comment in `backend/app.py` quotes 0.087 → 0.0006 (a
+>100× drop), measured the day it was written; the numbers above are
+slightly different because `data/gurugram_observed.csv` keeps growing
+under live CI collection and now overrides more bootstrap cells than it
+did on 2026-08-17, but the same cliff is still there. That evidence is
+what `DAY_HOURS`/`NIGHT_HOURS` are built from:
+
+```python
+DAY_HOURS = list(range(6, 22))                        # 06:00-21:59
+NIGHT_HOURS = list(range(22, 24)) + list(range(0, 6))  # 22:00-05:59
+```
+
+Night advice is still fully served, not dropped — truck drivers and
+shift workers genuinely do travel then — it just no longer silently wins
+every "best time" comparison against daytime hours it was never being
+fairly compared against. `/advice` now returns `day_period`/`night_period`
+blocks and `/best-time` accepts `period=day|night|any` (§10.10 has the
+full API shape).
+
+**One honest caveat this document adds that the commit message doesn't
+make**: "near-zero, flat floor overnight — every corridor reads Free" is
+an *average*-case claim, not a claim about every individual cell.
+Spot-checking the live grid directly for this document turns up a real
+counterexample: **Old Delhi-Gurgaon Road, Tuesday 2 AM** — four real
+live observations 15 minutes apart on 2026-08-18 (`source="observed"`,
+`is_raining=True`, `has_jam=True`, one row carrying `incident_max_magnitude=2`)
+show `congestion_idx` climbing **0.151 → 0.193 → 0.236 → 0.275** across
+that half hour, served today as `"Heavy"` at `confidence=0.97` (observed
+data is the *highest*-confidence tier, §10.3 — this is not low-quality
+noise). The day/night boundary is still the right call: it's derived from
+the average shape of the week, and one real jam-plus-rain night out of
+2,184 cells doesn't change that night hours are overwhelmingly, reliably
+quieter than day hours — but a teacher asking "is 22:00–05:59 *always*
+empty?" deserves "no, and here's the one real exception I found," not a
+restatement of the average as if it were a guarantee.
+
+**The savings-framing half of the same commit.** MG Road is 3.85 km with
+a 6.8-minute free-flow time (§10.9 has the full corridor-length table), so
+its whole-day best-vs-worst saving is capped at ~5 minutes no matter how
+bad the worst hour gets — a number that reads as unimpressive next to
+"Gurugram traffic is terrible," even though it's correct. Recomputed live
+for this document (`/advice?corridor=1&day=4`, MG Road, Friday): best hour
+6 AM (0.1 min delay) vs. worst hour 7 PM (5.2 min delay, **76.5% longer
+than free-flow**) — the same 5.2-minute gap as always, but expressed as
+**"+5 min, 76% longer"** it reads as a materially different claim, and
+it's equally true. Minutes and percent are now both served side by side
+(`whole_day_saving_minutes`/`whole_day_saving_pct`,
+`peak_delay_minutes`/`peak_delay_pct`) — neither replaces the other.
+
+**The same commit also tightened label-honesty wording**, and this ties
+directly back to §12.3's 58.3% label-agreement figure: `/now` and
+`/advice` text now say *"Typically \<label\>…"* instead of stating a
+typical-hour value as an unqualified present-tense fact, and any summary
+built from a cell with `confidence < 0.5` gets an inline `" (Limited data
+for this corridor/day — treat as a rough guide.)"` caveat appended —
+visible in the sentence a user actually reads, not just in a `confidence`
+number a frontend has to remember to check.
+
+`backend/test_api.py` grew from 57 to **79 tests** in this commit across
+14 test classes (re-collected directly with `pytest --collect-only` while
+writing this document, not taken from the commit message).
 
 ---
 
@@ -957,11 +1046,17 @@ per request.
 - **`/predict?corridor=&day=&hour=`** — single `GRID[...]` lookup.
 - **`/advice?corridor=&day=`** — "the primary endpoint": full 24-hour
   profile plus computed best/worst windows and a natural-language summary
-  (e.g. *"Leave before 7 AM or after 9 PM. Worst is 6 PM (+11 min)."*).
-- **`/advice/all?day=`** — the same payload for all 13 corridors in one
-  response, so the frontend isn't firing 13 parallel requests.
+  that leads with the whole-day best-vs-worst saving in minutes *and*
+  percent (e.g., recomputed live for this document, MG Road/Friday: *"Leave
+  before 8 AM or after 10 PM. Worst is 7 PM (+5 min, 76% longer than
+  free-flow). Timing it right saves ~5 min (43% shorter trip) versus the
+  worst hour."*). Also returns `day_period`/`night_period` blocks — §10.10.
+- **`/advice/all?day=`** — the same payload (including `day_period`/
+  `night_period`) for all 13 corridors in one response, so the frontend
+  isn't firing 13 parallel requests.
 - **`/best-time?corridor=&day=&earliest=&latest=`** — best departure
-  inside a user-specified window.
+  inside a user-specified window. Also accepts `period=day|night|any` as
+  an alternative to `earliest`/`latest` — §10.10.
 - **`/now`** — live verdict for all 13 corridors at the current IST time,
   including a `trend` (rising/falling/flat, comparing this hour to the
   next) and a `verdict` (`go_now` / `wait` / `avoid`).
@@ -1033,6 +1128,53 @@ hedging or underselling — it is what a short, real road network
 arithmetically produces, and a single global "typical" minutes-saved
 number would hide that this varies more than 6× (2.4 to 15.5 minutes)
 corridor to corridor for reasons the model can point to directly.
+
+**The same commit that split day/night (`7d32d12`, §9.8) also added
+percentage framing alongside minutes**, for exactly the reason this
+section lays out — "saves 5 min" reads as unimpressive, but the identical
+fact reads differently as "43% shorter trip," and "+5 min" reads as
+unimpressive next to "+76% longer than free-flow." Every `/advice`-family
+response now carries both forms: `whole_day_saving_minutes` *and*
+`whole_day_saving_pct` (the best-vs-worst saving as a percent of the peak
+hour's trip time), `peak_delay_minutes` *and* `peak_delay_pct` (how much
+longer the worst hour is than free-flow, as a percent). Recomputed live
+for this document (`/advice?corridor=1&day=4`, MG Road, Friday): the worst
+hour (7 PM) takes **76.5% longer** than free-flow, and leaving at the best
+hour instead saves the same 5.2 minutes as **43.3% off the trip**. Neither
+framing is invented or replaces the other — both are the same underlying
+minutes figure expressed two ways, and minutes are always still shown
+alongside the percentage.
+
+### 10.10 The day/night split (added `7d32d12`, 2026-08-17)
+
+Full derivation and a real counterexample the commit message doesn't
+mention are in §9.8 — this subsection is just the API shape. What changed:
+
+- `DAY_HOURS = 06:00-21:59`, `NIGHT_HOURS = 22:00-05:59` — a boundary
+  derived from a >90x average collapse in `congestion_index` between
+  21:00 and 22:00 (§9.8's table), not asserted.
+- `/advice` and `/advice/all` now additionally return `day_period` and
+  `night_period` blocks, each with its own `best_hour`/`worst_hour`,
+  `saving_minutes`/`saving_pct`, best/worst windows, and a period-worded
+  `summary` (e.g. *"Best daytime departure: 6 AM. Avoid 7 PM (+5 min, 76%
+  longer)."*). Windows within a period are found by
+  `find_windows_for_hours()`, a non-circular variant of §10.7's
+  `find_windows()`: day and night are linear ranges, not a 24-hour wheel,
+  so hour 6 and hour 21 must never be merged as adjacent the way hour 23
+  and hour 0 are on the full clock.
+- `/best-time` accepts `period=day|night|any` as an alternative to
+  `earliest`/`latest`. When a period is given, `window_constrained` is
+  always `false` and the summary never second-guesses the caller by
+  comparing back against the unconstrained 24-hour scan — that comparison
+  is exactly what made night silently "win" every best-time query before
+  this feature existed.
+- Night advice is still fully served, not dropped — real audience: truck
+  drivers and shift workers do travel then. The frontend defaults to
+  showing Day, since daytime commuters are the primary audience.
+
+All fields from before this commit (`profile`, `best_windows`, `best_hour`,
+`peak_hour`, `summary`, `confidence`, `earliest`/`latest`, …) are
+unchanged — this is additive, not a breaking change.
 
 ---
 
@@ -1276,6 +1418,18 @@ report and exposed through `/health` — so a user of the live site (or
 static bundle) can see the same honest self-assessment discussed here,
 not just this document.
 
+**The same commit that added `ACCURACY_SUMMARY` (`7d32d12`, §9.8) also
+changed how individual sentences are worded**, for the same underlying
+reason: a served label is a *typical* value, and stating it as an
+unqualified present-tense fact ("Heavy now") overclaims exactly what the
+58.3% figure above says not to trust. `/now` and `/advice` text now reads
+*"Typically \<label\>…"*, and any summary built from a cell with
+`confidence < 0.5` gets an inline caveat — `" (Limited data for this
+corridor/day — treat as a rough guide.)"` (or the `/now`-specific
+wording) — appended directly to the sentence a user reads, not just
+exposed as a separate `confidence` number a frontend has to remember to
+check.
+
 ---
 
 ## 13. Supporting/config files
@@ -1285,7 +1439,7 @@ not just this document.
 | `requirements.txt` | Training-side packages: scikit-learn, pandas, numpy, joblib, requests |
 | `backend/requirements.txt` | API-side: adds Flask, flask-cors, gunicorn, pytest |
 | `requirements-collect.txt` | Just `requests` (+ `holidays` for calendar features) — deliberately minimal, since `collect_live.py` runs every CI round and shouldn't reinstall pandas/scikit-learn just to make an HTTP call |
-| `backend/test_api.py` | pytest suite: label thresholds, health/corridors, confidence honesty, measured-vs-inferred grid behaviour, route-instability confidence, `/predict`/`/advice`/`/advice/all`/`/best-time`/`/now`, midnight-wrap window detection, and the no-model 503 path. 12 test classes. |
+| `backend/test_api.py` | pytest suite: label thresholds, health/corridors, confidence honesty, measured-vs-inferred grid behaviour, route-instability confidence, `/predict`/`/advice`/`/advice/all`/`/best-time`/`/now`, day/night saving fields (§9.8/§10.10), midnight-wrap window detection, and the no-model 503 path. **79 tests across 14 test classes** (verified directly with `pytest --collect-only`, not carried over from an earlier draft — it was 57 tests/12 classes before `7d32d12`). |
 | `docs/api_contract.md` | The frozen API specification — **stale in one respect** (§9.4: it still describes 8 corridors / 1,344 cells / the older label distribution, frozen the day before the 13-corridor expansion). The field names, types, and label thresholds it documents are still accurate; the illustrative numbers are not. |
 | `.github/workflows/collect.yml` | Runs `collect_live.py --loop --max-rounds 4 --max-minutes 50` roughly hourly (§4.2/§9.7), commits new rows with a fetch-rebase-retry loop. |
 | `.github/workflows/retrain.yml` | Weekly (Monday 03:00 UTC): retrains `model/traffic_model.py`, rebuilds the static bundle, commits both. |
@@ -1470,6 +1624,25 @@ different lane count, different urban-vs-rural character — §3.1), not
 just "more data." Going further would help Dwarka's specific
 outlier-corridor problem less than a genuinely different kind of feature
 (§14) would.
+
+**"Why does the site treat day and night differently, and why 6 AM-10 PM
+specifically?"**
+Because the whole-day best-hour was midnight for almost every corridor —
+roads are structurally empty overnight — which made "best time to leave"
+identical and useless across every corridor for the audience that actually
+needs it: daytime commuters. The boundary isn't a guess: averaging
+`congestion_index` across all 13 corridors × 7 days per hour shows roughly
+a 90x collapse between 21:00 and 22:00, and a near-flat floor holding
+through the early morning before climbing sharply from 06:00 (§9.8, with
+the current recomputed numbers). Night advice is still fully served — real
+audience: truck drivers and shift workers do travel then — it's just its
+own explicit `period=night` rather than silently outcompeting every
+daytime hour it was never being fairly compared against. I'd also volunteer,
+unprompted, that "every corridor reads Free overnight" is an average-case
+claim, not a universal one — I found a real counterexample myself in the
+live-observed data (Old Delhi-Gurgaon Road, a real 2 AM jam during rain,
+§9.8) and can point to it directly, which is a stronger answer than
+restating the average as if it were a guarantee.
 
 **"Your labels are only 58% accurate against real data — is this actually
 useful?"**
