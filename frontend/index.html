@@ -481,6 +481,10 @@ function colorForLabel(l){ return l==='Free'?'var(--green)':l==='Moderate'?'var(
 function badgeBg(v){ return v<0.091?'rgba(0,255,157,0.1)':v<0.200?'rgba(255,184,0,0.1)':v<0.310?'rgba(255,140,0,0.1)':'rgba(255,45,107,0.1)'; }
 function pad2(n){ return String(n).padStart(2,'0'); }
 function fmtHour(h){ return pad2(((h%24)+24)%24) + ':00'; }
+// day_period/night_period.end_hour is the last whole hour IN the block (21
+// for day, 5 for night per DAY_HOURS/NIGHT_HOURS in backend/app.py), so the
+// boundary it marks runs through :59, not :00 -- used only for that range label.
+function fmtHourRangeEnd(h){ return pad2(((h%24)+24)%24) + ':59'; }
 
 const VISUAL_MAX = 0.45;
 function visualFrac(v){ return Math.max(0, Math.min(1, v / VISUAL_MAX)); }
@@ -1267,10 +1271,19 @@ function windowText(w){
 function updatePeriodButtons(a){
   const dayBtn = document.querySelector('.period-btn[data-period="day"]');
   const nightBtn = document.querySelector('.period-btn[data-period="night"]');
-  if(a && a.day_period) dayBtn.innerHTML = `Day <span class="period-range">${fmtHour(a.day_period.start_hour)}–${fmtHour(a.day_period.end_hour)}</span>`;
-  else dayBtn.textContent = 'Day';
-  if(a && a.night_period) nightBtn.innerHTML = `Night <span class="period-range">${fmtHour(a.night_period.start_hour)}–${fmtHour(a.night_period.end_hour)}</span>`;
-  else nightBtn.textContent = 'Night';
+  // The day/night boundary is a fixed constant (periodHours(), mirroring
+  // backend/app.py's DAY_HOURS/NIGHT_HOURS), not something that varies by
+  // corridor -- so fall back to it whenever no advice has loaded yet
+  // (e.g. the whole-city landing view, before a corridor is selected)
+  // rather than leaving the range blank.
+  const dayHours = periodHours('day'), nightHours = periodHours('night');
+  const dayPb = a && a.day_period, nightPb = a && a.night_period;
+  const dayStart = dayPb ? dayPb.start_hour : dayHours[0];
+  const dayEnd = dayPb ? dayPb.end_hour : dayHours[dayHours.length-1];
+  const nightStart = nightPb ? nightPb.start_hour : nightHours[0];
+  const nightEnd = nightPb ? nightPb.end_hour : nightHours[nightHours.length-1];
+  dayBtn.innerHTML = `Day <span class="period-range">${fmtHour(dayStart)}–${fmtHourRangeEnd(dayEnd)}</span>`;
+  nightBtn.innerHTML = `Night <span class="period-range">${fmtHour(nightStart)}–${fmtHourRangeEnd(nightEnd)}</span>`;
 }
 function renderAdvice(){
   const nameEl = document.getElementById('adviceCorridorName');
@@ -1480,9 +1493,14 @@ async function refreshAll(){
   if(!corridorsFailed){
     await loadHealth();
     if(selCorridor===null && CORRIDORS.length){
+      // Land on the whole-city overview by default (same framing the
+      // recenter button gives you, matching the intro animation) — only an
+      // explicit ?sel=<id> deep link pins a corridor on load. This used to
+      // fall back to CORRIDORS[0] (NH-48), which forced a corridor selection
+      // — and the camera fly-to that comes with it — on every fresh load.
       const selParam = new URLSearchParams(location.search).get('sel');
       const wanted = selParam!==null ? parseInt(selParam,10) : null;
-      selCorridor = (wanted!==null && CORRIDORS.some(c=>c.id===wanted)) ? wanted : CORRIDORS[0].id;
+      if(wanted!==null && CORRIDORS.some(c=>c.id===wanted)) selCorridor = wanted;
     }
     await loadAdviceForDay(curDay);
     render();
