@@ -16377,3 +16377,55 @@ corridor_id,corridor_name,road_class,day_of_week,hour,minute,length_m,free_flow_
 10,NH-352W (Gurugram-Sohna-Alwar Road),highway,0,22,0,14599,1642,1638,1645,0,-0.0024,observed,2026-09-14T22:00:00,27.4,0.1,False,none,0.1,5800.0,False,False,,False,False,9,0,0.0,0,0,False,False,5089.2
 11,Old Delhi-Gurgaon Road,highway,0,22,0,11923,1383,1296,1386,0,-0.0671,observed,2026-09-14T22:00:00,27.4,0.1,False,none,0.1,5800.0,False,False,,False,False,9,4,0.0,0,4,True,False,22.1
 12,Pataudi Road,highway,0,22,0,30038,2873,2689,2886,0,-0.0684,observed,2026-09-14T22:00:00,27.4,0.1,False,none,0.1,5800.0,False,False,,False,False,9,5,0.0,0,4,True,False,0.0
+0,NH-48 Delhi-Gurgaon Expressway,highway,1,0,0,21899,1995,1947,2030,0,-0.0247,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,6,293.0,2,4,True,True,0.0
+1,MG Road,arterial,1,0,0,3850,407,384,413,0,-0.0599,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,1,0.0,0,4,True,False,220.8
+2,Golf Course Road,arterial,1,0,0,7135,741,706,751,0,-0.0496,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,3,277.0,1,4,True,True,36.5
+3,Sohna Road,arterial,1,0,0,7155,675,639,684,0,-0.0563,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,100.0,1,4,True,True,10.2
+4,Dwarka Expressway,expressway,1,0,0,24298,1347,1332,1362,0,-0.0113,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,244.7
+5,Golf Course Extension Road,arterial,1,0,0,10024,1442,1380,1470,0,-0.0449,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,279.2
+6,Mehrauli-Gurgaon Road,arterial,1,0,0,9408,979,921,996,0,-0.063,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,1,0.0,0,4,True,False,244.4
+7,Southern Peripheral Road,arterial,1,0,0,8020,886,857,907,0,-0.0338,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,1532.2
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,0,0,13590,1311,1243,1343,0,-0.0547,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,6,0.0,0,4,True,False,0.1
+9,Delhi-Mumbai Expressway,expressway,1,0,0,33588,1973,1905,1997,0,-0.0357,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,7637.1
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,0,0,14599,1642,1674,1668,0,0.0191,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,5089.2
+11,Old Delhi-Gurgaon Road,highway,1,0,0,15258,1320,1324,1342,0,0.003,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,0.0,0,4,True,False,22.1
+12,Pataudi Road,highway,1,0,0,30038,2873,2723,2923,0,-0.0551,observed,2026-09-15T00:00:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,5,271.0,1,4,True,True,0.0
+0,NH-48 Delhi-Gurgaon Expressway,highway,1,0,15,21899,1995,1972,2035,0,-0.0117,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,0.0,0,4,True,False,0.0
+1,MG Road,arterial,1,0,15,3850,407,385,414,0,-0.0571,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,1,0.0,0,4,True,False,220.8
+2,Golf Course Road,arterial,1,0,15,7135,741,707,751,0,-0.0481,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,3,249.0,1,4,True,True,36.5
+3,Sohna Road,arterial,1,0,15,7155,675,640,684,0,-0.0547,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,3,0.0,0,4,True,False,10.2
+4,Dwarka Expressway,expressway,1,0,15,24298,1347,1335,1362,0,-0.009,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,244.7
+5,Golf Course Extension Road,arterial,1,0,15,10024,1442,1386,1474,0,-0.0404,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,279.2
+6,Mehrauli-Gurgaon Road,arterial,1,0,15,9408,979,924,998,0,-0.0595,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,1,0.0,0,4,True,False,244.4
+7,Southern Peripheral Road,arterial,1,0,15,8020,886,861,911,0,-0.029,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,1532.2
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,0,15,13590,1311,1243,1356,0,-0.0547,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,7,132.0,1,4,True,True,0.1
+9,Delhi-Mumbai Expressway,expressway,1,0,15,33588,1973,1909,2002,0,-0.0335,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,1,433.0,1,3,False,True,11.1
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,0,15,14599,1642,1666,1672,0,0.0144,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,2943.5
+11,Old Delhi-Gurgaon Road,highway,1,0,15,15258,1320,1327,1346,0,0.0053,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,0.0,0,4,True,False,22.1
+12,Pataudi Road,highway,1,0,15,29305,2920,2777,2980,0,-0.0515,observed,2026-09-15T00:15:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,5,290.0,2,4,True,True,0.0
+0,NH-48 Delhi-Gurgaon Expressway,highway,1,0,30,21899,1995,1957,2044,0,-0.0194,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,5,141.0,1,4,True,True,0.0
+1,MG Road,arterial,1,0,30,3850,407,385,414,0,-0.0571,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,1,0.0,0,4,True,False,220.8
+2,Golf Course Road,arterial,1,0,30,7135,741,708,753,0,-0.0466,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,288.9
+3,Sohna Road,arterial,1,0,30,7155,675,640,684,0,-0.0547,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,158.0,1,4,True,True,4.1
+4,Dwarka Expressway,expressway,1,0,30,24298,1347,1330,1362,0,-0.0128,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,3,41.0,1,4,True,True,19.7
+5,Golf Course Extension Road,arterial,1,0,30,10024,1442,1392,1480,0,-0.0359,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,279.2
+6,Mehrauli-Gurgaon Road,arterial,1,0,30,9408,979,928,1004,0,-0.055,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,1,0.0,0,4,True,False,244.4
+7,Southern Peripheral Road,arterial,1,0,30,8020,886,864,915,0,-0.0255,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,1120.6
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,0,30,13590,1311,1267,1376,0,-0.0347,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,6,0.0,0,4,True,False,0.1
+9,Delhi-Mumbai Expressway,expressway,1,0,30,33588,1973,1933,2010,0,-0.0207,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,788.0,2,3,False,True,11.1
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,0,30,14599,1642,1657,1680,0,0.0091,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,2943.5
+11,Old Delhi-Gurgaon Road,highway,1,0,30,15258,1320,1331,1354,0,0.0083,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,0.0,0,4,True,False,22.1
+12,Pataudi Road,highway,1,0,30,30038,2873,2748,2948,0,-0.0455,observed,2026-09-15T00:30:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,0.0,0,4,True,False,0.0
+0,NH-48 Delhi-Gurgaon Expressway,highway,1,0,45,21899,1995,1993,2059,0,-0.001,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,0.0,0,4,True,False,0.0
+1,MG Road,arterial,1,0,45,3850,407,386,415,0,-0.0544,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,3,293.0,2,4,True,True,32.4
+2,Golf Course Road,arterial,1,0,45,7135,741,711,756,0,-0.0422,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,288.9
+3,Sohna Road,arterial,1,0,45,7155,675,642,687,0,-0.0514,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,3,0.0,0,4,True,False,10.2
+4,Dwarka Expressway,expressway,1,0,45,24298,1347,1330,1364,0,-0.0128,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,244.7
+5,Golf Course Extension Road,arterial,1,0,45,10024,1442,1403,1492,0,-0.0278,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,2,0.0,0,4,True,False,279.2
+6,Mehrauli-Gurgaon Road,arterial,1,0,45,9408,979,937,1012,0,-0.0448,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,3,293.0,2,4,True,True,20.0
+7,Southern Peripheral Road,arterial,1,0,45,8020,886,868,919,0,-0.0207,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,1532.2
+8,KMP Expressway (Western Peripheral Expressway),expressway,1,0,45,13590,1311,1292,1407,0,-0.0147,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,6,0.0,0,4,True,False,0.1
+9,Delhi-Mumbai Expressway,expressway,1,0,45,33588,1973,1945,2022,0,-0.0144,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,7637.1
+10,NH-352W (Gurugram-Sohna-Alwar Road),highway,1,0,45,14599,1642,1665,1690,0,0.0138,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,0,0.0,0,0,False,False,5089.2
+11,Old Delhi-Gurgaon Road,highway,1,0,45,15258,1320,1339,1367,0,0.0142,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,6,295.0,2,4,True,True,22.1
+12,Pataudi Road,highway,1,0,45,30038,2873,2770,2970,0,-0.0372,observed,2026-09-15T00:45:00,25.7,0.2,True,light,0.4,5660.0,False,False,,False,False,8,4,0.0,0,4,True,False,0.0
