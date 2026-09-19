@@ -107,26 +107,22 @@ def label_for(idx: float) -> str:
 # tools/evaluate_accuracy.py, n=15234 observed rows / 100% cell coverage --
 # see that file for the full methodology and confidence-tier caveats).
 # NOT re-derived here -- these are the headline figures from that report,
-# kept in sync by hand whenever the report is regenerated with a
-# materially larger n. Surfaced via /health (and the static bundle) so the
-# product's real strength (ranking hours against each other) and real
-# weakness (matching an exact label) are both discoverable. These numbers
-# compare TomTom historical bootstrap vs live observations -- NOT a GBT
-# model-accuracy score.
+# Forecast holdout metrics from docs/forecast_eval.md — re-derived 2026-09-19.
+# Residual GBT vs later live observations on a time-based test split, NOT
+# TomTom historical bootstrap vs the full observed CSV. Surfaced via /health
+# and the static bundle so the Data & model panel quotes the shipped predictor.
 ACCURACY_SUMMARY = {
-    "label_agreement_pct": 43.0,
-    "hour_ranking_concordance_pct": 57.2,
-    "sample_size": 15234,
-    "as_of": "2026-09-18",
+    "label_agreement_pct": 78.6,
+    "hour_ranking_concordance_pct": 91.1,
+    "sample_size": 1789,
+    "as_of": "2026-09-19",
     "note": (
-        "Measured against 15,234 real TomTom live observations (100% cell "
-        "coverage): compares the TomTom historical bootstrap each cell "
-        "serves against what was actually observed for that same "
-        "(corridor, day, hour) -- NOT a GradientBoosting model score. "
-        "Hour-vs-hour ranking concordance is 57.2% (n=91 corridor/day "
-        "groups); exact label match is 43.0%. Best-hour hit 13.2%, "
-        "worst-hour hit 0.0%. Treat labels as typical day-of-week values, "
-        "not a forecast for a specific date. Source: docs/accuracy_report.md."
+        "Forecast holdout (time-based split): residual GBT vs later live "
+        "observations on 1,789 test rows (2026-09-13 .. 2026-09-19). "
+        "NOT TomTom historical bootstrap vs all 15,234 rows. "
+        "Skill 0.5575 (model MAE 0.0441, baseline MAE 0.0997). "
+        "Label agreement 78.6%; hour-ranking concordance 91.1%. "
+        "Source: docs/forecast_eval.md."
     ),
 }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GTP — Gurugram Traffic Intelligence</title>
+<title>Gurugram Traffic Predictor</title>
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <link rel="stylesheet" href="intro.css">
 <style>
@@ -38,8 +38,8 @@ body{overflow-x:hidden;overflow-y:hidden}
 
 /* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;z-index:500;background:var(--panel);border-bottom:1px solid var(--border);flex:0 0 auto;gap:8px}
-.logo-text{font-size:15px;font-weight:800;letter-spacing:.06em;color:var(--cyan)}
-.logo-sub{font-family:var(--display);font-size:11px;color:var(--sub);margin-top:1px}
+.logo-text{font-size:24px;font-weight:800;letter-spacing:.04em;color:var(--cyan);line-height:1.15}
+.logo-sub{font-family:var(--display);font-size:12px;color:var(--sub);margin-top:3px}
 .header-right{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 .theme-btn{font-family:var(--mono);font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:6px;padding:6px 10px;cursor:pointer}
 .theme-btn:hover{border-color:var(--cyan);color:var(--cyan)}
@@ -235,6 +235,18 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .info-row b{color:var(--text);font-weight:500}
 .info-accuracy{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-family:var(--display);font-size:11px;line-height:1.5;color:var(--sub)}
 
+/* FIRST-LOAD TUTORIAL */
+.tutorial-overlay{display:none;position:fixed;inset:0;z-index:11000;background:rgba(2,5,12,0.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;cursor:pointer;pointer-events:all}
+.tutorial-overlay.show{display:flex}
+.tutorial-card{max-width:min(480px,calc(100vw - 48px));width:100%;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:14px;padding:28px 26px;box-shadow:0 24px 80px rgba(0,0,0,0.55);cursor:pointer;pointer-events:all}
+.tutorial-step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.tutorial-title{font-family:var(--display);font-size:20px;font-weight:700;color:var(--cyan);margin-bottom:12px;line-height:1.3}
+.tutorial-body{font-family:var(--display);font-size:14px;line-height:1.65;color:var(--sub);margin-bottom:18px}
+.tutorial-hint{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;letter-spacing:.04em}
+.tutorial-dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.tutorial-dot{width:7px;height:7px;border-radius:50%;background:var(--card-border);transition:background .2s,transform .2s}
+.tutorial-dot.active{background:var(--cyan);transform:scale(1.15)}
+
 /* RESPONSIVE — below this width the fixed no-scroll shell relaxes into a
    normal scrolling document: the app-shell model (fixed 100vh, only the
    left panel scrolling internally) doesn't fit a phone alongside a
@@ -257,8 +269,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 <div class="app">
   <header>
     <div>
-      <div class="logo-text">GURUGRAM TRAFFIC</div>
-      <div class="logo-sub">Know when to leave.</div>
+      <div class="logo-text">Gurugram Traffic Predictor</div>
+      <div class="logo-sub">Find the best time to leave</div>
     </div>
     <div class="header-right">
       <span style="font-family:var(--mono);font-size:12px;color:var(--cyan)">IST</span>
@@ -368,8 +380,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       </div>
 
       <div class="tool-card">
-        <input id="fromInput" placeholder="From (e.g. Cyber Hub) — optional" aria-label="From location">
-        <input id="toInput" placeholder="To (e.g. Sector 56) — optional" aria-label="To location">
+        <input id="fromInput" placeholder="From" aria-label="From location (optional)">
+        <input id="toInput" placeholder="To" aria-label="To location (optional)">
         <div class="tool-row">
           <select id="earliestSel" aria-label="Earliest departure"></select>
           <select id="latestSel" aria-label="Latest departure"></select>
@@ -404,6 +416,17 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <span class="info-dot" id="infoDot"></span>Data &amp; model
     </button>
   </div>
+  <!-- First-load tutorial: full-screen, blocks interaction until dismissed -->
+  <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true">
+    <div class="tutorial-card" id="tutorialCard" role="dialog" aria-labelledby="tutorialTitle">
+      <div class="tutorial-step" id="tutorialStepLabel">Step 1 of 6</div>
+      <div class="tutorial-title" id="tutorialTitle"></div>
+      <div class="tutorial-body" id="tutorialBody"></div>
+      <div class="tutorial-dots" id="tutorialDots"></div>
+      <div class="tutorial-hint">Click anywhere to continue · click escape to skip tutorial</div>
+    </div>
+  </div>
+
   <div class="info-popover" id="dataInfoPopover" role="dialog" aria-label="Data and model information" style="display:none">
     <div class="info-row"><span>Status</span><b id="mHealth">--</b></div>
     <div class="info-row"><span>Model version</span><b id="mVersion">--</b></div>
@@ -1437,7 +1460,7 @@ function renderInfoPopover(){
   const genEl = document.getElementById('mGeneratedAt');
   genEl.textContent = (BUNDLE_MODE && BUNDLE && BUNDLE.generated_at) ? (fmtGeneratedAt(BUNDLE.generated_at) + ' IST') : '--';
   const accEl = document.getElementById('mAccuracy');
-  const acc = BUNDLE_MODE && BUNDLE ? BUNDLE.accuracy : null;
+  const acc = (BUNDLE_MODE && BUNDLE && BUNDLE.accuracy) || (health && health.accuracy) || null;
   accEl.textContent = acc ? acc.note : '';
 }
 
@@ -1745,6 +1768,11 @@ document.addEventListener('click', function(e){
   }
 });
 document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && tutorialVisible()){
+    e.stopPropagation();
+    dismissTutorial();
+    return;
+  }
   if(e.key==='Escape' && dataInfoPopover.style.display!=='none'){
     dataInfoPopover.style.display = 'none';
     dataInfoBtn.setAttribute('aria-expanded','false');
@@ -1754,6 +1782,101 @@ document.addEventListener('keydown', function(e){
 window.addEventListener('resize', function(){ if(glMap) glMap.resize(); });
 
 setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'}); }, 1000);
+
+// ─────────────────────────────────────────────────────────────────────────
+// FIRST-LOAD TUTORIAL
+// ─────────────────────────────────────────────────────────────────────────
+const TUTORIAL_KEY = 'gtp_tutorial_done';
+const TUTORIAL_STEPS = [
+  {
+    title: 'Gurugram Traffic Predictor',
+    body: 'This tool helps you pick the best hour to leave on 13 Gurugram road corridors — using measured traffic and a residual forecast model, not guesswork.'
+  },
+  {
+    title: 'Pick a corridor',
+    body: 'Search by name in the Roads panel, or click a corridor on the map. Colours show predicted congestion for the day and hour you select.'
+  },
+  {
+    title: 'Choose day and hour',
+    body: 'Use the weekday buttons and hour slider to preview congestion at different departure times. The map and advice banner update as you move the slider.'
+  },
+  {
+    title: 'From / To (optional)',
+    body: 'Enter start and end locations if you want the route planner to match your trip to a corridor. Leave them blank to explore corridors directly.'
+  },
+  {
+    title: 'Find best departure',
+    body: 'Set your earliest and latest departure window, then tap FIND BEST DEPARTURE. The app scans hours in that range and picks the least congested slot.'
+  },
+  {
+    title: 'Data & model',
+    body: 'Open Data & model in the footer for model version and holdout accuracy. Map numbers are residual-adjusted predictions — not a live traffic replay.'
+  }
+];
+let tutorialIndex = 0;
+let tutorialShown = false;
+
+function tutorialVisible(){
+  const el = document.getElementById('tutorialOverlay');
+  return el && el.classList.contains('show');
+}
+
+function shouldShowTutorial(){
+  if(MOCK) return false;
+  if(new URLSearchParams(location.search).has('tutorial')) return true;
+  try{ return !localStorage.getItem(TUTORIAL_KEY); }catch(e){ return false; }
+}
+
+function renderTutorialStep(){
+  const step = TUTORIAL_STEPS[tutorialIndex];
+  document.getElementById('tutorialStepLabel').textContent = `Step ${tutorialIndex + 1} of ${TUTORIAL_STEPS.length}`;
+  document.getElementById('tutorialTitle').textContent = step.title;
+  document.getElementById('tutorialBody').textContent = step.body;
+  document.getElementById('tutorialDots').innerHTML = TUTORIAL_STEPS.map((_, i)=>
+    `<span class="tutorial-dot${i===tutorialIndex?' active':''}"></span>`
+  ).join('');
+}
+
+function dismissTutorial(){
+  const el = document.getElementById('tutorialOverlay');
+  el.classList.remove('show');
+  el.setAttribute('aria-hidden', 'true');
+  tutorialShown = false;
+  try{ localStorage.setItem(TUTORIAL_KEY, '1'); }catch(e){ /* private mode */ }
+}
+
+function advanceTutorial(){
+  if(tutorialIndex >= TUTORIAL_STEPS.length - 1){
+    dismissTutorial();
+    return;
+  }
+  tutorialIndex += 1;
+  renderTutorialStep();
+}
+
+function showTutorial(){
+  if(tutorialShown || !shouldShowTutorial()) return;
+  tutorialShown = true;
+  tutorialIndex = 0;
+  renderTutorialStep();
+  const el = document.getElementById('tutorialOverlay');
+  el.classList.add('show');
+  el.setAttribute('aria-hidden', 'false');
+}
+
+(function initTutorial(){
+  const overlay = document.getElementById('tutorialOverlay');
+  const card = document.getElementById('tutorialCard');
+  overlay.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    advanceTutorial();
+  });
+  card.addEventListener('click', function(e){
+    e.stopPropagation();
+    advanceTutorial();
+  });
+})();
 
 // ─────────────────────────────────────────────────────────────────────────
 // INIT
@@ -1791,7 +1914,8 @@ setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().t
   updateSliderTrack();
   render();
   initGlMap();
-  refreshAll();
+  await refreshAll();
+  showTutorial();
 })();
 window.__gtpDebug = function(){
   return {
