@@ -88,7 +88,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
 .advice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-wrap:wrap}
 .advice-main{flex:1 1 420px;min-width:0}
-.advice-corridor{font-size:17px;font-weight:700;color:var(--cyan)}
+.advice-corridor{font-size:clamp(22px,3vw,36px);font-weight:700;color:var(--cyan);line-height:1.2}
 .period-toggle-wrap{display:flex;flex-direction:column;justify-content:center;gap:4px}
 .period-toggle{display:flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
 .period-btn{flex:1;font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -97,7 +97,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
    their button via the matching flex:1/gap/padding split below. */
 .period-ranges{display:flex;gap:4px;padding:0 3px}
 .period-range{flex:1;text-align:center;font-family:var(--mono);font-size:9px;color:var(--sub);opacity:.8;white-space:nowrap}
-.advice-summary{font-size:clamp(19px,2.5vw,30px);font-weight:700;line-height:1.3;margin-top:8px;letter-spacing:-0.01em}
+.advice-summary{font-size:clamp(15px,1.8vw,18px);font-weight:500;line-height:1.4;margin-top:6px;color:var(--sub);letter-spacing:normal}
 .window-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .chip{font-family:var(--mono);font-size:10px;padding:6px 11px;border-radius:6px;border:1px solid;display:flex;align-items:center;gap:6px}
 .chip.best{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok-text)}
@@ -313,13 +313,12 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <span id="warnBannerText"></span>
   </div>
 
-  <!-- HERO — "when should you leave" -->
+  <!-- HERO — product title when idle, corridor advice when selected -->
   <div class="advice-banner" id="adviceBanner">
-    <div class="advice-eyebrow">When should you leave?</div>
     <div class="advice-top">
       <div class="advice-main">
-        <div class="advice-corridor" id="adviceCorridorName">Loading…</div>
-        <div class="advice-summary" id="adviceSummary">Fetching advice from the model…</div>
+        <div class="advice-corridor" id="adviceCorridorName">Gurugram Traffic Predictor</div>
+        <div class="advice-summary" id="adviceSummary">Find the best time to leave</div>
         <div class="window-chips" id="windowChips"></div>
       </div>
       <div class="hero-stats" id="heroStats">
@@ -413,7 +412,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
   <div class="footer-strip">
     <button class="info-btn" id="dataInfoBtn" type="button" aria-haspopup="true" aria-expanded="false">
-      <span class="info-dot" id="infoDot"></span>Data &amp; model
+      <span class="info-dot" id="infoDot"></span>About
     </button>
   </div>
   <!-- First-load tutorial: full-screen, blocks interaction until dismissed -->
@@ -427,13 +426,11 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     </div>
   </div>
 
-  <div class="info-popover" id="dataInfoPopover" role="dialog" aria-label="Data and model information" style="display:none">
-    <div class="info-row"><span>Status</span><b id="mHealth">--</b></div>
-    <div class="info-row"><span>Model version</span><b id="mVersion">--</b></div>
-    <div class="info-row"><span>Provenance</span><b id="mProv">--</b></div>
-    <div class="info-row"><span>Trained rows</span><b id="mRows">--</b></div>
-    <div class="info-row"><span>Generated</span><b id="mGeneratedAt">--</b></div>
-    <div class="info-accuracy" id="mAccuracy"></div>
+  <div class="info-popover" id="dataInfoPopover" role="dialog" aria-label="About" style="display:none">
+    <div class="info-row"><span>Accuracy</span><b id="mAccuracyPct">--</b></div>
+    <div class="info-row"><span>Trained on</span><b id="mRows">--</b></div>
+    <div class="info-row"><span>Data</span><b>TomTom</b></div>
+    <div class="info-accuracy">How often the model ranks hours in the right order, checked against later real traffic.</div>
   </div>
 </div>
 
@@ -511,6 +508,7 @@ function currentMapStyleKey(){
 // LABEL / COLOR
 // ─────────────────────────────────────────────────────────────────────────
 function labelFor(v){ return v<0.091?'Free':v<0.200?'Moderate':v<0.310?'Heavy':'Severe'; }
+function freePct(v){ return Math.round((1 - v) * 100); }
 function colorFor(v){ return v<0.091?'var(--green)':v<0.200?'var(--amber)':v<0.310?'var(--orange)':'var(--magenta)'; }
 function colorForLabel(l){ return l==='Free'?'var(--green)':l==='Moderate'?'var(--amber)':l==='Heavy'?'var(--orange)':'var(--magenta)'; }
 function badgeBg(v){ return v<0.091?'rgba(0,255,157,0.1)':v<0.200?'rgba(255,184,0,0.1)':v<0.310?'rgba(255,140,0,0.1)':'rgba(255,45,107,0.1)'; }
@@ -1120,8 +1118,9 @@ function glPopupHtml(cid){
   let html = `<div class="gl-popup-title">${c.name}</div><div class="gl-popup-sub">${c.sub}</div>`;
   if(info){
     const col = colorFor(info.v);
-    html += `<div class="gl-popup-row"><span class="gl-popup-pct" style="color:${col}">${Math.round(info.v*100)}%</span>
-      <span class="gl-popup-label" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</span></div>`;
+    html += `<div class="gl-popup-row"><span class="gl-popup-pct" style="color:${col}">${freePct(info.v)}% free</span>
+      <span class="gl-popup-label" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</span></div>
+      <div class="gl-popup-muted">Compared with an empty road (no traffic).</div>`;
     if(info.prov) html += `<div style="margin-top:6px">${originBadgeHtml(info.prov)}</div>`;
   } else {
     html += `<div class="gl-popup-muted">Loading congestion…</div>`;
@@ -1349,8 +1348,8 @@ function renderAdvice(){
   const hsConfWrap = document.getElementById('hsConfWrap');
 
   if(selCorridor===null || !CORRIDORS.length){
-    nameEl.textContent = CORRIDORS.length ? 'Select a corridor' : 'Loading corridors…';
-    sumEl.textContent = CORRIDORS.length ? 'Search for a road above, or click one on the map, to get a departure recommendation.' : '';
+    nameEl.textContent = CORRIDORS.length ? 'Gurugram Traffic Predictor' : 'Loading corridors…';
+    sumEl.textContent = CORRIDORS.length ? 'Find the best time to leave' : '';
     chipsEl.innerHTML = '';
     hsBest.textContent = '--'; hsSave.textContent = '--'; hsConf.textContent = '--';
     hsConfWrap.classList.remove('low');
@@ -1422,7 +1421,7 @@ function renderDetail(){
     const v = prof[h];
     const ht = Math.max(4, Math.round(visualFrac(v)*40));
     const isN = Math.abs(h-curHour) < 2 || (curHour>=22 && h===0) || (curHour<2 && h===21);
-    return `<div class="df-bar${isN?' now':''}" style="height:${ht}px;background:${colorFor(v)}" title="${fmtHour(h)} · ${Math.round(v*100)}%"></div>`;
+    return `<div class="df-bar${isN?' now':''}" style="height:${ht}px;background:${colorFor(v)}" title="${fmtHour(h)} · ${freePct(v)}% free"></div>`;
   }).join('');
   const hrs = hours.map(h=>`<div class="df-hr">${pad2(h)}</div>`).join('');
   el.innerHTML = `
@@ -1443,25 +1442,15 @@ function renderDetail(){
 // ─────────────────────────────────────────────────────────────────────────
 // RENDER: DATA & MODEL INFO POPOVER (footer)
 // ─────────────────────────────────────────────────────────────────────────
-function fmtGeneratedAt(iso){
-  try{
-    return new Date(iso).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric', timeZone:'Asia/Kolkata'});
-  }catch(e){ return iso; }
-}
 function renderInfoPopover(){
-  document.getElementById('mHealth').textContent = health ? health.status : (apiReachable===false ? 'unreachable' : '--');
-  document.getElementById('mVersion').textContent = health ? health.model_version : '--';
-  document.getElementById('mProv').innerHTML = health
-    ? (health.forecast && health.forecast.enabled
-        ? originBadgeHtml('residual_adjusted')
-        : provBadgeHtml(health.provenance))
+  const accBlock = (BUNDLE_MODE && BUNDLE && BUNDLE.accuracy) || (health && health.accuracy) || null;
+  const accRaw = accBlock && accBlock.hour_ranking_concordance_pct;
+  const accPct = typeof accRaw === 'number' ? Math.round(accRaw) : null;
+  document.getElementById('mAccuracyPct').textContent = accPct !== null ? accPct + '%' : '--';
+  const rows = health ? health.trained_rows : (BUNDLE_MODE && BUNDLE ? BUNDLE.trained_rows : null);
+  document.getElementById('mRows').textContent = rows != null
+    ? rows.toLocaleString('en-IN') + ' readings'
     : '--';
-  document.getElementById('mRows').textContent = health ? health.trained_rows : '--';
-  const genEl = document.getElementById('mGeneratedAt');
-  genEl.textContent = (BUNDLE_MODE && BUNDLE && BUNDLE.generated_at) ? (fmtGeneratedAt(BUNDLE.generated_at) + ' IST') : '--';
-  const accEl = document.getElementById('mAccuracy');
-  const acc = (BUNDLE_MODE && BUNDLE && BUNDLE.accuracy) || (health && health.accuracy) || null;
-  accEl.textContent = acc ? acc.note : '';
 }
 
 // ─────────────────────────────────────────────────────────────────────────
