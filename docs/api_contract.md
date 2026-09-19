@@ -42,6 +42,15 @@ Base URL: `http://localhost:5000` (dev)
   - `"observed"`  — trained on live data we measured ourselves
   - `"bootstrap"` — trained on TomTom historical-model data
   - `"synthetic"` — trained on generated data (NOT real; must be surfaced in UI)
+- Per-cell `origin` (internal grid/bundle field, not the top-level model
+  `provenance`) — one of:
+  - `"observed"` — live-measured cell from `gurugram_observed.csv`
+  - `"bootstrap"` — TomTom historical-model cell from `gurugram_bootstrap.csv`
+  - `"model_inferred"` — legacy GBT gap-fill (`model/traffic_model.py`)
+  - `"residual_adjusted"` — bootstrap baseline + residual forecast
+    (`model/forecast_model.py`), using weather/incidents/calendar. Only
+    served when the residual model's time-holdout skill score is strictly
+    positive; never labelled as `"observed"`.
 - `confidence` — float 0.0–1.0. Derived from how much real data backs the
   prediction for that corridor/day/hour cell. Frontend must visibly degrade
   the display when `< 0.5`.
@@ -50,24 +59,28 @@ Every response includes `provenance` and `model_version`. The frontend is
 required to display provenance to the user — never present synthetic numbers
 as if they were measured.
 
-### Label honesty (added 2026-08-17)
+### Label honesty (updated 2026-09-18)
 
-A served `label`/`congestion_index` is a **typical** value for that
-(corridor, day-of-week, hour) cell — it is not a live sensor reading and not
-a forecast for one specific date. Measured against 115 real observations
-(`docs/accuracy_report.md`, 3.5% cell coverage): exact label agreement is
-**58.3%**, while hour-vs-hour ranking (pairwise concordance) is **89.4%**.
-The gap is not a uniform bias (per-band bias is +0.032/-0.048/-0.052/+0.037
-near-free/light/moderate/peak) — it is variance at thin coverage, so
-thresholds are **not** shifted and **no** bias correction is applied; both
-would fit noise. Instead:
+A served `label`/`congestion_index` is a **residual forecast** for the next
+occurrence of that (corridor, day-of-week, hour) in IST:
+`clip(bootstrap_baseline + predicted_residual, 0, 1)`, origin
+`residual_adjusted` when the holdout-gated model is loaded. It is **not** a
+replay of the latest row in `gurugram_observed.csv` and not a live sensor
+reading of this exact moment.
+
+The **43.0% label / 57.2% ranking** figures in `GET /health`'s `accuracy`
+block are a separate **bootstrap-vs-observed diagnostic** (historical typical
+vs what was measured) — see `docs/accuracy_report.md`. They do **not** score
+the residual forecast the map now displays. Thresholds are **not** shifted and
+**no** bias correction is applied. Instead:
 - `GET /health` (and the bundle's top-level `accuracy` key) serve
   `ACCURACY_SUMMARY`: `label_agreement_pct`, `hour_ranking_concordance_pct`,
   `sample_size`, `as_of`, `note` — so this strength/weakness split is
   discoverable, not just documented.
 - Natural-language `text`/`summary` fields (`/now`, `/advice`,
-  `/advice/all`) say "Typically <label>…", never state the label as an
-  unqualified fact.
+  `/advice/all`) describe the **forecast** (baseline vs residual adjustment,
+  rain/incident flags when used) — never state the label as an unqualified
+  live-sensor fact.
 - Any summary/text built from a cell with `confidence < 0.5` appends
   `" (Limited data for this corridor/day — treat as a rough guide.)"` (or
   the `/now`-specific `" Limited data for this hour — treat as a rough
@@ -168,9 +181,9 @@ fields are still populated for reference in every response regardless of
 ```json
 { "status": "ok", "model_version": "gbt-2026-08-16", "provenance": "bootstrap",
   "corridors": 8, "trained_rows": 1344,
-  "accuracy": { "label_agreement_pct": 58.3, "hour_ranking_concordance_pct": 89.4,
-                "sample_size": 115, "as_of": "2026-08-17",
-                "note": "Measured against 115 real observations: this site is much better at RANKING which hour is better... (see docs/accuracy_report.md)" } }
+  "accuracy": { "label_agreement_pct": 43.0, "hour_ranking_concordance_pct": 57.2,
+                "sample_size": 15234, "as_of": "2026-09-18",
+                "note": "Measured against 15,234 real TomTom live observations: bootstrap vs observed, not a GBT score... (see docs/accuracy_report.md)" } }
 ```
 
 ### `GET /corridors`

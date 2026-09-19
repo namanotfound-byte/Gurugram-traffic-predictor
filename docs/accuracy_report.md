@@ -1,19 +1,18 @@
 # Accuracy Report — served numbers vs. measured reality
 
-_Generated 2026-08-17 12:39 UTC by `tools/evaluate_accuracy.py`. Re-run this script as `data/gurugram_observed.csv` grows; it overwrites this file with the latest snapshot and appends one row to `docs/accuracy_history.csv` so trend-over-time can be tracked._
+_Generated 2026-09-18 12:41 UTC by `tools/evaluate_accuracy.py`. Re-run this script as `data/gurugram_observed.csv` grows; it overwrites this file with the latest snapshot and appends one row to `docs/accuracy_history.csv` so trend-over-time can be tracked._
 
 ## Headline
 
-**Coverage is still very thin: 76 of 2184 cells (3.5%) have ever been observed, from 115 collected rows spanning 2026-08-16T20:00:00 to 2026-08-17T11:45:00.** The numbers below are real (not fabricated, not tuned), but treat every headline figure here as **LOW-MODERATE (n still small for a product-level claim)** until coverage grows. See the Coverage section for exactly how much more data would change that.
 
-- Point error (served vs. observed `congestion_index`, n=115): **MAE = 0.057**, **RMSE = 0.075**, **bias = -0.017** (95% CI -0.031 to -0.004).
-  A negative bias means the site systematically **UNDERSTATES** real congestion (served value below what was actually measured).
-- Label agreement (what users actually see, n=115): **58.3%** exact match (95% CI 49.1%–66.9%). **28.7%** of the time the site showed a label *better* than reality (the dangerous direction), **13.0%** of the time *worse* than reality (merely annoying).
-- Advice-level hour ranking (n=13 corridor/day groups, 142 comparable hour-pairs): pairwise concordance **89.4%**, best-hour-hit rate **76.9%**, worst-hour-hit rate **76.9%**.
+- Point error (served vs. observed `congestion_index`, n=15234): **MAE = 0.116**, **RMSE = 0.153**, **bias = 0.003** (95% CI 0.000 to 0.005).
+  A negative bias means the site systematically **OVERSTATES** real congestion (served value below what was actually measured).
+- Label agreement (what users actually see, n=15234): **43.0%** exact match (95% CI 42.2%–43.7%). **30.8%** of the time the site showed a label *better* than reality (the dangerous direction), **26.3%** of the time *worse* than reality (merely annoying).
+- Advice-level hour ranking (n=91 corridor/day groups, 23704 comparable hour-pairs): pairwise concordance **57.2%**, best-hour-hit rate **13.2%**, worst-hour-hit rate **0.0%**.
 
 ## What this compares
 
-- **Served** = `data/gurugram_bootstrap.csv`'s `congestion_idx` for a (corridor, day-of-week, hour) cell — TomTom's historical-model average (`1 - noTraffic/historic`), with no date sensitivity. This is what `backend/app.py` serves for any cell that has not (yet) been directly observed — today that is 96.5% of all cells.
+- **Served** = `data/gurugram_bootstrap.csv`'s `congestion_idx` for a (corridor, day-of-week, hour) cell — TomTom's historical-model average (`1 - noTraffic/historic`), with no date sensitivity. This is what `backend/app.py` serves for any cell that has not (yet) been directly observed — today that is 0.0% of all cells.
 - **Observed** = `data/gurugram_observed.csv`'s `congestion_idx` for the same cell — a real measurement collected by CI (`1 - noTraffic/live`) at some actual date/time that fell into that (corridor, day-of-week, hour) bucket.
 - Both use the same `free_flow` numerator, so the two `congestion_idx` values are directly comparable — this is *not* comparing two different quantities.
 - **One caveat, for completeness:** the live backend's `load_measured_grid()` (`backend/app.py`) actually overwrites a cell with the *freshest matching observation* once one exists for that exact cell, so a handful of cells are, right now, serving the observed value verbatim (self-matching by construction). This evaluation deliberately measures the underlying **bootstrap** model instead, because that is what is served for the overwhelming majority of cells (everything not yet observed), and it is what was being served for every one of these comparison rows at the moment they were actually collected.
@@ -22,101 +21,179 @@ _Generated 2026-08-17 12:39 UTC by `tools/evaluate_accuracy.py`. Re-run this scr
 
 - Corridors: 13 (13, after the 5 added 2026-08-17)
 - Total cells (corridors x 7 days x 24 hours): 2184
-- Cells with at least one observation: 76 (3.5%)
-- Observed rows collected so far: 115
-- Days of week with any coverage: Monday, Sunday
-- Days of week with ZERO coverage: Tuesday, Wednesday, Thursday, Friday, Saturday
-- Collection window: 2026-08-16T20:00:00 → 2026-08-17T11:45:00
+- Cells with at least one observation: 2184 (100.0%)
+- Observed rows collected so far: 15234
+- Days of week with any coverage: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+- Days of week with ZERO coverage: none
+- Collection window: 2026-08-16T20:00:00 → 2026-09-11T15:30:00
 
-At the current CI cadence (~40 min/sweep, 13 corridors x 1 hour-of-day per sweep), reaching even 500 covered cells (~23% coverage, still thin) needs roughly 424 more distinct (corridor, day, hour) cells to be hit — coverage grows slower than row count because the same popular hours get re-sampled before new ones are reached. Full 2184-cell coverage (every hour of every day) requires the collector to run across all 7 days, which it has not yet done (see missing days above).
+At the current CI cadence (~40 min/sweep, 13 corridors x 1 hour-of-day per sweep), reaching even 500 covered cells (~23% coverage, still thin) needs roughly 0 more distinct (corridor, day, hour) cells to be hit — coverage grows slower than row count because the same popular hours get re-sampled before new ones are reached. Full 2184-cell coverage (every hour of every day) requires the collector to run across all 7 days, which it has not yet done (see missing days above).
 
 ## 1. Point-error metrics (served vs. observed `congestion_index`)
 
-Overall, n=115 — confidence tier: **LOW-MODERATE (n still small for a product-level claim)**
+Overall, n=15234 — confidence tier: **LOW-MODERATE (n still small for a product-level claim)**
 
 | metric | value | 95% CI |
 |---|---|---|
-| MAE | 0.057 | 0.048 – 0.066 |
-| RMSE | 0.075 | — |
-| Bias (mean signed error, served − observed) | -0.017 | -0.031 – -0.004 |
-| p50 abs error | 0.045 | — |
-| p90 abs error | 0.137 | — |
-| max abs error | 0.201 | — |
-| p10 / p50 / p90 signed error | -0.127 / -0.016 / 0.065 | — |
+| MAE | 0.116 | 0.115 – 0.118 |
+| RMSE | 0.153 | — |
+| Bias (mean signed error, served − observed) | 0.003 | 0.000 – 0.005 |
+| p50 abs error | 0.087 | — |
+| p90 abs error | 0.262 | — |
+| max abs error | 0.663 | — |
+| p10 / p50 / p90 signed error | -0.190 / 0.001 / 0.198 | — |
 
 ### Per corridor
 
 | corridor | n | MAE | RMSE | bias | tier |
 |---|---|---|---|---|---|
-| NH-48 Delhi-Gurgaon Expressway | 10 | 0.078 | 0.089 | -0.071 | INSUFFICIENT (do not draw conclusions) |
-| MG Road | 10 | 0.041 | 0.051 | 0.029 | INSUFFICIENT (do not draw conclusions) |
-| Golf Course Road | 10 | 0.070 | 0.083 | -0.048 | INSUFFICIENT (do not draw conclusions) |
-| Sohna Road | 10 | 0.038 | 0.042 | -0.012 | INSUFFICIENT (do not draw conclusions) |
-| Dwarka Expressway | 10 | 0.022 | 0.024 | -0.011 | INSUFFICIENT (do not draw conclusions) |
-| Golf Course Extension Road | 10 | 0.033 | 0.040 | 0.013 | INSUFFICIENT (do not draw conclusions) |
-| Mehrauli-Gurgaon Road | 10 | 0.044 | 0.052 | 0.041 | INSUFFICIENT (do not draw conclusions) |
-| Southern Peripheral Road | 10 | 0.095 | 0.110 | -0.037 | INSUFFICIENT (do not draw conclusions) |
-| KMP Expressway (Western Peripheral Expressway) | 7 | 0.086 | 0.115 | 0.083 | INSUFFICIENT (do not draw conclusions) |
-| Delhi-Mumbai Expressway | 7 | 0.032 | 0.037 | -0.032 | INSUFFICIENT (do not draw conclusions) |
-| NH-352W (Gurugram-Sohna-Alwar Road) | 7 | 0.095 | 0.099 | -0.095 | INSUFFICIENT (do not draw conclusions) |
-| Old Delhi-Gurgaon Road | 7 | 0.100 | 0.126 | -0.095 | INSUFFICIENT (do not draw conclusions) |
-| Pataudi Road | 7 | 0.020 | 0.021 | -0.003 | INSUFFICIENT (do not draw conclusions) |
+| NH-48 Delhi-Gurgaon Expressway | 1173 | 0.117 | 0.139 | -0.022 | LOW-MODERATE (n still small for a product-level claim) |
+| MG Road | 1173 | 0.175 | 0.220 | 0.000 | LOW-MODERATE (n still small for a product-level claim) |
+| Golf Course Road | 1173 | 0.131 | 0.162 | 0.001 | LOW-MODERATE (n still small for a product-level claim) |
+| Sohna Road | 1173 | 0.155 | 0.197 | 0.002 | LOW-MODERATE (n still small for a product-level claim) |
+| Dwarka Expressway | 1173 | 0.041 | 0.055 | -0.005 | LOW-MODERATE (n still small for a product-level claim) |
+| Golf Course Extension Road | 1173 | 0.110 | 0.139 | 0.028 | LOW-MODERATE (n still small for a product-level claim) |
+| Mehrauli-Gurgaon Road | 1173 | 0.148 | 0.189 | 0.021 | LOW-MODERATE (n still small for a product-level claim) |
+| Southern Peripheral Road | 1173 | 0.136 | 0.167 | -0.011 | LOW-MODERATE (n still small for a product-level claim) |
+| KMP Expressway (Western Peripheral Expressway) | 1170 | 0.119 | 0.145 | 0.044 | LOW-MODERATE (n still small for a product-level claim) |
+| Delhi-Mumbai Expressway | 1170 | 0.066 | 0.079 | 0.007 | LOW-MODERATE (n still small for a product-level claim) |
+| NH-352W (Gurugram-Sohna-Alwar Road) | 1170 | 0.103 | 0.126 | -0.026 | LOW-MODERATE (n still small for a product-level claim) |
+| Old Delhi-Gurgaon Road | 1170 | 0.151 | 0.184 | -0.017 | LOW-MODERATE (n still small for a product-level claim) |
+| Pataudi Road | 1170 | 0.062 | 0.078 | 0.014 | LOW-MODERATE (n still small for a product-level claim) |
 
 ### Per road class
 
 | road class | n | MAE | RMSE | bias | tier |
 |---|---|---|---|---|---|
-| arterial | 60 | 0.053 | 0.068 | -0.002 | LOW (preliminary only) |
-| highway | 31 | 0.074 | 0.092 | -0.067 | LOW (preliminary only) |
-| expressway | 24 | 0.044 | 0.067 | 0.010 | INSUFFICIENT (do not draw conclusions) |
+| arterial | 7038 | 0.143 | 0.181 | 0.007 | LOW-MODERATE (n still small for a product-level claim) |
+| highway | 4683 | 0.108 | 0.137 | -0.013 | LOW-MODERATE (n still small for a product-level claim) |
+| expressway | 3513 | 0.075 | 0.101 | 0.015 | LOW-MODERATE (n still small for a product-level claim) |
 
 ## 2. Label agreement (what the user actually sees)
 
 Thresholds (from `backend/app.py`, matching `docs/api_contract.md`): Free < 0.091, Moderate < 0.2, Heavy < 0.31, Severe ≥ 0.31
 
-n=115 — confidence tier: **LOW-MODERATE (n still small for a product-level claim)**
+n=15234 — confidence tier: **LOW-MODERATE (n still small for a product-level claim)**
 
-- Exact label match: **58.3%** (95% CI 49.1%–66.9%)
-- Understated (served label better than observed — **dangerous**, user leaves at a time we called clear/moderate but was actually worse): 33 / 115 = **28.7%**
-- Overstated (served label worse than observed — merely annoying): 15 / 115 = **13.0%**
+- Exact label match: **43.0%** (95% CI 42.2%–43.7%)
+- Understated (served label better than observed — **dangerous**, user leaves at a time we called clear/moderate but was actually worse): 4691 / 15234 = **30.8%**
+- Overstated (served label worse than observed — merely annoying): 3999 / 15234 = **26.3%**
 
 ### Confusion matrix (rows = served label, columns = observed label)
 
 | served \ observed | Free | Moderate | Heavy | Severe | row total |
 |---|---|---|---|---|---|
-| **Free** | 27 | 6 | 0 | 0 | 33 |
-| **Moderate** | 2 | 29 | 18 | 7 | 56 |
-| **Heavy** | 0 | 9 | 11 | 2 | 22 |
-| **Severe** | 0 | 2 | 2 | 0 | 4 |
-| **col total** | 29 | 46 | 31 | 9 | 115 |
+| **Free** | 4518 | 1868 | 827 | 317 | 7530 |
+| **Moderate** | 1536 | 1442 | 821 | 560 | 4359 |
+| **Heavy** | 1183 | 739 | 548 | 298 | 2768 |
+| **Severe** | 425 | 60 | 56 | 36 | 577 |
+| **col total** | 7662 | 4109 | 2252 | 1211 | 15234 |
 
 ## 3. Advice-level accuracy (hour ranking within a corridor/day)
 
 The site's core claim is "leave at hour X, avoid hour Y." That claim only makes sense to check where we have observed data at 2+ distinct hours for the same corridor and day-of-week, so we can ask: did the served ranking of those hours match the observed ranking?
 
-n=13 corridor/day groups, 142 comparable hour-pairs (8 tied pairs excluded) — confidence tier: **INSUFFICIENT (do not draw conclusions)**
+n=91 corridor/day groups, 23704 comparable hour-pairs (1412 tied pairs excluded) — confidence tier: **LOW (preliminary only)**
 
-- Pairwise concordance (served says A vs B in the same order reality did): **89.4%**
-- Best-hour-hit rate (served's best hour among observed hours = observed's actual best hour): **76.9%** (10/13)
-- Worst-hour-hit rate: **76.9%** (10/13)
+- Pairwise concordance (served says A vs B in the same order reality did): **57.2%**
+- Best-hour-hit rate (served's best hour among observed hours = observed's actual best hour): **13.2%** (12/91)
+- Worst-hour-hit rate: **0.0%** (0/91)
 
 **Important limitation:** every group below comes from Monday (`day_of_week=0`) — that is the only day with enough distinct observed hours to rank. This says nothing yet about weekday-vs-weekend or other days.
 
 | corridor | day | hours observed | n pairs | pairwise concordance | best-hour hit | worst-hour hit |
 |---|---|---|---|---|---|---|
-| NH-48 Delhi-Gurgaon Expressway | Monday | 0, 1, 8, 9, 10, 11 | 14 | 85.7% | yes | no |
-| MG Road | Monday | 0, 1, 8, 9, 10, 11 | 14 | 100.0% | yes | yes |
-| Golf Course Road | Monday | 0, 1, 8, 9, 10, 11 | 14 | 92.9% | yes | yes |
-| Sohna Road | Monday | 0, 1, 8, 9, 10, 11 | 14 | 100.0% | yes | yes |
-| Dwarka Expressway | Monday | 0, 1, 8, 9, 10, 11 | 14 | 100.0% | no | yes |
-| Golf Course Extension Road | Monday | 0, 1, 8, 9, 10, 11 | 14 | 92.9% | yes | yes |
-| Mehrauli-Gurgaon Road | Monday | 0, 1, 8, 9, 10, 11 | 14 | 92.9% | yes | yes |
-| Southern Peripheral Road | Monday | 0, 1, 8, 9, 10, 11 | 14 | 100.0% | no | yes |
-| KMP Expressway (Western Peripheral Expressway) | Monday | 8, 9, 10, 11 | 6 | 16.7% | no | no |
-| Delhi-Mumbai Expressway | Monday | 8, 9, 10, 11 | 6 | 50.0% | yes | no |
-| NH-352W (Gurugram-Sohna-Alwar Road) | Monday | 8, 9, 10, 11 | 6 | 83.3% | yes | yes |
-| Old Delhi-Gurgaon Road | Monday | 8, 9, 10, 11 | 6 | 83.3% | yes | yes |
-| Pataudi Road | Monday | 8, 9, 10, 11 | 6 | 100.0% | yes | yes |
+| NH-48 Delhi-Gurgaon Expressway | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 57.9% | no | no |
+| NH-48 Delhi-Gurgaon Expressway | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 61.3% | no | no |
+| NH-48 Delhi-Gurgaon Expressway | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 60.5% | no | no |
+| NH-48 Delhi-Gurgaon Expressway | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 57.7% | no | no |
+| NH-48 Delhi-Gurgaon Expressway | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 58.6% | yes | no |
+| NH-48 Delhi-Gurgaon Expressway | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 60.5% | no | no |
+| NH-48 Delhi-Gurgaon Expressway | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 61.2% | no | no |
+| MG Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 56.7% | no | no |
+| MG Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 47.9% | no | no |
+| MG Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 55.0% | no | no |
+| MG Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 52.9% | no | no |
+| MG Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 57.5% | yes | no |
+| MG Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 60.0% | no | no |
+| MG Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 65.4% | yes | no |
+| Golf Course Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 59.8% | yes | no |
+| Golf Course Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 55.6% | no | no |
+| Golf Course Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 58.8% | no | no |
+| Golf Course Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 58.2% | no | no |
+| Golf Course Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 60.9% | yes | no |
+| Golf Course Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 57.3% | no | no |
+| Golf Course Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 62.3% | no | no |
+| Sohna Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 56.3% | no | no |
+| Sohna Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 54.8% | no | no |
+| Sohna Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 55.6% | no | no |
+| Sohna Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 55.0% | no | no |
+| Sohna Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 54.4% | yes | no |
+| Sohna Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 61.5% | no | no |
+| Sohna Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 67.0% | no | no |
+| Dwarka Expressway | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 259 | 58.7% | no | no |
+| Dwarka Expressway | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 258 | 55.8% | no | no |
+| Dwarka Expressway | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 258 | 57.0% | no | no |
+| Dwarka Expressway | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 258 | 57.8% | no | no |
+| Dwarka Expressway | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 257 | 59.1% | no | no |
+| Dwarka Expressway | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 59.6% | no | no |
+| Dwarka Expressway | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 259 | 56.8% | no | no |
+| Golf Course Extension Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 56.7% | no | no |
+| Golf Course Extension Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 53.6% | no | no |
+| Golf Course Extension Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 56.9% | no | no |
+| Golf Course Extension Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 61.7% | no | no |
+| Golf Course Extension Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 56.7% | yes | no |
+| Golf Course Extension Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 58.6% | no | no |
+| Golf Course Extension Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 63.1% | no | no |
+| Mehrauli-Gurgaon Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 52.5% | no | no |
+| Mehrauli-Gurgaon Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 52.1% | no | no |
+| Mehrauli-Gurgaon Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 54.2% | no | no |
+| Mehrauli-Gurgaon Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 54.4% | no | no |
+| Mehrauli-Gurgaon Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 51.7% | no | no |
+| Mehrauli-Gurgaon Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 61.5% | no | no |
+| Mehrauli-Gurgaon Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 63.8% | no | no |
+| Southern Peripheral Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 52.9% | no | no |
+| Southern Peripheral Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 54.0% | no | no |
+| Southern Peripheral Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 53.6% | no | no |
+| Southern Peripheral Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 51.0% | no | no |
+| Southern Peripheral Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 53.3% | yes | no |
+| Southern Peripheral Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 56.2% | no | no |
+| Southern Peripheral Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 62.8% | no | no |
+| KMP Expressway (Western Peripheral Expressway) | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 62.8% | no | no |
+| KMP Expressway (Western Peripheral Expressway) | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 44.1% | no | no |
+| KMP Expressway (Western Peripheral Expressway) | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 52.9% | no | no |
+| KMP Expressway (Western Peripheral Expressway) | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 45.4% | no | no |
+| KMP Expressway (Western Peripheral Expressway) | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 59.0% | no | no |
+| KMP Expressway (Western Peripheral Expressway) | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 259 | 52.9% | no | no |
+| KMP Expressway (Western Peripheral Expressway) | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 53.1% | no | no |
+| Delhi-Mumbai Expressway | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 58.5% | no | no |
+| Delhi-Mumbai Expressway | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 59.2% | no | no |
+| Delhi-Mumbai Expressway | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 57.5% | no | no |
+| Delhi-Mumbai Expressway | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 259 | 59.8% | no | no |
+| Delhi-Mumbai Expressway | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 60.9% | yes | no |
+| Delhi-Mumbai Expressway | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 60.9% | no | no |
+| Delhi-Mumbai Expressway | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 63.6% | yes | no |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 55.6% | no | no |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 55.6% | no | no |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 59.4% | no | no |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 52.9% | no | no |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 57.1% | yes | no |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 54.4% | no | no |
+| NH-352W (Gurugram-Sohna-Alwar Road) | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 62.8% | no | no |
+| Old Delhi-Gurgaon Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 51.7% | no | no |
+| Old Delhi-Gurgaon Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 47.9% | no | no |
+| Old Delhi-Gurgaon Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 50.6% | no | no |
+| Old Delhi-Gurgaon Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 54.0% | no | no |
+| Old Delhi-Gurgaon Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 51.3% | no | no |
+| Old Delhi-Gurgaon Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 57.1% | no | no |
+| Old Delhi-Gurgaon Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 259 | 62.2% | no | no |
+| Pataudi Road | Monday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 259 | 56.4% | no | no |
+| Pataudi Road | Tuesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 58.2% | no | no |
+| Pataudi Road | Wednesday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 62.8% | no | no |
+| Pataudi Road | Thursday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 60.5% | no | no |
+| Pataudi Road | Friday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 62.8% | yes | no |
+| Pataudi Road | Saturday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 261 | 58.6% | no | no |
+| Pataudi Road | Sunday | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 | 260 | 65.4% | no | no |
 
 ## Evaluation framework — formulas and why
 

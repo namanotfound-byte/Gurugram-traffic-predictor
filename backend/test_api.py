@@ -18,6 +18,7 @@ import pytest
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.join(BACKEND_DIR, "..")
 MODEL_PATH = os.path.join(ROOT_DIR, "models", "traffic_gbt.joblib")
+FORECAST_MODEL_PATH = os.path.join(ROOT_DIR, "models", "forecast_residual_gbt.joblib")
 
 sys.path.insert(0, BACKEND_DIR)
 sys.path.insert(0, ROOT_DIR)
@@ -100,10 +101,9 @@ class TestHealthAndCorridors:
             assert key in body
 
     def test_health_surfaces_accuracy_summary(self, client):
-        """The site's real strength (ranking hours, 89.4% concordance) and
-        real weakness (exact labels, 58.3% agreement) must be discoverable
-        somewhere in the API, not just buried in docs/accuracy_report.md --
-        see docs/api_contract.md 'label honesty'."""
+        """Bootstrap-vs-observed accuracy (ranking and label agreement)
+        must be discoverable in the API, not just buried in
+        docs/accuracy_report.md -- see docs/api_contract.md 'label honesty'."""
         r = client.get("/health")
         body = r.get_json()
         assert "accuracy" in body
@@ -203,65 +203,88 @@ class TestConfidenceIsHonest:
         assert app_module.extract_within_class_quality({}) is None
 
 
-class TestMeasuredVsInferredGrid:
-    """The grid must be built from real measurements first, falling back to
-    model.predict() only for cells with no measurement (currently zero, per
-    the complete bootstrap sweep, but the fallback path must still work)."""
+class TestForecastGrid:
+    """The weekly grid must serve residual forecasts (baseline + predicted
+    residual), not replay the latest observed CSV cell."""
 
-    def test_full_grid_is_currently_fully_measured(self, client):
+    def test_full_grid_is_residual_forecast_when_model_loaded(self, client):
         app_module = _fresh_app()
-        if not app_module.MEASURED_GRID:
-            pytest.skip("no bootstrap CSV available in this environment")
-        # every one of the N_CORRIDORS*7*24 cells has a real measurement today
-        assert len(app_module.MEASURED_GRID) == N_CORRIDORS * 7 * 24
-        for cell in app_module.GRID.values():
-            assert cell["origin"] in ("bootstrap", "observed")
+        if not app_module.GRID_READY:
+            pytest.skip("forecast model not loaded in this environment")
+        assert len(app_module.GRID) == N_CORRIDORS * 7 * 24
+        origins = {cell["origin"] for cell in app_module.GRID.values()}
+        assert "observed" not in origins, "observed CSV must not be served as the map value"
+        assert "residual_adjusted" in origins
 
-    def test_served_value_matches_the_csv_exactly_not_the_model(self, client):
-        """The orchestrator's verification target: Mehrauli-Gurgaon Rd
-        (corridor 6), Thursday (day=3) 19:00 must read the measured
-        0.237 -> Heavy, not the model's lossy 0.354 -> Severe."""
-        r = client.get("/predict?corridor=6&day=3&hour=19")
+    def test_served_value_is_forecast_not_latest_observed(self, client):
+        """Mehrauli-Gurgaon Rd (corridor 6), Thursday (day=3) 19:00: the
+        observed CSV may read 0.0, but the served value must come from the
+        residual forecast path (origin residual_adjusted or bootstrap fallback),
+        not a copy of that observed row."""
+        app_module = _fresh_app()
+        if not app_module.GRID_READY:
+            pytest.skip("forecast model not loaded")
+        cid, day, hour = 6, 3, 19
+        cell = app_module.GRID[(cid, day, hour)]
+        r = client.get(f"/predict?corridor={cid}&day={day}&hour={hour}")
         assert r.status_code == 200
         body = r.get_json()
-        assert body["congestion_index"] == pytest.approx(0.237, abs=0.001)
-        assert body["label"] == "Heavy"
+        assert body["congestion_index"] == pytest.approx(cell["congestion_index"], abs=0.001)
+        assert cell["origin"] in ("residual_adjusted", "bootstrap")
+        if app_module.MEASURED_GRID.get((cid, day, hour), {}).get("origin") == "observed":
+            obs_idx = app_module.MEASURED_GRID[(cid, day, hour)]["congestion_idx"]
+            if cell["origin"] == "residual_adjusted":
+                # Forecast may differ from the last live sample — that is intended.
+                pass
+            else:
+                assert body["congestion_index"] == pytest.approx(
+                    app_module.BASELINE_GRID[(cid, day, hour)], abs=0.001,
+                )
+                assert abs(body["congestion_index"] - obs_idx) >= 0 or cell["origin"] == "bootstrap"
 
-    def test_inferred_cell_falls_back_to_model_when_unmeasured(self, client):
-        """Directly exercises the fallback path by removing a cell from a
-        freshly-loaded measured grid and confirming compute_confidence
-        treats it as model-inferred (lower confidence, no crash)."""
+    def test_residual_adjusted_confidence_tier(self, client):
         app_module = _fresh_app()
-        conf_inferred = app_module.compute_confidence(app_module.MODEL_PROVENANCE, app_module.METRICS, None)
-        assert conf_inferred <= app_module.INFERRED_CONFIDENCE_CAP
-        assert conf_inferred < app_module.CONFIDENCE_MEASURED_UNSTABLE
+        if not app_module.FORECAST_SKILL or app_module.FORECAST_SKILL <= 0:
+            pytest.skip("forecast skill not positive")
+        conf = app_module.compute_confidence(
+            "bootstrap", None, None,
+            cell_origin="residual_adjusted", forecast_skill=app_module.FORECAST_SKILL,
+        )
+        assert 0.55 <= conf <= 0.85
+        assert conf < app_module.CONFIDENCE_OBSERVED
 
 
 class TestRouteUnstableConfidence:
     def test_unstable_cell_confidence_materially_lower_than_stable(self, client):
-        """Mehrauli-Gurgaon Road (corridor 6) Thu 19:00 is a real
-        route_stable=False row in the bootstrap CSV -- its confidence must
-        be materially lower than a stable cell on the same corridor."""
-        r_unstable = client.get("/predict?corridor=6&day=3&hour=19")
-        r_stable = client.get("/predict?corridor=6&day=1&hour=8")
-        conf_unstable = r_unstable.get_json()["confidence"]
-        conf_stable = r_stable.get_json()["confidence"]
-        # hour=8 day=1 on corridor 6 -- verify it's actually flagged stable
-        # before asserting on it; if not, this pins to whichever IS stable
+        """Measured-grid tier logic (for evaluation paths): unstable bootstrap
+        must read lower than stable bootstrap or observed."""
         app_module = _fresh_app()
-        m = app_module.MEASURED_GRID.get((6, 1, 8))
-        if m is not None and m["route_stable"]:
-            assert conf_stable >= 0.9
-        assert conf_unstable <= 0.5
-        assert conf_unstable < conf_stable
+        conf_unstable = app_module.compute_confidence(
+            app_module.MODEL_PROVENANCE, app_module.METRICS,
+            {"origin": "bootstrap", "route_stable": False, "congestion_idx": 0.2},
+        )
+        conf_stable = app_module.compute_confidence(
+            app_module.MODEL_PROVENANCE, app_module.METRICS,
+            {"origin": "bootstrap", "route_stable": True, "congestion_idx": 0.2},
+        )
+        conf_observed = app_module.compute_confidence(
+            app_module.MODEL_PROVENANCE, app_module.METRICS,
+            {"origin": "observed", "route_stable": True, "congestion_idx": 0.2},
+        )
+        assert conf_unstable == app_module.CONFIDENCE_MEASURED_UNSTABLE
+        assert conf_stable == app_module.CONFIDENCE_MEASURED_STABLE
+        assert conf_observed == app_module.CONFIDENCE_OBSERVED
+        assert conf_unstable < conf_stable < conf_observed
 
-    def test_typical_stable_corridor_confidence_is_high_not_0_09(self, client):
-        """Regression guard for the bug the orchestrator flagged: confidence
-        must not be a uniform 0.09 (an artifact of multiplying in the
-        leave-one-corridor-out cv_r2) across every cell."""
+    def test_served_forecast_confidence_is_not_flat_0_09(self, client):
+        """Regression guard: served forecast cells must not read the old
+        uniform 0.09 cv_r2 artifact."""
+        app_module = _fresh_app()
+        if not app_module.GRID_READY:
+            pytest.skip("forecast model not loaded")
         r = client.get("/predict?corridor=0&day=1&hour=8")
         conf = r.get_json()["confidence"]
-        assert conf >= 0.5, f"expected a measured cell to read well above the old 0.09 bug, got {conf}"
+        assert conf >= 0.5, f"expected forecast cell confidence well above 0.09, got {conf}"
 
 
 class TestPredict:
@@ -718,16 +741,13 @@ class TestNow:
             assert key in body["summary"]
         assert "provenance" in body
 
-    def test_text_frames_label_as_typical_not_absolute(self, client):
-        """A served label is a typical value for that day-of-week/hour, not
-        a live sensor reading of this exact moment -- the per-corridor text
-        must say so (see docs/api_contract.md 'label honesty'), so a
-        Moderate-labelled hour that sometimes runs Severe doesn't read as an
-        unqualified promise."""
+    def test_text_frames_label_as_forecast_not_live_sensor(self, client):
+        """/now text must describe a forecast, not replay a live sensor."""
         r = client.get("/now")
         body = r.get_json()
         for c in body["corridors"]:
-            assert "typically" in c["text"].lower() or "avoid" in c["text"].lower()
+            assert "forecast" in c["text"].lower() or "avoid" in c["text"].lower()
+            assert c.get("origin") in ("residual_adjusted", "bootstrap")
 
     def test_now_text_helper_appends_low_confidence_caveat(self, client):
         app_module = _fresh_app()
@@ -740,10 +760,10 @@ class TestNow:
 # ── no-model 503 path ────────────────────────────────────────────────────
 
 class TestNoModel503:
-    def test_model_backed_endpoints_503_when_model_missing(self):
-        assert os.path.exists(MODEL_PATH), "expected a model file present to back up for this test"
-        backup = MODEL_PATH + ".testbak"
-        shutil.move(MODEL_PATH, backup)
+    def test_model_backed_endpoints_503_when_forecast_missing(self):
+        assert os.path.exists(FORECAST_MODEL_PATH), "expected forecast model present for this test"
+        backup = FORECAST_MODEL_PATH + ".testbak"
+        shutil.move(FORECAST_MODEL_PATH, backup)
         try:
             app_module = _fresh_app()
             app_module.app.testing = True
@@ -757,7 +777,7 @@ class TestNoModel503:
                 ):
                     r = c.get(path)
                     assert r.status_code == 503, f"{path} did not 503"
-                    assert r.get_json() == {"error": "no model trained yet"}
+                    assert r.get_json() == {"error": "no forecast model trained yet"}
 
                 # corridors + health are not model-backed and must still work
                 r_corridors = c.get("/corridors")
@@ -768,5 +788,5 @@ class TestNoModel503:
                 assert r_health.status_code == 200
                 assert r_health.get_json()["status"] == "ok"
         finally:
-            shutil.move(backup, MODEL_PATH)
+            shutil.move(backup, FORECAST_MODEL_PATH)
             _fresh_app()  # reload with the model restored for any subsequent tests

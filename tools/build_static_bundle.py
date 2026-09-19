@@ -55,7 +55,7 @@ for the authoritative, machine-readable version of this):
     "congestion_index": [[[...24 floats...] x7 days] x13 corridors],
     "confidence":       [[[...24 floats...] x7 days] x13 corridors],
     "origin":           [[[...24 strings...] x7 days] x13 corridors]
-                         // "observed" | "bootstrap" | "model_inferred"
+                         // "observed" | "bootstrap" | "model_inferred" | "residual_adjusted"
   },
   "advice": [
     // one object per (corridor, day) = 13*7 = 91, same shape GET /advice
@@ -152,6 +152,7 @@ def build_bundle():
     congestion_index, confidence, origin = [], [], []
     measured_cells = 0
     inferred_cells = 0
+    residual_cells = 0
     for c in CORRIDORS:
         cid = c["id"]
         c_idx, c_conf, c_origin = [], [], []
@@ -164,6 +165,8 @@ def build_bundle():
                 d_origin.append(cell["origin"])
                 if cell["origin"] == "model_inferred":
                     inferred_cells += 1
+                elif cell["origin"] == "residual_adjusted":
+                    residual_cells += 1
                 else:
                     measured_cells += 1
             c_idx.append(d_idx)
@@ -183,6 +186,14 @@ def build_bundle():
             payload["day"] = day
             advice_out.append(payload)
 
+    forecast_block = {"enabled": False}
+    if getattr(app_module, "FORECAST_READY", False):
+        forecast_block = {
+            "enabled": True,
+            "skill_score": round(float(app_module.FORECAST_SKILL), 4),
+            "holdout": app_module.FORECAST_HOLDOUT,
+        }
+
     bundle = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "model_version": app_module.MODEL_VERSION,
@@ -190,6 +201,8 @@ def build_bundle():
         "trained_rows": app_module.TRAINED_ROWS,
         "measured_cells": measured_cells,
         "inferred_cells": inferred_cells,
+        "residual_adjusted_cells": residual_cells,
+        "forecast": forecast_block,
         # Same object GET /health serves under "accuracy" -- read verbatim
         # from app_module.ACCURACY_SUMMARY, never re-typed here, so the
         # static site and the live API can never drift on this figure.

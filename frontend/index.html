@@ -62,6 +62,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .prov-badge{font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:20px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;border:1px solid transparent}
 .prov-observed{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok-text)}
 .prov-bootstrap{background:var(--neu-bg);border-color:var(--neu-border);color:var(--neu-text)}
+.prov-residual{background:rgba(100,180,255,0.12);border-color:rgba(100,180,255,0.35);color:#8ec8ff}
 .prov-synthetic{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-text);font-weight:700}
 .prov-demo{background:var(--demo-bg);border-color:var(--demo-border);color:var(--demo-text);font-weight:700}
 .conf-badge{font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:20px;border:1px solid var(--card-border);color:var(--sub)}
@@ -88,11 +89,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .advice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-wrap:wrap}
 .advice-main{flex:1 1 420px;min-width:0}
 .advice-corridor{font-size:17px;font-weight:700;color:var(--cyan)}
-.period-toggle{display:inline-flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
-.period-btn{font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
-.period-btn .period-range{font-family:var(--mono);font-size:9px;font-weight:400;opacity:.8}
+.period-toggle-wrap{display:flex;flex-direction:column;justify-content:center;gap:4px}
+.period-toggle{display:flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
+.period-btn{flex:1;font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .period-btn.active{background:var(--cyan);color:var(--void)}
-.period-btn.active .period-range{color:var(--void)}
+/* Ranges live outside the pill now (below it), one per button, aligned under
+   their button via the matching flex:1/gap/padding split below. */
+.period-ranges{display:flex;gap:4px;padding:0 3px}
+.period-range{flex:1;text-align:center;font-family:var(--mono);font-size:9px;color:var(--sub);opacity:.8;white-space:nowrap}
 .advice-summary{font-size:clamp(19px,2.5vw,30px);font-weight:700;line-height:1.3;margin-top:8px;letter-spacing:-0.01em}
 .window-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .chip{font-family:var(--mono);font-size:10px;padding:6px 11px;border-radius:6px;border:1px solid;display:flex;align-items:center;gap:6px}
@@ -102,17 +106,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 
 .hero-stats{display:flex;gap:10px;flex:0 0 auto;flex-wrap:wrap;align-items:stretch}
 .hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:8px 14px;text-align:center}
-.hstat-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;color:var(--text)}
+.hstat-val{font-family:var(--mono);font-size:19px;font-weight:600;line-height:1;color:var(--text)}
 .hstat-lbl{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:6px;letter-spacing:.1em;text-transform:uppercase}
 .hstat.conf{border-color:var(--ok-border);background:var(--ok-bg)}
 .hstat.conf .hstat-val{color:var(--ok-text)}
 .hstat.conf.low{border-color:var(--warn-border);background:var(--warn-bg)}
 .hstat.conf.low .hstat-val{color:var(--warn-text)}
 /* Day/Night as the hero-stats row's 4th element: no extra box/caption, just
-   the toggle itself, stretched by the row's default align-items to match
-   the (now-compacted) stat cards' height. */
-#heroStats > .period-toggle{margin:0}
-#heroStats > .period-toggle .period-btn{padding:8px 18px;font-size:13px}
+   the toggle (+ its two ranges below) stretched by the row's default
+   align-items to match the (now-compacted) stat cards' height; justify-content:
+   center on .period-toggle-wrap keeps the pill+ranges block centered in
+   that stretched height instead of pinned to the top. */
+#heroStats > .period-toggle-wrap{margin:0}
+#heroStats > .period-toggle-wrap .period-btn{padding:8px 18px;font-size:13px}
 
 /* WORKSPACE — fills remaining viewport height; only .panel-left scrolls internally */
 .workspace{display:flex;flex-direction:row;flex:1 1 auto;min-height:0}
@@ -242,7 +248,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   .map-zone{flex:none;height:340px;order:-1}
   .advice-top{gap:16px}
   .hero-stats{width:100%}
-  .hstat,#heroStats > .period-toggle{flex:1;min-width:90px}
+  .hstat,#heroStats > .period-toggle-wrap{flex:1;min-width:90px}
   .time-big{font-size:34px}
 }
 </style>
@@ -255,7 +261,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <div class="logo-sub">Know when to leave.</div>
     </div>
     <div class="header-right">
-      <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">IST</span>
+      <span style="font-family:var(--mono);font-size:12px;color:var(--cyan)">IST</span>
       <span id="liveTime">--:--:--</span>
       <button class="theme-btn" id="themeBtn" title="Toggle theme">◐</button>
     </div>
@@ -305,9 +311,15 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <div class="window-chips" id="windowChips"></div>
       </div>
       <div class="hero-stats" id="heroStats">
-        <div class="period-toggle" id="periodToggle">
-          <button class="period-btn active" data-period="day" type="button">Day</button>
-          <button class="period-btn" data-period="night" type="button">Night</button>
+        <div class="period-toggle-wrap" id="periodToggleWrap">
+          <div class="period-toggle" id="periodToggle">
+            <button class="period-btn active" data-period="day" type="button">Day</button>
+            <button class="period-btn" data-period="night" type="button">Night</button>
+          </div>
+          <div class="period-ranges" id="periodRanges">
+            <span class="period-range" id="periodRangeDay"></span>
+            <span class="period-range" id="periodRangeNight"></span>
+          </div>
         </div>
         <div class="hstat"><div class="hstat-val" id="hsBest">--</div><div class="hstat-lbl">Best time</div></div>
         <div class="hstat"><div class="hstat-val" id="hsSave">--</div><div class="hstat-lbl">You save</div></div>
@@ -789,10 +801,23 @@ function setConnPill(ok){
 // ─────────────────────────────────────────────────────────────────────────
 // PROVENANCE / CONFIDENCE UI HELPERS
 // ─────────────────────────────────────────────────────────────────────────
+function originBadgeHtml(origin){
+  const map = {
+    residual_adjusted: ['prov-residual', 'PREDICTED (baseline + conditions)'],
+    bootstrap: ['prov-bootstrap', 'BOOTSTRAP (typical pattern)'],
+    observed: ['prov-observed', 'OBSERVED (live sample)'],
+    model_inferred: ['prov-bootstrap', 'MODEL-INFERRED (estimated)'],
+    synthetic: ['prov-synthetic', '⚠ SYNTHETIC — NOT REAL DATA'],
+    demo: ['prov-demo', '◆ DEMO FIXTURE — NOT REAL DATA'],
+  };
+  const [cls, label] = map[origin] || ['prov-bootstrap', String(origin||'unknown').toUpperCase()];
+  return `<span class="prov-badge ${cls}">${label}</span>`;
+}
 function provBadgeHtml(prov, conf){
+  if(prov==='residual_adjusted') return originBadgeHtml('residual_adjusted');
   const cls = prov==='synthetic' ? 'prov-synthetic' : prov==='observed' ? 'prov-observed' : prov==='demo' ? 'prov-demo' : 'prov-bootstrap';
   const icon = prov==='synthetic' ? '⚠ ' : prov==='demo' ? '◆ ' : '';
-  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : prov==='model_inferred' ? 'MODEL-INFERRED (estimated)' : 'BOOTSTRAP (TomTom history)';
+  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : prov==='model_inferred' ? 'MODEL-INFERRED (estimated)' : 'RESIDUAL FORECAST';
   return `<span class="prov-badge ${cls}">${icon}${label}</span>`;
 }
 function isDegraded(conf){ return typeof conf === 'number' && conf < 0.5; }
@@ -839,7 +864,10 @@ function currentValueFor(cid, day, hour){
   }
   const key = cid+'_'+day;
   const a = adviceCache[key];
-  if(a && Array.isArray(a.profile)) return {v:a.profile[hour], prov:a.provenance, conf:a.confidence};
+  if(a && Array.isArray(a.profile)){
+    const prov = (a.profile_origins && a.profile_origins[hour]) || a.provenance;
+    return {v:a.profile[hour], prov, conf:a.confidence};
+  }
   return null;
 }
 
@@ -1072,6 +1100,7 @@ function glPopupHtml(cid){
     const col = colorFor(info.v);
     html += `<div class="gl-popup-row"><span class="gl-popup-pct" style="color:${col}">${Math.round(info.v*100)}%</span>
       <span class="gl-popup-label" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</span></div>`;
+    if(info.prov) html += `<div style="margin-top:6px">${originBadgeHtml(info.prov)}</div>`;
   } else {
     html += `<div class="gl-popup-muted">Loading congestion…</div>`;
   }
@@ -1269,8 +1298,11 @@ function windowText(w){
   return `${fmtHour(w.start_hour)}–${fmtHour(w.end_hour)}${wrap?' (overnight)':''}`;
 }
 function updatePeriodButtons(a){
-  const dayBtn = document.querySelector('.period-btn[data-period="day"]');
-  const nightBtn = document.querySelector('.period-btn[data-period="night"]');
+  // Buttons hold only "Day"/"Night" now; the hour ranges render as their own
+  // line below the pill (one per button, aligned under it via matching
+  // flex:1 columns) so the pill stays a plain two-word toggle.
+  const dayRangeEl = document.getElementById('periodRangeDay');
+  const nightRangeEl = document.getElementById('periodRangeNight');
   // The day/night boundary is a fixed constant (periodHours(), mirroring
   // backend/app.py's DAY_HOURS/NIGHT_HOURS), not something that varies by
   // corridor -- so fall back to it whenever no advice has loaded yet
@@ -1282,8 +1314,8 @@ function updatePeriodButtons(a){
   const dayEnd = dayPb ? dayPb.end_hour : dayHours[dayHours.length-1];
   const nightStart = nightPb ? nightPb.start_hour : nightHours[0];
   const nightEnd = nightPb ? nightPb.end_hour : nightHours[nightHours.length-1];
-  dayBtn.innerHTML = `Day <span class="period-range">${fmtHour(dayStart)}–${fmtHourRangeEnd(dayEnd)}</span>`;
-  nightBtn.innerHTML = `Night <span class="period-range">${fmtHour(nightStart)}–${fmtHourRangeEnd(nightEnd)}</span>`;
+  dayRangeEl.textContent = `${fmtHour(dayStart)}–${fmtHourRangeEnd(dayEnd)}`;
+  nightRangeEl.textContent = `${fmtHour(nightStart)}–${fmtHourRangeEnd(nightEnd)}`;
 }
 function renderAdvice(){
   const nameEl = document.getElementById('adviceCorridorName');
@@ -1321,6 +1353,15 @@ function renderAdvice(){
 
   sumEl.textContent = pb.summary || a.summary || '';
   sumEl.classList.toggle('degraded', isDegraded(conf));
+  const curOrigin = (a.profile_origins && a.profile_origins[curHour]) || null;
+  let badgeEl = document.getElementById('adviceOriginBadge');
+  if(!badgeEl){
+    badgeEl = document.createElement('div');
+    badgeEl.id = 'adviceOriginBadge';
+    badgeEl.style.marginTop = '8px';
+    sumEl.parentNode.insertBefore(badgeEl, sumEl.nextSibling);
+  }
+  badgeEl.innerHTML = curOrigin ? originBadgeHtml(curOrigin) : '';
 
   chipsEl.innerHTML = '';
   (pb.best_windows||[]).forEach(w=>{
@@ -1388,7 +1429,11 @@ function fmtGeneratedAt(iso){
 function renderInfoPopover(){
   document.getElementById('mHealth').textContent = health ? health.status : (apiReachable===false ? 'unreachable' : '--');
   document.getElementById('mVersion').textContent = health ? health.model_version : '--';
-  document.getElementById('mProv').innerHTML = health ? provBadgeHtml(health.provenance) : '--';
+  document.getElementById('mProv').innerHTML = health
+    ? (health.forecast && health.forecast.enabled
+        ? originBadgeHtml('residual_adjusted')
+        : provBadgeHtml(health.provenance))
+    : '--';
   document.getElementById('mRows').textContent = health ? health.trained_rows : '--';
   const genEl = document.getElementById('mGeneratedAt');
   genEl.textContent = (BUNDLE_MODE && BUNDLE && BUNDLE.generated_at) ? (fmtGeneratedAt(BUNDLE.generated_at) + ' IST') : '--';
@@ -1592,9 +1637,11 @@ async function findBestDeparture(){
   try{
     const bt = await apiGet('/best-time', {corridor: corridor.id, day: curDay, earliest, latest});
     const degraded = isDegraded(bt.confidence);
+    const originBadge = bt.origin ? originBadgeHtml(bt.origin) : '';
     result.innerHTML = `
       <div style="color:var(--cyan);font-size:12px;font-weight:600;margin-bottom:6px">${corridor.name}</div>
       <div style="font-size:20px;color:${colorForLabel(bt.label)};font-family:var(--mono)" class="${degraded?'degraded':''}">${fmtHour(bt.recommended_hour)}</div>
+      ${originBadge ? `<div style="margin:8px 0">${originBadge}</div>` : ''}
       <div style="margin:6px 0">${bt.summary}</div>
       <div>Saves ~${bt.saving_vs_worst_minutes} min vs the worst hour in this window.</div>`;
     render();

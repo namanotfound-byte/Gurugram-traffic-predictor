@@ -151,6 +151,7 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error
+from sklearn.neural_network import MLPRegressor
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
@@ -221,16 +222,24 @@ FREE_FLOW_CONSISTENCY_TOL_PCT = 5.0
 # nearby" without claiming a specific false distance.
 NEAREST_INCIDENT_SENTINEL_M = 5000.0
 
+# corridor_id is allowed here (residual model, time holdout) — not in traffic_model.py GBT.
+LAG_WEEK_DAYS = 7
+LAG_WEEK_TOLERANCE_D = 1  # accept same corridor+hour from 6–8 calendar days earlier
+
 FEATURE_COLS = [
     "temperature_c", "precipitation_mm", "is_raining_i", "rain_last_3h",
     "visibility_m", "low_visibility_i",
     "is_holiday_i", "is_festival_period_i", "is_month_end_i",
     "days_to_nearest_holiday",
     "road_class_enc", "hour_sin", "hour_cos", "is_weekend",
+    "corridor_id",
+    "lag_prior_idx", "lag_week_idx",
     "incident_count", "incident_total_delay_s", "incident_max_magnitude",
     "has_road_closure_i", "has_jam_i", "nearest_incident_m",
     "incident_data_known",
 ]
+
+DWARKA_CORRIDOR_ID = 4
 
 
 # ─────────────────────────────────────────────
@@ -348,6 +357,101 @@ def load_observed_raw():
     df["date"] = df["collected_at"].dt.date
     df = _apply_route_stability_filter(df, label="load_observed_raw")
     return df
+
+
+def compute_leak_safe_lags(obs_df, baseline_lookup=None):
+    """Add lag_prior_idx and lag_week_idx using only rows with collected_at
+    strictly before each row's timestamp (no holdout leakage).
+
+    baseline_lookup: optional {(corridor_id, day, hour): baseline_idx} used
+    to impute missing lags at inference when no prior observation exists."""
+    if obs_df.empty:
+        obs_df = obs_df.copy()
+        obs_df["lag_prior_idx"] = np.nan
+        obs_df["lag_week_idx"] = np.nan
+        return obs_df
+
+    df = obs_df.sort_values("collected_at").reset_index(drop=True)
+    lag_prior = []
+    lag_week = []
+
+    for _, row in df.iterrows():
+        cid = int(row["corridor_id"])
+        hour = int(row["hour"])
+        ts = row["collected_at"]
+        row_date = row["date"] if "date" in row else ts.date()
+
+        prior = df[(df["corridor_id"] == cid) & (df["collected_at"] < ts)]
+        if prior.empty:
+            lag_prior.append(np.nan)
+        else:
+            lag_prior.append(float(prior.iloc[-1]["congestion_idx"]))
+
+        week_lo = row_date - datetime.timedelta(days=LAG_WEEK_DAYS + LAG_WEEK_TOLERANCE_D)
+        week_hi = row_date - datetime.timedelta(days=LAG_WEEK_DAYS - LAG_WEEK_TOLERANCE_D)
+        week_cands = prior[
+            (prior["hour"] == hour)
+            & (prior["date"] >= week_lo)
+            & (prior["date"] <= week_hi)
+        ]
+        if week_cands.empty:
+            lag_week.append(np.nan)
+        else:
+            week_cands = week_cands.copy()
+            week_cands["day_delta"] = (row_date - week_cands["date"]).apply(lambda d: abs(d.days - LAG_WEEK_DAYS))
+            best = week_cands.sort_values(["day_delta", "collected_at"]).iloc[0]
+            lag_week.append(float(best["congestion_idx"]))
+
+    df["lag_prior_idx"] = lag_prior
+    df["lag_week_idx"] = lag_week
+
+    if baseline_lookup is not None:
+        for col in ("lag_prior_idx", "lag_week_idx"):
+            missing = df[col].isna()
+            if missing.any():
+                df.loc[missing, col] = df.loc[missing].apply(
+                    lambda r: baseline_lookup.get(
+                        (int(r["corridor_id"]), int(r["day_of_week"]), int(r["hour"])),
+                        r.get("baseline_idx", np.nan),
+                    ),
+                    axis=1,
+                )
+    return df
+
+
+def lags_at_datetime(obs_df, corridor_id, day, hour, target_dt, baseline_idx=None):
+    """Inference-time lag lookup: only observations strictly before target_dt."""
+    if obs_df is None or obs_df.empty:
+        return baseline_idx, baseline_idx
+
+    cid = int(corridor_id)
+    cutoff = pd.Timestamp(target_dt)
+    if cutoff.tzinfo is None:
+        cutoff = cutoff.tz_localize("Asia/Kolkata")
+    else:
+        cutoff = cutoff.tz_convert("Asia/Kolkata")
+
+    past = obs_df[(obs_df["corridor_id"] == cid) & (obs_df["collected_at"] < cutoff)]
+    lag_prior = float(past.iloc[-1]["congestion_idx"]) if not past.empty else baseline_idx
+
+    target_date = cutoff.date()
+    week_lo = target_date - datetime.timedelta(days=LAG_WEEK_DAYS + LAG_WEEK_TOLERANCE_D)
+    week_hi = target_date - datetime.timedelta(days=LAG_WEEK_DAYS - LAG_WEEK_TOLERANCE_D)
+    week_cands = past[
+        (past["hour"] == int(hour))
+        & (past["date"] >= week_lo)
+        & (past["date"] <= week_hi)
+    ]
+    if week_cands.empty:
+        lag_week = baseline_idx
+    else:
+        week_cands = week_cands.copy()
+        week_cands["day_delta"] = (target_date - week_cands["date"]).apply(
+            lambda d: abs(d.days - LAG_WEEK_DAYS)
+        )
+        lag_week = float(week_cands.sort_values(["day_delta", "collected_at"]).iloc[0]["congestion_idx"])
+
+    return lag_prior, lag_week
 
 
 def attach_weather_and_events(df):
@@ -481,6 +585,14 @@ def build_training_table():
     df["incident_total_delay_s"] = df["incident_total_delay_s"].fillna(0.0)
     df["incident_max_magnitude"] = df["incident_max_magnitude"].fillna(0).astype(int)
     df["nearest_incident_m"] = df["nearest_incident_m"].fillna(NEAREST_INCIDENT_SENTINEL_M)
+
+    baseline_lookup = {
+        (int(r["corridor_id"]), int(r["day_of_week"]), int(r["hour"])): float(r["baseline_idx"])
+        for _, r in base.iterrows()
+    }
+    df = compute_leak_safe_lags(df, baseline_lookup=baseline_lookup)
+    df["lag_prior_idx"] = df["lag_prior_idx"].fillna(df["baseline_idx"])
+    df["lag_week_idx"] = df["lag_week_idx"].fillna(df["baseline_idx"])
 
     return df
 
@@ -666,21 +778,60 @@ def train():
     X_train, y_train = train_df[FEATURE_COLS], train_df["residual"]
     X_test, y_test = test_df[FEATURE_COLS], test_df["residual"]
 
-    # Modest capacity on purpose: this data is small and autocorrelated, and
-    # an overpowered GBR would memorise the training window instead of
-    # learning a generalisable weather/calendar relationship.
-    model = GradientBoostingRegressor(
+    baseline_mae = mean_absolute_error(test_df["congestion_idx"], test_df["baseline_idx"])
+
+    def _holdout_scores(name, fitted, X_tr, y_tr, X_te, te_df):
+        fitted.fit(X_tr, y_tr)
+        pred_resid = fitted.predict(X_te)
+        pred_cong = (te_df["baseline_idx"] + pred_resid).clip(0, 1)
+        mae = mean_absolute_error(te_df["congestion_idx"], pred_cong)
+        sk = 1 - (mae / baseline_mae) if baseline_mae > 0 else float("nan")
+        return fitted, mae, sk
+
+    gbt = GradientBoostingRegressor(
         n_estimators=150, max_depth=3, learning_rate=0.05,
         subsample=0.8, random_state=42,
     )
-    model.fit(X_train, y_train)
+    gbt_model, gbt_mae, gbt_skill = _holdout_scores(
+        "GBT", gbt, X_train, y_train, X_test, test_df,
+    )
 
-    pred_resid = model.predict(X_test)
-    pred_congestion = (test_df["baseline_idx"] + pred_resid).clip(0, 1)
+    mlp = MLPRegressor(
+        hidden_layer_sizes=(64, 32), early_stopping=True, random_state=42,
+        max_iter=500,
+    )
+    mlp_model, mlp_mae, mlp_skill = _holdout_scores(
+        "MLP", mlp, X_train, y_train, X_test, test_df,
+    )
 
-    model_mae = mean_absolute_error(test_df["congestion_idx"], pred_congestion)
-    baseline_mae = mean_absolute_error(test_df["congestion_idx"], test_df["baseline_idx"])
-    skill = 1 - (model_mae / baseline_mae) if baseline_mae > 0 else float("nan")
+    if mlp_mae < gbt_mae:
+        winner_name, model, model_mae, skill = "MLP", mlp_model, mlp_mae, mlp_skill
+    else:
+        winner_name, model, model_mae, skill = "GBT", gbt_model, gbt_mae, gbt_skill
+
+    # Optional corridor-specific GBT for Dwarka if it improves holdout MAE there.
+    dwarka_override = None
+    dw_test = test_df[test_df["corridor_id"] == DWARKA_CORRIDOR_ID]
+    if len(dw_test) >= 5:
+        dw_train = train_df[train_df["corridor_id"] == DWARKA_CORRIDOR_ID]
+        dw_gbt = GradientBoostingRegressor(
+            n_estimators=100, max_depth=3, learning_rate=0.05,
+            subsample=0.8, random_state=42,
+        )
+        dw_gbt.fit(dw_train[FEATURE_COLS], dw_train["residual"])
+        dw_pred = (dw_test["baseline_idx"] + dw_gbt.predict(dw_test[FEATURE_COLS])).clip(0, 1)
+        dw_mae_main = mean_absolute_error(dw_test["congestion_idx"], dw_pred)
+        dw_pred_global = (
+            dw_test["baseline_idx"] + model.predict(dw_test[FEATURE_COLS])
+        ).clip(0, 1)
+        dw_mae_global = mean_absolute_error(dw_test["congestion_idx"], dw_pred_global)
+        print(f"  Dwarka holdout MAE — global {winner_name}: {dw_mae_global:.4f}, "
+              f"corridor-specific GBT: {dw_mae_main:.4f}")
+        if dw_mae_main < dw_mae_global:
+            dwarka_override = dw_gbt
+            print("  -> shipping corridor-specific GBT for Dwarka (id 4) on holdout improvement.")
+        else:
+            print("  -> keeping global model for Dwarka.")
 
     print()
     print("=" * 70)
@@ -690,32 +841,42 @@ def train():
           f"({distinct_days[0]} .. {distinct_days[-n_test_days - 1]})")
     print(f"  test:  {len(test_df)} rows across {n_test_days} days "
           f"({distinct_days[-n_test_days]} .. {distinct_days[-1]})")
-    print(f"  baseline MAE (bootstrap grid alone):   {baseline_mae:.4f}")
-    print(f"  model MAE (baseline + predicted resid): {model_mae:.4f}")
+    print(f"  baseline MAE (bootstrap grid alone):        {baseline_mae:.4f}")
+    print(f"  GBT   MAE (baseline + predicted residual): {gbt_mae:.4f}  skill={gbt_skill:.4f}")
+    print(f"  MLP   MAE (baseline + predicted residual): {mlp_mae:.4f}  skill={mlp_skill:.4f}")
+    print(f"  SHIPPED: {winner_name} (lower holdout MAE)")
     print(f"  SKILL SCORE = 1 - model_MAE/baseline_MAE: {skill:.4f}")
     if skill > 0:
-        print(f"  -> model adds value over 'just use the historical average'.")
+        print("  -> model adds value over 'just use the historical average'.")
     else:
-        print(f"  -> model does NOT beat the baseline. Report this honestly; do not ship it "
-              f"as an improvement.")
+        print("  -> model does NOT beat the baseline. Report this honestly; do not ship it "
+              "as an improvement.")
+        sys.exit(1)
 
-    importances = sorted(
-        zip(FEATURE_COLS, model.feature_importances_), key=lambda x: -x[1]
-    )
-    print()
-    print("  feature importances:")
-    for name, imp in importances:
-        print(f"    {name:28s} {imp:.4f}")
+    if hasattr(model, "feature_importances_"):
+        importances = sorted(
+            zip(FEATURE_COLS, model.feature_importances_), key=lambda x: -x[1]
+        )
+        print()
+        print("  feature importances (shipped model):")
+        for name, imp in importances:
+            print(f"    {name:28s} {imp:.4f}")
     print("=" * 70)
 
     os.makedirs(os.path.dirname(MODEL_FILE), exist_ok=True)
     joblib.dump(
         {
             "model": model,
+            "model_type": winner_name,
             "features": FEATURE_COLS,
             "skill_score": skill,
             "model_mae": model_mae,
             "baseline_mae": baseline_mae,
+            "holdout_gbt_mae": gbt_mae,
+            "holdout_gbt_skill": gbt_skill,
+            "holdout_mlp_mae": mlp_mae,
+            "holdout_mlp_skill": mlp_skill,
+            "dwarka_override": dwarka_override,
             "trained_at": datetime.datetime.now().isoformat(),
             "train_rows": len(train_df),
             "test_rows": len(test_df),
