@@ -5,7 +5,7 @@ collect_live.py — Live OBSERVED traffic collector (TomTom Routing API)
 
 WHY THIS EXISTS
 ----------------
-The original collector (model/traffic_model.py: collect_once) polls TomTom's
+The original collector (since removed) polled TomTom's
 Flow Segment Data API (/traffic/services/4/flowSegmentData/...). Tested
 2026-08-16 against this project's real TomTom key:
 

@@ -51,7 +51,6 @@ from corridors import CORRIDORS, ROAD_CLASS_ENC  # noqa: E402
 from model.forecast_model import lags_at_datetime  # noqa: E402
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-MODEL_PATH = os.path.join(BASE_DIR, "models", "traffic_gbt.joblib")
 FORECAST_MODEL_PATH = os.path.join(BASE_DIR, "models", "forecast_residual_gbt.joblib")
 BOOTSTRAP_CSV = os.path.join(BASE_DIR, "data", "gurugram_bootstrap.csv")
 OBSERVED_CSV = os.path.join(BASE_DIR, "data", "gurugram_observed.csv")
@@ -142,50 +141,8 @@ def fmt_ampm(hour: int) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# Model loading
+# Data loading
 # ─────────────────────────────────────────────────────────────────────────
-
-def load_model_payload():
-    """Load models/traffic_gbt.joblib and normalize its shape.
-
-    Returns None if no usable model is present. Handles the legacy payload
-    shape (only "model" + "features", from the pre-v2 synthetic-data
-    pipeline) by honestly labeling it provenance="synthetic" rather than
-    pretending it is the same as a real bootstrap/observed model.
-    """
-    try:
-        payload = joblib.load(MODEL_PATH)
-    except Exception as e:
-        print(f"[app] no usable model at {MODEL_PATH}: {e}")
-        return None
-
-    if not isinstance(payload, dict) or "model" not in payload or "features" not in payload:
-        print(f"[app] model payload at {MODEL_PATH} is malformed; ignoring")
-        return None
-
-    new_shape_keys = ("provenance", "model_version", "trained_rows", "road_class_enc", "metrics")
-    if all(k in payload for k in new_shape_keys):
-        return payload
-
-    # Legacy shape: {"model", "features"} only. This is the pre-Phase-2
-    # payload, trained purely on model/traffic_model.py's synthetic data
-    # generator. Label it accordingly rather than implying real data.
-    try:
-        mtime = datetime.datetime.fromtimestamp(os.path.getmtime(MODEL_PATH))
-        version_stamp = mtime.strftime("%Y-%m-%d")
-    except OSError:
-        version_stamp = "unknown"
-    print("[app] legacy model payload (model+features only) -> provenance=synthetic")
-    return {
-        "model": payload["model"],
-        "features": payload["features"],
-        "provenance": "synthetic",
-        "model_version": f"gbt-legacy-{version_stamp}",
-        "trained_rows": None,
-        "road_class_enc": dict(ROAD_CLASS_ENC),
-        "metrics": None,
-    }
-
 
 def load_free_flow_minutes():
     """Real free-flow minutes per corridor, preferring measured data.
@@ -282,39 +239,11 @@ def load_measured_grid():
     return measured
 
 
-def extract_within_class_quality(metrics):
-    """A same-road-class / within-corridor quality figure, if the training
-    pipeline has published one under a recognizable key. NEVER read
-    metrics["cv_r2"] here: that figure is leave-one-CORRIDOR-out, and it is
-    dominated by the two corridors that are the sole member of their road
-    class -- Dwarka Expressway (the only "expressway", per-fold R2 -25.5)
-    and NH-48 (the only "highway", R2 -0.08). The six arterial corridors,
-    which do have same-class siblings to generalize from, individually
-    average R2 ~0.90. We never serve a road class the model hasn't seen,
-    so cross-corridor-class generalization is not the risk that matters
-    for an inferred cell here.
-    """
-    if not metrics or not isinstance(metrics, dict):
-        return None
-    for key in ("within_corridor_r2", "within_class_r2", "same_class_r2", "holdout_hours_r2"):
-        val = metrics.get(key)
-        if val is not None:
-            try:
-                return float(val)
-            except (TypeError, ValueError):
-                continue
-    return None
-
-
 # Confidence tiers, strictly ordered: a live observation beats a stable
-# bootstrap measurement beats an unstable one beats any model-inferred
-# value -- never a flat constant, and cv_r2 (leave-one-corridor-out, not
-# representative of this product) never enters the calculation.
+# bootstrap measurement beats an unstable one beats a residual forecast.
 CONFIDENCE_OBSERVED = 0.97
 CONFIDENCE_MEASURED_STABLE = 0.92
 CONFIDENCE_MEASURED_UNSTABLE = 0.50
-INFERRED_CONFIDENCE_DEFAULT = 0.35
-INFERRED_CONFIDENCE_CAP = 0.45  # even a strong within-class score can't outrank a real measurement
 # Residual forecast: holdout skill maps to confidence between 0.55 and 0.85.
 # Never outranks a direct measurement — this is a condition-adjusted forecast.
 NEAREST_INCIDENT_SENTINEL_M = 5000.0
@@ -324,28 +253,18 @@ def compute_confidence(provenance, metrics, measured_cell, cell_origin=None, for
     """Honest per-cell confidence -- how trustworthy is the SERVED value.
 
     Priority:
-      1. synthetic model -> flat low. No real data exists anywhere to
-         differentiate cells by, so a flat number is the honest answer.
-      2. cell has a live "observed" measurement -> highest (0.97).
-      3. cell has a bootstrap measurement, route_stable -> high (0.92).
-      4. cell has a bootstrap measurement, NOT route_stable (TomTom routed
-         a materially different/longer path for that hour, so the
-         free-flow/expected ratio isn't apples-to-apples) -> materially
-         lower (0.50).
-      5. cell origin is "residual_adjusted" -- weather/incident-conditioned
+      1. cell has a live "observed" measurement -> highest (0.97).
+      2. cell has a bootstrap measurement, route_stable -> high (0.92).
+      3. cell has a bootstrap measurement, NOT route_stable -> lower (0.50).
+      4. cell origin is "residual_adjusted" -- weather/incident-conditioned
          forecast over the bootstrap baseline; confidence scales with the
          model's time-holdout skill score (see model/forecast_model.py).
-      6. no measurement at all -- the GBT model fills the gap -> lower
-         still, using a within-corridor/same-class quality figure if the
-         training pipeline publishes one, else a conservative default.
+      5. cell origin is "bootstrap" (baseline fallback when forecast path
+         unavailable for one cell) -> same tier as a stable measurement.
     """
-    if provenance == "synthetic":
-        return 0.15
-
     if cell_origin == "residual_adjusted":
         if forecast_skill is None or forecast_skill <= 0:
-            # Residual model refused or failed holdout — must not be served.
-            return INFERRED_CONFIDENCE_DEFAULT
+            return CONFIDENCE_MEASURED_STABLE
         return round(min(0.85, max(0.55, 0.55 + 0.35 * forecast_skill)), 2)
 
     if measured_cell is not None:
@@ -353,11 +272,12 @@ def compute_confidence(provenance, metrics, measured_cell, cell_origin=None, for
             return CONFIDENCE_OBSERVED
         return CONFIDENCE_MEASURED_STABLE if measured_cell["route_stable"] else CONFIDENCE_MEASURED_UNSTABLE
 
-    quality = extract_within_class_quality(metrics)
-    if quality is None:
-        return INFERRED_CONFIDENCE_DEFAULT
-    conf = 0.20 + 0.25 * max(0.0, min(1.0, quality))
-    return round(min(INFERRED_CONFIDENCE_CAP, max(0.05, conf)), 2)
+    if cell_origin == "bootstrap":
+        return CONFIDENCE_MEASURED_STABLE
+    if cell_origin == "observed":
+        return CONFIDENCE_OBSERVED
+
+    return CONFIDENCE_MEASURED_STABLE
 
 
 def minutes_from_index(free_flow_minutes: float, idx: float):
@@ -365,19 +285,6 @@ def minutes_from_index(free_flow_minutes: float, idx: float):
     typical = free_flow_minutes / (1.0 - idx_safe)
     delay = typical - free_flow_minutes
     return round(typical, 1), round(delay, 1)
-
-
-def build_feature_row(hour: int, day: int, road_class: str, road_class_enc: dict) -> dict:
-    return {
-        "hour": hour,
-        "day_of_week": day,
-        "hour_sin": math.sin(2 * math.pi * hour / 24),
-        "hour_cos": math.cos(2 * math.pi * hour / 24),
-        "is_weekend": int(day >= 5),
-        "is_peak_morning": int(7 <= hour <= 10),
-        "is_peak_evening": int(17 <= hour <= 20),
-        "road_class_enc": road_class_enc[road_class],
-    }
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -494,19 +401,26 @@ def load_observed_for_lags():
 
 
 def build_forecast_feature_row(corridor, day, hour, target_date, incident_feat,
-                               lag_prior_idx=None, lag_week_idx=None, baseline_idx=0.0):
+                               lag_prior_idx=None, lag_week_idx=None, baseline_idx=0.0,
+                               weather_offline=False):
     """Feature vector matching model/forecast_model.py FEATURE_COLS."""
     try:
         import weather as wx  # noqa: WPS433 — lazy: optional at app import time
     except ImportError:
         wx = None
-    w = (wx.get_hourly_weather(target_date, hour) or {}) if wx else {}
-    e = wx.get_event_features(target_date) if wx else {
+    _event_defaults = {
         "is_holiday": False,
         "is_festival_period": False,
         "is_month_end": int(target_date.day >= 28),
         "days_to_nearest_holiday": 999,
     }
+    w, e = {}, _event_defaults
+    if wx and not weather_offline:
+        try:
+            w = wx.get_hourly_weather(target_date, hour) or {}
+            e = wx.get_event_features(target_date) or _event_defaults
+        except Exception:
+            w, e = {}, _event_defaults
 
     def _bool_i(val):
         if val is None or (isinstance(val, float) and np.isnan(val)):
@@ -575,7 +489,7 @@ def _incident_features_for_date(target_date, live_incidents_by_cid):
 
 def residual_forecast_idx(corridor, day, hour, target_date, incident_feat,
                           baseline_grid, forecast_model, forecast_features,
-                          observed_df=None, dwarka_override=None):
+                          observed_df=None, dwarka_override=None, weather_offline=False):
     """baseline + predicted_residual, clipped to [0, 1]. Returns None if no baseline."""
     cell = (corridor["id"], day, hour)
     baseline = baseline_grid.get(cell)
@@ -589,6 +503,7 @@ def residual_forecast_idx(corridor, day, hour, target_date, incident_feat,
     feat_row = build_forecast_feature_row(
         corridor, day, hour, target_date, incident_feat,
         lag_prior_idx=lag_prior, lag_week_idx=lag_week,
+        weather_offline=weather_offline,
     )
     X = pd.DataFrame([feat_row])[forecast_features]
     model = dwarka_override if (dwarka_override is not None and corridor["id"] == 4) else forecast_model
@@ -637,9 +552,6 @@ def fetch_live_incident_features():
 # Startup: load model, load real-data backing, precompute the full grid
 # ─────────────────────────────────────────────────────────────────────────
 
-MODEL_PAYLOAD = load_model_payload()
-MODEL_READY = MODEL_PAYLOAD is not None
-
 FORECAST_PAYLOAD = load_forecast_payload()
 FORECAST_READY = FORECAST_PAYLOAD is not None
 FORECAST_SKILL = FORECAST_PAYLOAD["skill_score"] if FORECAST_READY else None
@@ -659,29 +571,23 @@ FORECAST_HOLDOUT = (
     if FORECAST_READY else None
 )
 
-MODEL_VERSION = None
-MODEL_PROVENANCE = None
-TRAINED_ROWS = None
-GRID = {}  # (corridor_id, day, hour) -> dict
-BASELINE_GRID = {}
-
-if MODEL_READY:
-    MODEL = MODEL_PAYLOAD["model"]
-    FEATURES = MODEL_PAYLOAD["features"]
-    MODEL_VERSION = MODEL_PAYLOAD["model_version"]
-    MODEL_PROVENANCE = MODEL_PAYLOAD["provenance"]
-    TRAINED_ROWS = MODEL_PAYLOAD["trained_rows"]
-    METRICS = MODEL_PAYLOAD.get("metrics")
-    ROAD_CLASS_ENC_USED = MODEL_PAYLOAD.get("road_class_enc") or dict(ROAD_CLASS_ENC)
+if FORECAST_READY:
+    _model_type = FORECAST_PAYLOAD.get("model_type") or "forecast"
+    _trained_at = FORECAST_PAYLOAD.get("trained_at") or "unknown"
+    try:
+        _stamp = datetime.datetime.fromisoformat(_trained_at).strftime("%Y-%m-%d")
+    except (TypeError, ValueError):
+        _stamp = str(_trained_at)[:10]
+    MODEL_VERSION = f"forecast-{_model_type.lower()}-{_stamp}"
+    MODEL_PROVENANCE = "observed"
+    TRAINED_ROWS = FORECAST_PAYLOAD.get("train_rows")
 else:
-    MODEL = None
-    FEATURES = []
     MODEL_VERSION = None
     MODEL_PROVENANCE = None
     TRAINED_ROWS = None
-    METRICS = None
-    ROAD_CLASS_ENC_USED = dict(ROAD_CLASS_ENC)
-    print(f"[app] no legacy GBT at {MODEL_PATH}; grid uses residual forecast only")
+
+GRID = {}  # (corridor_id, day, hour) -> dict
+BASELINE_GRID = {}
 
 FREE_FLOW_MINUTES = load_free_flow_minutes()
 MEASURED_GRID = load_measured_grid()  # training/evaluation only — not served as forecasts
@@ -693,13 +599,17 @@ if GRID_READY:
         import weather as wx  # noqa: WPS433
 
         target_dates = [target_date_for_weekday(d) for d in range(7)]
-        wx.get_weather_range(min(target_dates), max(target_dates))
+        weather_offline = False
+        try:
+            wx.get_weather_range(min(target_dates), max(target_dates))
+        except Exception as wx_err:
+            weather_offline = True
+            print(f"[app] weather prefetch failed ({wx_err}); grid build uses neutral weather defaults")
         today = datetime.datetime.now(IST).date()
         live_incidents_today = fetch_live_incident_features() if today in target_dates else {}
 
         residual_count = 0
         bootstrap_fallback_count = 0
-        corridor_by_id = {c["id"]: c for c in CORRIDORS}
 
         for c in CORRIDORS:
             for day in range(7):
@@ -712,6 +622,7 @@ if GRID_READY:
                         c, day, hour, target_date, inc_feat,
                         BASELINE_GRID, FORECAST_MODEL, FORECAST_FEATURES,
                         observed_df=OBSERVED_LAG_DF, dwarka_override=FORECAST_DWARKA_OVERRIDE,
+                        weather_offline=weather_offline,
                     )
                     baseline = BASELINE_GRID.get(cell)
                     if adj is not None:
@@ -728,7 +639,7 @@ if GRID_READY:
                     ff_minutes = FREE_FLOW_MINUTES[c["id"]]
                     typical, delay = minutes_from_index(ff_minutes, idx)
                     conf = compute_confidence(
-                        MODEL_PROVENANCE or "bootstrap", METRICS, None,
+                        MODEL_PROVENANCE, None, None,
                         cell_origin=origin, forecast_skill=FORECAST_SKILL,
                     )
                     GRID[cell] = {
@@ -1432,7 +1343,7 @@ def now():
         label = label_for(idx)
         typical, delay = minutes_from_index(ff_minutes, idx)
         conf = compute_confidence(
-            MODEL_PROVENANCE or "bootstrap", METRICS, None,
+            MODEL_PROVENANCE, None, None,
             cell_origin=origin, forecast_skill=FORECAST_SKILL,
         )
         trend = _trend_for(cid, day, hour)

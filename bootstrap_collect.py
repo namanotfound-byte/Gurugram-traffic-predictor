@@ -30,7 +30,7 @@ corridors stayed within 1%). Each row gets a `route_stable` boolean: True iff
 reference length from corridors.py (the length recorded when that corridor
 was validated). Rows with route_stable=False are measuring a different road
 than the frozen corridor definition and are excluded from training by
-default — see model/traffic_model.py.
+default — see model/forecast_model.py (same route_stable filter at train time).
 """
 
 import argparse
@@ -310,7 +310,7 @@ def check_route_consistency(out_path):
         print("\n[WARN] Corridors with inconsistent routing (different physical "
               "route chosen at different times) — the route_stable column marks "
               "which rows deviate from the corridors.py verified_km reference; "
-              "model/traffic_model.py excludes route_stable=False rows by default:")
+              "model/forecast_model.py excludes route_stable=False rows before training:")
         for cid, name, pct, n_unstable in flagged:
             print(f"  - corridor {cid} ({name}): {pct:.1f}% length variance, "
                   f"{n_unstable} row(s) flagged route_stable=False")

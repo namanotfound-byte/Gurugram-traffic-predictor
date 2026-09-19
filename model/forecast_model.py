@@ -54,11 +54,10 @@ flattering but meaningless number:
      forecaster has to be evaluated on data from AFTER its training window,
      because that's the only way it will ever actually be used.
 
-  2. cv_r2 / leave-one-corridor-out is NOT used here (unlike
-     model/traffic_model.py) — it was shown to be the wrong metric for this
-     project (road classes with only one corridor each drove a nonsensical
-     -2.52 score there). MAE-based skill score against the baseline is used
-     instead throughout.
+  2. Leave-one-corridor-out R² is NOT used here — it was shown to be the
+     wrong metric for this project (road classes with only one corridor each
+     drove a nonsensical score). MAE-based skill score against the baseline
+     is used instead throughout.
 
 HONEST GATING
 --------------
@@ -89,15 +88,15 @@ to discount incident features on rows where they're actually unknown rather
 than silently treating "unknown" as "confirmed clear." See FEATURE COLUMNS
 below.
 
-ROUTE-STABILITY FILTER (mirrors model/traffic_model.py / bootstrap_collect.py)
+ROUTE-STABILITY FILTER (mirrors bootstrap_collect.py)
 --------------------------------------------------------------------------------
 TomTom's routing engine occasionally reroutes a corridor onto a physically
 different road at different times (previously identified for this project:
 Golf Course Extension Road, Mehrauli-Gurgaon Road, Southern Peripheral Road
 all show >9% length_m swings). bootstrap_collect.py already flags this per
 row as `route_stable` (length_m within 2% of corridors.py's verified_km) and
-model/traffic_model.py already excludes route_stable=False rows before
-training. This file does the same for BOTH datasets — bootstrap (using its
+bootstrap_collect.py flags route_stable=False rows; this file excludes them
+before training/residual computation for BOTH datasets — bootstrap (using its
 existing route_stable column) and observed (recomputed from length_m, since
 collect_live.py doesn't currently write the column, but it's fully derivable
 from a value every row already has). Mixing congestion_idx values that
@@ -222,7 +221,7 @@ FREE_FLOW_CONSISTENCY_TOL_PCT = 5.0
 # nearby" without claiming a specific false distance.
 NEAREST_INCIDENT_SENTINEL_M = 5000.0
 
-# corridor_id is allowed here (residual model, time holdout) — not in traffic_model.py GBT.
+# corridor_id is allowed here (residual model, time holdout).
 LAG_WEEK_DAYS = 7
 LAG_WEEK_TOLERANCE_D = 1  # accept same corridor+hour from 6–8 calendar days earlier
 
@@ -525,9 +524,7 @@ def build_training_table():
     # can legitimately be negative, and is intentionally NOT clipped here.
     df["residual"] = df["congestion_idx"] - df["baseline_idx"]
 
-    # engineered features (self-contained here — NOT imported from
-    # model/traffic_model.py, which this project's rules say to leave
-    # untouched, and which this file must keep working independent of)
+    # engineered features (self-contained in this file)
     df["road_class_enc"] = df["road_class"].map(corridors.ROAD_CLASS_ENC)
     df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
     df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)

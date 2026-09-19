@@ -24,8 +24,8 @@ ever diverged, the static site would silently disagree with the live API
 Usage:
     python3 tools/build_static_bundle.py
 
-Reads models/traffic_gbt.joblib + data/*.csv (via backend/app.py's own
-startup logic). Writes frontend/data/bundle.json.
+Reads models/forecast_residual_gbt.joblib + data/*.csv (via backend/app.py's
+own startup logic). Writes frontend/data/bundle.json.
 
 Bundle shape (see the "conventions" block written into the bundle itself
 for the authoritative, machine-readable version of this):
@@ -55,7 +55,7 @@ for the authoritative, machine-readable version of this):
     "congestion_index": [[[...24 floats...] x7 days] x13 corridors],
     "confidence":       [[[...24 floats...] x7 days] x13 corridors],
     "origin":           [[[...24 strings...] x7 days] x13 corridors]
-                         // "observed" | "bootstrap" | "model_inferred" | "residual_adjusted"
+                         // "observed" | "bootstrap" | "residual_adjusted"
   },
   "advice": [
     // one object per (corridor, day) = 13*7 = 91, same shape GET /advice
@@ -99,8 +99,8 @@ sys.path.insert(0, BACKEND_DIR)
 def _fresh_backend_app():
     """(Re)import backend/app.py fresh, exactly like test_api.py's
     _fresh_app(), so its startup logic (model load + grid precompute) runs
-    against the CURRENT state of models/traffic_gbt.joblib and data/*.csv
-    — never a stale cached import."""
+    against the CURRENT state of models/forecast_residual_gbt.joblib and
+    data/*.csv — never a stale cached import."""
     if "app" in sys.modules:
         del sys.modules["app"]
     import app as app_module
@@ -110,10 +110,10 @@ def _fresh_backend_app():
 def build_bundle():
     app_module = _fresh_backend_app()
 
-    if not app_module.MODEL_READY:
+    if not app_module.GRID_READY:
         raise RuntimeError(
-            "backend/app.py has no usable model loaded (models/traffic_gbt.joblib "
-            "missing or malformed) -- cannot build a bundle with no data."
+            "backend/app.py has no forecast grid ready (models/forecast_residual_gbt.joblib "
+            "missing, malformed, or holdout skill <= 0) — cannot build a bundle."
         )
 
     CORRIDORS = app_module.CORRIDORS
@@ -163,9 +163,7 @@ def build_bundle():
                 d_idx.append(cell["congestion_index"])
                 d_conf.append(cell["confidence"])
                 d_origin.append(cell["origin"])
-                if cell["origin"] == "model_inferred":
-                    inferred_cells += 1
-                elif cell["origin"] == "residual_adjusted":
+                if cell["origin"] == "residual_adjusted":
                     residual_cells += 1
                 else:
                     measured_cells += 1

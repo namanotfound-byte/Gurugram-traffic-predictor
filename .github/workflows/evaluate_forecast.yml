@@ -1,25 +1,22 @@
-name: Retrain Forecast Model
+name: Evaluate Forecast Model
 
-# Runs once a week, retraining the residual forecast model on accumulated
-# observed rows in data/gurugram_observed.csv. Commits the updated artifact
-# and refreshes frontend/data/bundle.json in the same commit.
-#
-# Same caveat as collect.yml: `schedule:` triggers are best-effort, not
-# exact — see README's "Live data collection" section.
+# Re-scores models/forecast_residual_gbt.joblib on a time-based holdout and
+# commits docs/forecast_eval.md. Runs after retrain.yml (03:00 UTC Monday)
+# so the shipped artifact is fresh; schedule is best-effort like other jobs.
 on:
   schedule:
-    - cron: "0 3 * * 1"   # every Monday 03:00 UTC
+    - cron: "30 3 * * 1"   # every Monday 03:30 UTC
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
 concurrency:
-  group: retrain-forecast-model
+  group: evaluate-forecast-model
   cancel-in-progress: false
 
 jobs:
-  retrain:
+  evaluate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +28,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-collect.txt -r backend/requirements.txt
-
-      - name: Train forecast model
-        run: python model/forecast_model.py train
 
       - name: Evaluate forecast model
         run: |
@@ -48,21 +42,18 @@ jobs:
           cat eval_stdout.txt >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Build static bundle
-        run: python tools/build_static_bundle.py
-
-      - name: Commit updated model + bundle (retries on push conflicts)
+      - name: Commit updated evaluation report (retries on push conflicts)
         run: |
           set -e
           git config user.name "traffic-collector-bot"
           git config user.email "actions@github.com"
 
-          git add models/forecast_residual_gbt.joblib frontend/data/bundle.json docs/forecast_eval.md
+          git add docs/forecast_eval.md
           if git diff --staged --quiet; then
-            echo "Model output unchanged — nothing to commit."
+            echo "Evaluation report unchanged — nothing to commit."
             exit 0
           fi
-          git commit -m "model: weekly forecast retrain + refresh static bundle"
+          git commit -m "docs: weekly forecast holdout evaluation"
 
           branch="${GITHUB_REF_NAME}"
           attempt=1

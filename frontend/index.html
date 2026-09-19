@@ -806,7 +806,6 @@ function originBadgeHtml(origin){
     residual_adjusted: ['prov-residual', 'PREDICTED (baseline + conditions)'],
     bootstrap: ['prov-bootstrap', 'BOOTSTRAP (typical pattern)'],
     observed: ['prov-observed', 'OBSERVED (live sample)'],
-    model_inferred: ['prov-bootstrap', 'MODEL-INFERRED (estimated)'],
     synthetic: ['prov-synthetic', '⚠ SYNTHETIC — NOT REAL DATA'],
     demo: ['prov-demo', '◆ DEMO FIXTURE — NOT REAL DATA'],
   };
@@ -817,7 +816,7 @@ function provBadgeHtml(prov, conf){
   if(prov==='residual_adjusted') return originBadgeHtml('residual_adjusted');
   const cls = prov==='synthetic' ? 'prov-synthetic' : prov==='observed' ? 'prov-observed' : prov==='demo' ? 'prov-demo' : 'prov-bootstrap';
   const icon = prov==='synthetic' ? '⚠ ' : prov==='demo' ? '◆ ' : '';
-  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : prov==='model_inferred' ? 'MODEL-INFERRED (estimated)' : 'RESIDUAL FORECAST';
+  const label = prov==='synthetic' ? 'SYNTHETIC — NOT REAL DATA' : prov==='observed' ? 'OBSERVED' : prov==='demo' ? 'DEMO FIXTURE — NOT REAL DATA' : 'RESIDUAL FORECAST';
   return `<span class="prov-badge ${cls}">${icon}${label}</span>`;
 }
 function isDegraded(conf){ return typeof conf === 'number' && conf < 0.5; }

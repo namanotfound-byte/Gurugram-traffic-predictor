@@ -225,6 +225,8 @@ examples). Dwarka Expressway remains a poor fold at **R² = −12.4** even after
 under-construction, real-estate-corridor traffic that doesn't resemble any other corridor in the
 set, not a bug to be fixed by more averaging.
 
+**Forecast holdout eval.** `docs/forecast_eval.md` is regenerated weekly by `.github/workflows/evaluate_forecast.yml` (Mondays ~03:30 UTC, after retrain); trigger manually from Actions → *Evaluate Forecast Model* → *Run workflow*.
+
 ---
 
 ## Limitations
@@ -266,11 +268,10 @@ Gurugram-traffic-predictor/
 │   └── test_api.py              # 79 tests
 │
 ├── model/
-│   ├── traffic_model.py         # feature engineering, training, GroupKFold CV
 │   └── forecast_model.py        # gated residual (weather/calendar/incident) model
 │
 ├── models/
-│   └── traffic_gbt.joblib       # trained model artifact
+│   └── forecast_residual_gbt.joblib  # shipped forecast artifact
 │
 ├── data/
 │   ├── gurugram_bootstrap.csv   # the complete 2,184-cell measured grid
@@ -279,12 +280,14 @@ Gurugram-traffic-predictor/
 ├── docs/
 │   ├── api_contract.md          # frozen API contract
 │   ├── accuracy_report.md       # served-vs-observed accuracy, regenerated from real data
+│   ├── forecast_eval.md         # forecast holdout eval, regenerated weekly by CI
 │   └── accuracy_history.csv
 │
 ├── tools/
 │   ├── build_static_bundle.py   # builds frontend/data/bundle.json from the live grid
 │   ├── build_corridor_geojson.py
-│   └── evaluate_accuracy.py     # generates docs/accuracy_report.md
+│   ├── evaluate_accuracy.py     # generates docs/accuracy_report.md
+│   └── evaluate_forecast.py     # holdout eval of forecast_residual_gbt.joblib
 │
 ├── frontend/
 │   ├── index.html               # MapLibre map + dashboard
@@ -295,7 +298,8 @@ Gurugram-traffic-predictor/
 ├── .github/workflows/
 │   ├── collect.yml              # hourly live-collection job
 │   ├── refresh_bundle.yml       # daily static-bundle rebuild
-│   └── retrain.yml              # weekly model retrain
+│   ├── retrain.yml              # weekly model retrain
+│   └── evaluate_forecast.yml    # weekly forecast holdout eval
 │
 ├── PROJECT_EXPLAINER.md         # full technical writeup, file-by-file
 └── README.md

@@ -46,7 +46,6 @@ Base URL: `http://localhost:5000` (dev)
   `provenance`) — one of:
   - `"observed"` — live-measured cell from `gurugram_observed.csv`
   - `"bootstrap"` — TomTom historical-model cell from `gurugram_bootstrap.csv`
-  - `"model_inferred"` — legacy GBT gap-fill (`model/traffic_model.py`)
   - `"residual_adjusted"` — bootstrap baseline + residual forecast
     (`model/forecast_model.py`), using weather/incidents/calendar. Only
     served when the residual model's time-holdout skill score is strictly

@@ -17,7 +17,6 @@ import pytest
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.join(BACKEND_DIR, "..")
-MODEL_PATH = os.path.join(ROOT_DIR, "models", "traffic_gbt.joblib")
 FORECAST_MODEL_PATH = os.path.join(ROOT_DIR, "models", "forecast_residual_gbt.joblib")
 
 sys.path.insert(0, BACKEND_DIR)
@@ -34,10 +33,10 @@ INVALID_CORRIDOR_ID = max(VALID_CORRIDOR_IDS) + 1  # guaranteed out of range
 
 
 def _fresh_app():
-    """(Re)import app.py fresh so its module-level startup logic (model
-    load + grid precompute) reruns against the current state of
-    models/traffic_gbt.joblib. Needed because the app builds its grid once
-    at import time, not per-request."""
+    """(Re)import app.py fresh so its module-level startup logic (forecast
+    model load + grid precompute) reruns against the current state of
+    models/forecast_residual_gbt.joblib. Needed because the app builds its
+    grid once at import time, not per-request."""
     if "app" in sys.modules:
         del sys.modules["app"]
     import app as app_module
@@ -144,63 +143,27 @@ class TestConfidenceIsHonest:
             conf = r.get_json()["confidence"]
             assert 0.0 <= conf <= 1.0
 
-    def test_synthetic_provenance_is_flat_low(self, client):
-        """The one case where a flat confidence IS correct: a synthetic
-        model has literally no real data to differentiate cells by."""
-        app_module = _fresh_app()
-        assert app_module.compute_confidence("synthetic", None, None) == 0.15
-
-    def test_strict_ordering_observed_gt_stable_gt_unstable_gt_inferred(self, client):
+    def test_strict_ordering_observed_gt_stable_gt_unstable_gt_forecast(self, client):
         app_module = _fresh_app()
         observed = app_module.compute_confidence(
-            "bootstrap", {"cv_r2": -2.52},
+            "observed", None,
             {"origin": "observed", "congestion_idx": 0.1, "route_stable": True},
         )
         measured_stable = app_module.compute_confidence(
-            "bootstrap", {"cv_r2": -2.52},
+            "observed", None,
             {"origin": "bootstrap", "congestion_idx": 0.1, "route_stable": True},
         )
         measured_unstable = app_module.compute_confidence(
-            "bootstrap", {"cv_r2": -2.52},
+            "observed", None,
             {"origin": "bootstrap", "congestion_idx": 0.1, "route_stable": False},
         )
-        inferred_no_metric = app_module.compute_confidence("bootstrap", {"cv_r2": -2.52}, None)
-        inferred_with_good_within_class_metric = app_module.compute_confidence(
-            "bootstrap", {"within_corridor_r2": 0.95}, None,
+        forecast = app_module.compute_confidence(
+            "observed", None, None,
+            cell_origin="residual_adjusted", forecast_skill=0.5,
         )
 
-        assert observed > measured_stable > measured_unstable
-        assert measured_unstable > inferred_no_metric
-        assert measured_unstable > inferred_with_good_within_class_metric, (
-            "even a strong within-class quality score must not outrank a real "
-            "(if route-unstable) measurement"
-        )
+        assert observed > measured_stable > forecast > measured_unstable
         assert measured_stable >= 0.9, "a stable measured cell must read as high confidence (0.9+)"
-
-    def test_cv_r2_is_never_consulted_for_measured_or_inferred_confidence(self, client):
-        """A catastrophic leave-one-corridor-out cv_r2 (as this project's
-        actual model has: -2.52) must not drag down confidence for a
-        measured cell, and must not be read at all for an inferred cell
-        unless it is specifically a within-class/within-corridor figure."""
-        app_module = _fresh_app()
-        catastrophic_metrics = {"cv_r2": -2.52, "cv_r2_std": 8.69}
-        measured_stable = app_module.compute_confidence(
-            "bootstrap", catastrophic_metrics,
-            {"origin": "bootstrap", "congestion_idx": 0.1, "route_stable": True},
-        )
-        assert measured_stable == app_module.CONFIDENCE_MEASURED_STABLE
-        # an inferred cell with ONLY the leave-one-corridor-out cv_r2 available
-        # (no within-class key) must fall back to the conservative default,
-        # not read cv_r2 as if it were usable
-        inferred = app_module.compute_confidence("bootstrap", catastrophic_metrics, None)
-        assert inferred == app_module.INFERRED_CONFIDENCE_DEFAULT
-
-    def test_extract_within_class_quality_ignores_cv_r2(self, client):
-        app_module = _fresh_app()
-        assert app_module.extract_within_class_quality({"cv_r2": 0.9}) is None
-        assert app_module.extract_within_class_quality({"within_corridor_r2": 0.9}) == 0.9
-        assert app_module.extract_within_class_quality(None) is None
-        assert app_module.extract_within_class_quality({}) is None
 
 
 class TestForecastGrid:
@@ -260,15 +223,15 @@ class TestRouteUnstableConfidence:
         must read lower than stable bootstrap or observed."""
         app_module = _fresh_app()
         conf_unstable = app_module.compute_confidence(
-            app_module.MODEL_PROVENANCE, app_module.METRICS,
+            app_module.MODEL_PROVENANCE, None,
             {"origin": "bootstrap", "route_stable": False, "congestion_idx": 0.2},
         )
         conf_stable = app_module.compute_confidence(
-            app_module.MODEL_PROVENANCE, app_module.METRICS,
+            app_module.MODEL_PROVENANCE, None,
             {"origin": "bootstrap", "route_stable": True, "congestion_idx": 0.2},
         )
         conf_observed = app_module.compute_confidence(
-            app_module.MODEL_PROVENANCE, app_module.METRICS,
+            app_module.MODEL_PROVENANCE, None,
             {"origin": "observed", "route_stable": True, "congestion_idx": 0.2},
         )
         assert conf_unstable == app_module.CONFIDENCE_MEASURED_UNSTABLE
@@ -298,11 +261,12 @@ class TestPredict:
             assert key in body
         assert 0.0 <= body["congestion_index"] <= 1.0
         assert body["label"] in ("Free", "Moderate", "Heavy", "Severe")
-        assert body["provenance"] in ("observed", "bootstrap", "synthetic")
+        assert body["provenance"] in ("observed", "bootstrap")
         assert 0.0 <= body["confidence"] <= 1.0
         assert body["typical_minutes"] >= body["free_flow_minutes"]
+        # typical and delay are each rounded to 1dp independently in minutes_from_index
         assert body["delay_minutes"] == pytest.approx(
-            body["typical_minutes"] - body["free_flow_minutes"], abs=0.05)
+            body["typical_minutes"] - body["free_flow_minutes"], abs=0.15)
 
     def test_bad_corridor_high(self, client):
         r = client.get("/predict?corridor=99&day=1&hour=8")
