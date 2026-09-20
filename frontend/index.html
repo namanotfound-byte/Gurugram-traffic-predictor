@@ -239,15 +239,17 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .info-row b{color:var(--text);font-weight:500}
 .info-accuracy{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-family:var(--display);font-size:11px;line-height:1.5;color:var(--sub)}
 
-/* FIRST-LOAD TUTORIAL */
-.tutorial-overlay{display:none;position:fixed;inset:0;z-index:11000;background:rgba(2,5,12,0.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;cursor:pointer;pointer-events:all}
-.tutorial-overlay.show{display:flex}
-.tutorial-card{max-width:min(480px,calc(100vw - 48px));width:100%;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:14px;padding:28px 26px;box-shadow:0 24px 80px rgba(0,0,0,0.55);cursor:pointer;pointer-events:all}
-.tutorial-step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
-.tutorial-title{font-family:var(--display);font-size:20px;font-weight:700;color:var(--cyan);margin-bottom:12px;line-height:1.3}
-.tutorial-body{font-family:var(--display);font-size:14px;line-height:1.65;color:var(--sub);margin-bottom:18px}
-.tutorial-hint{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;letter-spacing:.04em}
-.tutorial-dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+/* FIRST-LOAD TUTORIAL — moving spotlight + caption card */
+.tutorial-overlay{display:none;position:fixed;inset:0;z-index:11000;cursor:pointer;pointer-events:none}
+.tutorial-overlay.show{display:block;pointer-events:all}
+#tutorialSpotlight{position:fixed;border:2px solid var(--cyan);border-radius:11px;box-shadow:0 0 0 9999px rgba(2,5,12,.78);pointer-events:none;z-index:1;opacity:0;transition:top .35s ease,left .35s ease,width .35s ease,height .35s ease,opacity .2s ease}
+#tutorialSpotlight.ready{opacity:1}
+.tutorial-card{position:fixed;max-width:min(320px,calc(100vw - 32px));min-width:220px;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:10px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45);cursor:pointer;pointer-events:all;z-index:2}
+.tutorial-step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.tutorial-title{font-family:var(--display);font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:8px;line-height:1.3}
+.tutorial-body{font-family:var(--display);font-size:13px;line-height:1.55;color:var(--sub);margin-bottom:12px}
+.tutorial-hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;line-height:1.4}
+.tutorial-dots{display:flex;gap:6px;margin-bottom:10px}
 .tutorial-dot{width:7px;height:7px;border-radius:50%;background:var(--card-border);transition:background .2s,transform .2s}
 .tutorial-dot.active{background:var(--cyan);transform:scale(1.15)}
 
@@ -358,7 +360,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <!-- LEFT PANEL -->
     <div class="panel panel-left">
       <div>
-        <div class="time-block">
+        <div class="time-block" id="timeBlock">
           <div class="time-big" id="timeDisp">08:00</div>
           <div class="time-desc" id="timeDesc">Select a day and hour to preview congestion</div>
           <div class="day-strip">
@@ -394,8 +396,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       </div>
 
       <div class="tool-card">
+        <div id="tutorialFromTo">
         <input id="fromInput" placeholder="From" aria-label="From location (optional)">
         <input id="toInput" placeholder="To" aria-label="To location (optional)">
+        </div>
         <div class="tool-row">
           <select id="earliestSel" aria-label="Earliest departure"></select>
           <select id="latestSel" aria-label="Latest departure"></select>
@@ -430,8 +434,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <span class="info-dot" id="infoDot"></span>About
     </button>
   </div>
-  <!-- First-load tutorial: full-screen, blocks interaction until dismissed -->
+  <!-- First-load tutorial: spotlight + caption, blocks interaction until dismissed -->
   <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true">
+    <div id="tutorialSpotlight" aria-hidden="true"></div>
     <div class="tutorial-card" id="tutorialCard" role="dialog" aria-labelledby="tutorialTitle">
       <div class="tutorial-step" id="tutorialStepLabel">Step 1 of 6</div>
       <div class="tutorial-title" id="tutorialTitle"></div>
@@ -1798,34 +1803,46 @@ setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().t
 // FIRST-LOAD TUTORIAL
 // ─────────────────────────────────────────────────────────────────────────
 const TUTORIAL_KEY = 'gtp_tutorial_done';
+const TUTORIAL_SPOTLIGHT_PAD = 8;
+const TUTORIAL_CARD_GAP = 12;
+const TUTORIAL_CARD_MARGIN = 16;
 const TUTORIAL_STEPS = [
   {
+    target: '#adviceBanner',
     title: 'Gurugram Traffic Predictor',
     body: 'This tool helps you pick the best hour to leave on 13 Gurugram road corridors — using measured traffic and a residual forecast model, not guesswork.'
   },
   {
+    target: '#corridorCombo',
     title: 'Pick a corridor',
     body: 'Search by name in the Roads panel, or click a corridor on the map. Colours show predicted congestion for the day and hour you select.'
   },
   {
+    target: '#timeBlock',
     title: 'Choose day and hour',
     body: 'Use the weekday buttons and hour slider to preview congestion at different departure times. The map and advice banner update as you move the slider.'
   },
   {
+    target: '#tutorialFromTo',
     title: 'From / To (optional)',
     body: 'Enter start and end locations if you want the route planner to match your trip to a corridor. Leave them blank to explore corridors directly.'
   },
   {
+    target: '#findBtn',
     title: 'Find best departure',
     body: 'Set your earliest and latest departure window, then tap FIND BEST DEPARTURE. The app scans hours in that range and picks the least congested slot.'
   },
   {
-    title: 'Data & model',
-    body: 'Open Data & model in the footer for model version and holdout accuracy. Map numbers are residual-adjusted predictions — not a live traffic replay.'
+    target: '#dataInfoBtn',
+    title: 'About',
+    body: 'Open About in the footer for model version and holdout accuracy. Map numbers are residual-adjusted predictions — not a live traffic replay.'
   }
 ];
 let tutorialIndex = 0;
 let tutorialShown = false;
+let tutorialLayoutGen = 0;
+let tutorialRepositionHandler = null;
+let tutorialScrollTimer = null;
 
 function tutorialVisible(){
   const el = document.getElementById('tutorialOverlay');
@@ -1838,6 +1855,78 @@ function shouldShowTutorial(){
   try{ return !localStorage.getItem(TUTORIAL_KEY); }catch(e){ return false; }
 }
 
+function positionTutorialCard(spot, card){
+  const margin = TUTORIAL_CARD_MARGIN;
+  const gap = TUTORIAL_CARD_GAP;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const cardW = card.offsetWidth;
+  const cardH = card.offsetHeight;
+  let top, left;
+
+  if(spot.bottom + gap + cardH <= vh - margin){
+    top = spot.bottom + gap;
+    left = Math.max(margin, Math.min(spot.left + (spot.width - cardW) / 2, vw - cardW - margin));
+  }else if(spot.top - gap - cardH >= margin){
+    top = spot.top - gap - cardH;
+    left = Math.max(margin, Math.min(spot.left + (spot.width - cardW) / 2, vw - cardW - margin));
+  }else if(spot.right + gap + cardW <= vw - margin){
+    left = spot.right + gap;
+    top = Math.max(margin, Math.min(spot.top + (spot.height - cardH) / 2, vh - cardH - margin));
+  }else if(spot.left - gap - cardW >= margin){
+    left = spot.left - gap - cardW;
+    top = Math.max(margin, Math.min(spot.top + (spot.height - cardH) / 2, vh - cardH - margin));
+  }else{
+    top = Math.min(spot.bottom + gap, vh - cardH - margin);
+    left = Math.max(margin, Math.min(spot.left, vw - cardW - margin));
+  }
+
+  card.style.top = top + 'px';
+  card.style.left = left + 'px';
+}
+
+function applyTutorialSpotlight(){
+  const step = TUTORIAL_STEPS[tutorialIndex];
+  const spotlight = document.getElementById('tutorialSpotlight');
+  const card = document.getElementById('tutorialCard');
+  const target = document.querySelector(step.target);
+  if(!target || !spotlight || !card) return;
+
+  const rect = target.getBoundingClientRect();
+  const pad = TUTORIAL_SPOTLIGHT_PAD;
+  const spot = {
+    top: rect.top - pad,
+    left: rect.left - pad,
+    right: rect.right + pad,
+    bottom: rect.bottom + pad,
+    width: rect.width + pad * 2,
+    height: rect.height + pad * 2
+  };
+
+  spotlight.style.transition = 'none';
+  spotlight.style.top = spot.top + 'px';
+  spotlight.style.left = spot.left + 'px';
+  spotlight.style.width = spot.width + 'px';
+  spotlight.style.height = spot.height + 'px';
+  spotlight.offsetHeight;
+  spotlight.style.transition = '';
+  spotlight.classList.add('ready');
+
+  positionTutorialCard(spot, card);
+}
+
+function positionTutorialSpotlight(){
+  const target = document.querySelector(TUTORIAL_STEPS[tutorialIndex].target);
+  if(!target) return;
+  const gen = ++tutorialLayoutGen;
+  target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  applyTutorialSpotlight();
+  requestAnimationFrame(() => {
+    if(gen !== tutorialLayoutGen) return;
+    applyTutorialSpotlight();
+  });
+}
+
 function renderTutorialStep(){
   const step = TUTORIAL_STEPS[tutorialIndex];
   document.getElementById('tutorialStepLabel').textContent = `Step ${tutorialIndex + 1} of ${TUTORIAL_STEPS.length}`;
@@ -1846,12 +1935,36 @@ function renderTutorialStep(){
   document.getElementById('tutorialDots').innerHTML = TUTORIAL_STEPS.map((_, i)=>
     `<span class="tutorial-dot${i===tutorialIndex?' active':''}"></span>`
   ).join('');
+  positionTutorialSpotlight();
+}
+
+function bindTutorialReposition(){
+  if(tutorialRepositionHandler) return;
+  tutorialRepositionHandler = function(){
+    if(!tutorialVisible()) return;
+    clearTimeout(tutorialScrollTimer);
+    tutorialScrollTimer = setTimeout(applyTutorialSpotlight, 48);
+  };
+  window.addEventListener('resize', tutorialRepositionHandler);
+  window.addEventListener('scroll', tutorialRepositionHandler, true);
+}
+
+function unbindTutorialReposition(){
+  if(!tutorialRepositionHandler) return;
+  window.removeEventListener('resize', tutorialRepositionHandler);
+  window.removeEventListener('scroll', tutorialRepositionHandler, true);
+  tutorialRepositionHandler = null;
 }
 
 function dismissTutorial(){
   const el = document.getElementById('tutorialOverlay');
+  const spotlight = document.getElementById('tutorialSpotlight');
   el.classList.remove('show');
   el.setAttribute('aria-hidden', 'true');
+  spotlight.classList.remove('ready');
+  tutorialLayoutGen += 1;
+  clearTimeout(tutorialScrollTimer);
+  unbindTutorialReposition();
   tutorialShown = false;
   try{ localStorage.setItem(TUTORIAL_KEY, '1'); }catch(e){ /* private mode */ }
 }
@@ -1870,6 +1983,7 @@ function showTutorial(){
   tutorialShown = true;
   tutorialIndex = 0;
   renderTutorialStep();
+  bindTutorialReposition();
   const el = document.getElementById('tutorialOverlay');
   el.classList.add('show');
   el.setAttribute('aria-hidden', 'false');
