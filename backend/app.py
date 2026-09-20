@@ -240,28 +240,63 @@ def load_measured_grid():
 CONFIDENCE_OBSERVED = 0.97
 CONFIDENCE_MEASURED_STABLE = 0.92
 CONFIDENCE_MEASURED_UNSTABLE = 0.50
-# Residual forecast: holdout skill maps to confidence between 0.55 and 0.85.
-# Never outranks a direct measurement — this is a condition-adjusted forecast.
+# Residual forecast confidence is per (corridor, day, hour) slot stability in
+# gurugram_observed.csv — not a single global skill mapping.
+# OBSERVED_STD_FULLY_JUMPY: a 0.15 congestion-index swing across days is
+# treated as fully jumpy (stability term goes to zero).
+OBSERVED_STD_FULLY_JUMPY = 0.15
 NEAREST_INCIDENT_SENTINEL_M = 5000.0
 
 
-def compute_confidence(provenance, metrics, measured_cell, cell_origin=None, forecast_skill=None):
+def load_observed_cell_stats():
+    """Sample count and std of congestion_idx per (corridor, day, hour).
+
+    Built from data/gurugram_observed.csv. When route_stable is present,
+    only route-stable rows are included (same filter as bootstrap evaluation).
+    """
+    stats = {}
+    if not os.path.exists(OBSERVED_CSV):
+        return stats
+    try:
+        df = pd.read_csv(OBSERVED_CSV)
+        if "route_stable" in df.columns:
+            df = df[df["route_stable"].astype(bool)]
+        if df.empty:
+            return stats
+        grouped = df.groupby(["corridor_id", "day_of_week", "hour"])["congestion_idx"]
+        for (cid, day, hour), series in grouped:
+            n = int(len(series))
+            std = float(series.std()) if n >= 2 else 0.0
+            if n >= 2 and (std != std):  # NaN guard
+                std = 0.0
+            stats[(int(cid), int(day), int(hour))] = {"n": n, "std": std}
+    except Exception as e:
+        print(f"[app] could not build observed cell stats from {OBSERVED_CSV}: {e}")
+    return stats
+
+
+def compute_confidence(provenance, metrics, measured_cell, cell_origin=None,
+                       forecast_skill=None, observed_n=None, observed_std=None):
     """Honest per-cell confidence -- how trustworthy is the SERVED value.
 
     Priority:
       1. cell has a live "observed" measurement -> highest (0.97).
       2. cell has a bootstrap measurement, route_stable -> high (0.92).
       3. cell has a bootstrap measurement, NOT route_stable -> lower (0.50).
-      4. cell origin is "residual_adjusted" -- weather/incident-conditioned
-         forecast over the bootstrap baseline; confidence scales with the
-         model's time-holdout skill score (see model/forecast_model.py).
+      4. cell origin is "residual_adjusted" -- condition-adjusted forecast;
+         confidence reflects how stable that (corridor, day, hour) slot has
+         been in observed history (count + std), not a flat skill mapping.
       5. cell origin is "bootstrap" (baseline fallback when forecast path
          unavailable for one cell) -> same tier as a stable measurement.
     """
     if cell_origin == "residual_adjusted":
-        if forecast_skill is None or forecast_skill <= 0:
-            return CONFIDENCE_MEASURED_STABLE
-        return round(min(0.85, max(0.55, 0.55 + 0.35 * forecast_skill)), 2)
+        if observed_n is not None and observed_n >= 2:
+            std = observed_std if observed_std is not None else OBSERVED_STD_FULLY_JUMPY
+            stability = 1.0 - min(1.0, std / OBSERVED_STD_FULLY_JUMPY)
+            return round(min(0.95, max(0.50, 0.50 + 0.40 * stability)), 2)
+        # Thin history: fewer than two observed samples for this slot.
+        skill_boost = (0.05 * forecast_skill) if forecast_skill and forecast_skill > 0 else 0.0
+        return round(min(0.58, max(0.50, 0.50 + skill_boost)), 2)
 
     if measured_cell is not None:
         if measured_cell["origin"] == "observed":
@@ -587,6 +622,7 @@ BASELINE_GRID = {}
 
 FREE_FLOW_MINUTES = load_free_flow_minutes()
 MEASURED_GRID = load_measured_grid()  # training/evaluation only — not served as forecasts
+OBSERVED_CELL_STATS = load_observed_cell_stats()
 BASELINE_GRID = load_baseline_grid()
 
 GRID_READY = FORECAST_READY
@@ -634,9 +670,11 @@ if GRID_READY:
 
                     ff_minutes = FREE_FLOW_MINUTES[c["id"]]
                     typical, delay = minutes_from_index(ff_minutes, idx)
+                    slot_stats = OBSERVED_CELL_STATS.get(cell, {"n": 0, "std": 0.0})
                     conf = compute_confidence(
                         MODEL_PROVENANCE, None, None,
                         cell_origin=origin, forecast_skill=FORECAST_SKILL,
+                        observed_n=slot_stats["n"], observed_std=slot_stats["std"],
                     )
                     GRID[cell] = {
                         "congestion_index": idx,
@@ -990,11 +1028,15 @@ def advice_payload_for(corridor_id: int, day: int) -> dict:
     night_period = period_payload_for(corridor_id, day, profile, NIGHT_HOURS, "night")
 
     profile_origins = [GRID[(corridor_id, day, h)]["origin"] for h in range(24)]
+    profile_confidence = [GRID[(corridor_id, day, h)]["confidence"] for h in range(24)]
+    profile_delay_minutes = [GRID[(corridor_id, day, h)]["delay_minutes"] for h in range(24)]
 
     return {
         "corridor_id": corridor_id,
         "profile": profile,
         "profile_origins": profile_origins,
+        "profile_confidence": profile_confidence,
+        "profile_delay_minutes": profile_delay_minutes,
         "best_windows": best_windows,
         "worst_windows": worst_windows,
         "best_hour": best_hour,
@@ -1338,9 +1380,11 @@ def now():
 
         label = label_for(idx)
         typical, delay = minutes_from_index(ff_minutes, idx)
+        slot_stats = OBSERVED_CELL_STATS.get((cid, day, hour), {"n": 0, "std": 0.0})
         conf = compute_confidence(
             MODEL_PROVENANCE, None, None,
             cell_origin=origin, forecast_skill=FORECAST_SKILL,
+            observed_n=slot_stats["n"], observed_std=slot_stats["std"],
         )
         trend = _trend_for(cid, day, hour)
         verdict = _verdict_for(label, trend)

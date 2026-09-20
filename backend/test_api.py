@@ -143,7 +143,7 @@ class TestConfidenceIsHonest:
             conf = r.get_json()["confidence"]
             assert 0.0 <= conf <= 1.0
 
-    def test_strict_ordering_observed_gt_stable_gt_unstable_gt_forecast(self, client):
+    def test_strict_ordering_observed_gt_stable_gt_unstable(self, client):
         app_module = _fresh_app()
         observed = app_module.compute_confidence(
             "observed", None,
@@ -157,12 +157,14 @@ class TestConfidenceIsHonest:
             "observed", None,
             {"origin": "bootstrap", "congestion_idx": 0.1, "route_stable": False},
         )
-        forecast = app_module.compute_confidence(
+        thin_history = app_module.compute_confidence(
             "observed", None, None,
             cell_origin="residual_adjusted", forecast_skill=0.5,
+            observed_n=1, observed_std=0.0,
         )
 
-        assert observed > measured_stable > forecast > measured_unstable
+        assert observed > measured_stable > measured_unstable
+        assert thin_history <= 0.58
         assert measured_stable >= 0.9, "a stable measured cell must read as high confidence (0.9+)"
 
 
@@ -205,16 +207,45 @@ class TestForecastGrid:
                 )
                 assert abs(body["congestion_index"] - obs_idx) >= 0 or cell["origin"] == "bootstrap"
 
-    def test_residual_adjusted_confidence_tier(self, client):
+    def test_residual_adjusted_confidence_varies_by_slot_stability(self, client):
         app_module = _fresh_app()
         if not app_module.FORECAST_SKILL or app_module.FORECAST_SKILL <= 0:
             pytest.skip("forecast skill not positive")
-        conf = app_module.compute_confidence(
+        thin = app_module.compute_confidence(
             "bootstrap", None, None,
             cell_origin="residual_adjusted", forecast_skill=app_module.FORECAST_SKILL,
+            observed_n=1, observed_std=0.0,
         )
-        assert 0.55 <= conf <= 0.85
-        assert conf < app_module.CONFIDENCE_OBSERVED
+        stable = app_module.compute_confidence(
+            "bootstrap", None, None,
+            cell_origin="residual_adjusted", forecast_skill=app_module.FORECAST_SKILL,
+            observed_n=5, observed_std=0.02,
+        )
+        jumpy = app_module.compute_confidence(
+            "bootstrap", None, None,
+            cell_origin="residual_adjusted", forecast_skill=app_module.FORECAST_SKILL,
+            observed_n=5, observed_std=0.20,
+        )
+        assert 0.50 <= thin <= 0.58
+        assert stable > jumpy
+        assert jumpy == 0.50
+        assert stable <= 0.95
+        assert thin < app_module.CONFIDENCE_OBSERVED
+
+    def test_served_residual_cells_are_not_all_identical(self, client):
+        """Two corridors at the same hour should differ when observed std differs."""
+        app_module = _fresh_app()
+        if not app_module.GRID_READY:
+            pytest.skip("forecast model not loaded")
+        day, hour = 1, 8
+        confs = []
+        for cid in sorted(VALID_CORRIDOR_IDS):
+            cell = app_module.GRID[(cid, day, hour)]
+            if cell["origin"] == "residual_adjusted":
+                confs.append(cell["confidence"])
+        if len(confs) < 2:
+            pytest.skip("not enough residual cells in grid")
+        assert len(set(confs)) > 1, f"expected varying confidence, got {confs}"
 
 
 class TestRouteUnstableConfidence:

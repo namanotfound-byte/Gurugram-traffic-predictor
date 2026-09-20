@@ -85,16 +85,14 @@ body{overflow-x:hidden;overflow-y:hidden}
 .proto-cmd{display:block;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cyan);margin-bottom:7px}
 .proto-fix-sub{font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.5}
 
-/* HERO / ADVICE BANNER — continuous teal chrome from viewport top */
-.advice-banner{padding:16px 24px 14px;background:linear-gradient(180deg,var(--cyan-dim) 0%,rgba(0,229,255,0.04) 100%);border-bottom:1px solid var(--border);flex:0 0 auto}
-.banner-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:10px}
-.banner-title-block{flex:1 1 auto;min-width:0}
-.banner-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto;padding-top:4px}
+/* HERO / ADVICE BANNER — single compact row: title | stats | clock */
+.advice-banner{padding:10px 20px 8px;background:linear-gradient(180deg,var(--cyan-dim) 0%,rgba(0,229,255,0.04) 100%);border-bottom:1px solid var(--border);flex:0 0 auto}
+.banner-row{display:flex;align-items:center;gap:16px;min-height:52px}
+.banner-title-block{flex:0 1 auto;min-width:0;max-width:38%}
+.banner-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto;margin-left:auto}
 .banner-ist{font-family:var(--mono);font-size:12px;color:var(--cyan)}
 .advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
-.advice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-wrap:wrap}
-.advice-main{flex:1 1 420px;min-width:0}
-.advice-corridor{font-size:clamp(22px,3vw,36px);font-weight:700;color:var(--cyan);line-height:1.2}
+.advice-corridor{font-size:clamp(18px,2.4vw,28px);font-weight:700;color:var(--cyan);line-height:1.15}
 .period-toggle-wrap{display:flex;flex-direction:column;justify-content:center;gap:4px}
 .period-toggle{display:flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
 .period-btn{flex:1;font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -103,17 +101,17 @@ body{overflow-x:hidden;overflow-y:hidden}
    their button via the matching flex:1/gap/padding split below. */
 .period-ranges{display:flex;gap:4px;padding:0 3px}
 .period-range{flex:1;text-align:center;font-family:var(--mono);font-size:9px;color:var(--sub);opacity:.8;white-space:nowrap}
-.advice-summary{font-size:clamp(15px,1.8vw,18px);font-weight:500;line-height:1.4;margin-top:6px;color:var(--sub);letter-spacing:normal}
-.window-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.advice-summary{font-size:clamp(12px,1.4vw,15px);font-weight:500;line-height:1.35;margin-top:3px;color:var(--sub);letter-spacing:normal}
+.window-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .chip{font-family:var(--mono);font-size:10px;padding:6px 11px;border-radius:6px;border:1px solid;display:flex;align-items:center;gap:6px}
 .chip.best{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok-text)}
 .chip.worst{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
 .advice-empty{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
-.hero-stats{display:flex;gap:10px;flex:0 0 auto;flex-wrap:wrap;align-items:stretch}
-.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:8px 14px;text-align:center}
-.hstat-val{font-family:var(--mono);font-size:19px;font-weight:600;line-height:1;color:var(--text)}
-.hstat-lbl{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:6px;letter-spacing:.1em;text-transform:uppercase}
+.hero-stats{display:flex;gap:8px;flex:1 1 auto;flex-wrap:wrap;align-items:stretch;justify-content:center;min-width:0}
+.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:6px 12px;text-align:center}
+.hstat-val{font-family:var(--mono);font-size:16px;font-weight:600;line-height:1;color:var(--text)}
+.hstat-lbl{font-family:var(--mono);font-size:8px;color:var(--sub);margin-top:4px;letter-spacing:.1em;text-transform:uppercase}
 .hstat.conf{border-color:var(--ok-border);background:var(--ok-bg)}
 .hstat.conf .hstat-val{color:var(--ok-text)}
 .hstat.conf.low{border-color:var(--warn-border);background:var(--warn-bg)}
@@ -264,10 +262,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   .workspace{flex-direction:column;min-height:0}
   .panel-left{flex:none;width:100%;height:auto;max-height:none;border-right:none;border-top:1px solid var(--border);overflow-y:visible}
   .map-zone{flex:none;height:340px;order:-1}
-  .banner-head{flex-wrap:wrap}
-  .banner-controls{width:100%;justify-content:flex-end;padding-top:0}
-  .advice-top{gap:16px}
-  .hero-stats{width:100%}
+  .banner-row{flex-wrap:wrap;align-items:flex-start}
+  .banner-title-block{max-width:100%;flex:1 1 100%}
+  .banner-controls{margin-left:0;width:100%;justify-content:flex-end}
+  .hero-stats{width:100%;justify-content:flex-start}
   .hstat,#heroStats > .period-toggle-wrap{flex:1;min-width:90px}
   .time-big{font-size:34px}
 }
@@ -325,22 +323,12 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <span id="warnBannerText"></span>
   </div>
 
-  <!-- HERO — product title when idle, corridor advice when selected -->
+  <!-- HERO — one row: title | Day/Night + stats | IST clock -->
   <div class="advice-banner" id="adviceBanner">
-    <div class="banner-head">
+    <div class="banner-row">
       <div class="banner-title-block">
         <div class="advice-corridor" id="adviceCorridorName">Gurugram Traffic Predictor</div>
         <div class="advice-summary" id="adviceSummary">Find the best time to leave</div>
-      </div>
-      <div class="banner-controls">
-        <span class="banner-ist">IST</span>
-        <span id="liveTime">--:--:--</span>
-        <button class="theme-btn" id="themeBtn" title="Toggle theme" type="button">◐</button>
-      </div>
-    </div>
-    <div class="advice-top">
-      <div class="advice-main">
-        <div class="window-chips" id="windowChips"></div>
       </div>
       <div class="hero-stats" id="heroStats">
         <div class="period-toggle-wrap" id="periodToggleWrap">
@@ -357,7 +345,13 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <div class="hstat"><div class="hstat-val" id="hsSave">--</div><div class="hstat-lbl">You save</div></div>
         <div class="hstat conf" id="hsConfWrap"><div class="hstat-val" id="hsConf">--</div><div class="hstat-lbl">Confidence</div></div>
       </div>
+      <div class="banner-controls">
+        <span class="banner-ist">IST</span>
+        <span id="liveTime">--:--:--</span>
+        <button class="theme-btn" id="themeBtn" title="Toggle theme" type="button">◐</button>
+      </div>
     </div>
+    <div class="window-chips" id="windowChips"></div>
   </div>
 
   <div class="workspace">
@@ -898,16 +892,17 @@ function buildProjection(){
 // ─────────────────────────────────────────────────────────────────────────
 function currentValueFor(cid, day, hour){
   if(BUNDLE_MODE && BUNDLE){
-    const byDay = BUNDLE.grid.congestion_index[cid];
-    const v = byDay && byDay[day] ? byDay[day][hour] : undefined;
-    if(v === undefined) return null;
-    return {v, prov: BUNDLE.grid.origin[cid][day][hour], conf: BUNDLE.grid.confidence[cid][day][hour]};
+    const cell = bundleCell(cid, day, hour);
+    if(cell.congestion_index === undefined) return null;
+    return {v: cell.congestion_index, prov: cell.origin, conf: cell.confidence, delay: cell.delay_minutes};
   }
   const key = cid+'_'+day;
   const a = adviceCache[key];
   if(a && Array.isArray(a.profile)){
     const prov = (a.profile_origins && a.profile_origins[hour]) || a.provenance;
-    return {v:a.profile[hour], prov, conf:a.confidence};
+    const conf = (a.profile_confidence && a.profile_confidence[hour]) ?? a.confidence;
+    const delay = (a.profile_delay_minutes && a.profile_delay_minutes[hour]) ?? null;
+    return {v:a.profile[hour], prov, conf, delay};
   }
   return null;
 }
@@ -1139,15 +1134,20 @@ function glPopupHtml(cid){
   let html = `<div class="gl-popup-title">${c.name}</div><div class="gl-popup-sub">${c.sub}</div>`;
   if(info){
     const col = colorFor(info.v);
-    html += `<div class="gl-popup-row"><span class="gl-popup-pct" style="color:${col}">${freePct(info.v)}% free</span>
+    const delay = typeof info.delay === 'number'
+      ? info.delay
+      : (()=>{ const bc = bundleCorridor(cid); return bc ? minutesFromIndex(bc.free_flow_minutes, info.v)[1] : null; })();
+    const delayTxt = typeof delay === 'number' ? `+${delay} min vs empty` : '—';
+    const pctFree = ((1 - info.v) * 100).toFixed(1);
+    html += `<div class="gl-popup-row"><span class="gl-popup-pct" style="color:${col}">${delayTxt}</span>
       <span class="gl-popup-label" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</span></div>
-      <div class="gl-popup-muted">Compared with an empty road (no traffic).</div>`;
+      <div class="gl-popup-muted">${pctFree}% free · Vs a road with no traffic (TomTom empty-road time).</div>`;
     if(info.prov) html += `<div style="margin-top:6px">${originBadgeHtml(info.prov)}</div>`;
+    if(typeof info.conf === 'number') html += `<div style="margin-top:6px">confidence ${Math.round(info.conf*100)}%</div>`;
   } else {
     html += `<div class="gl-popup-muted">Loading congestion…</div>`;
   }
   if(bestWin) html += `<div class="gl-popup-window">&#10003; Best window: ${windowText(bestWin)}</div>`;
-  if(a) html += `<div style="margin-top:6px">confidence ${Math.round((a.confidence||0)*100)}%</div>`;
   return html;
 }
 
@@ -1391,7 +1391,8 @@ function renderAdvice(){
   }
   updatePeriodButtons(a);
   const pb = (curPeriod==='day' ? a.day_period : a.night_period) || a;
-  const conf = typeof pb.confidence === 'number' ? pb.confidence : a.confidence;
+  const cellInfo = currentValueFor(selCorridor, curDay, curHour);
+  const conf = (cellInfo && typeof cellInfo.conf === 'number') ? cellInfo.conf : null;
 
   sumEl.textContent = pb.summary || a.summary || '';
   sumEl.classList.toggle('degraded', isDegraded(conf));
