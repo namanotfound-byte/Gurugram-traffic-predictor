@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="gtp-boot">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gurugram Traffic Predictor</title>
+<style id="gtp-boot-critical">
+html.gtp-boot .app{visibility:hidden}
+#gtp-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#020408;color:#dff0f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+#gtp-boot::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(0,229,255,.16) 0%,transparent 62%);pointer-events:none}
+#gtp-boot .gtp-boot-title{position:relative;font-size:clamp(18px,4vw,24px);font-weight:800;letter-spacing:.04em;color:#00e5ff;text-align:center;padding:0 24px}
+#gtp-boot .gtp-boot-loading{position:relative;font-family:'SF Mono','Cascadia Code','Consolas','Menlo',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8ab4cc}
+</style>
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <link rel="stylesheet" href="intro.css">
 <style>
@@ -36,14 +43,9 @@ html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-f
 body{overflow-x:hidden;overflow-y:hidden}
 .app{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-/* HEADER */
-header{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;z-index:500;background:var(--panel);border-bottom:1px solid var(--border);flex:0 0 auto;gap:8px}
-.logo-text{font-size:24px;font-weight:800;letter-spacing:.04em;color:var(--cyan);line-height:1.15}
-.logo-sub{font-family:var(--display);font-size:12px;color:var(--sub);margin-top:3px}
-.header-right{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-.theme-btn{font-family:var(--mono);font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:6px;padding:6px 10px;cursor:pointer}
+.theme-btn{font-family:var(--mono);font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:6px;padding:6px 10px;cursor:pointer;flex:none}
 .theme-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-#liveTime{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--cyan);letter-spacing:.08em}
+#liveTime{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--cyan);letter-spacing:.08em;white-space:nowrap}
 
 /* GLOBAL BANNERS */
 .g-banner{display:none;padding:10px 24px;font-family:var(--mono);font-size:11px;line-height:1.6;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex:0 0 auto}
@@ -83,8 +85,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .proto-cmd{display:block;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cyan);margin-bottom:7px}
 .proto-fix-sub{font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.5}
 
-/* HERO / ADVICE BANNER — the centerpiece */
-.advice-banner{padding:12px 24px;background:linear-gradient(180deg,var(--cyan-dim),transparent);border-bottom:1px solid var(--border);flex:0 0 auto}
+/* HERO / ADVICE BANNER — continuous teal chrome from viewport top */
+.advice-banner{padding:16px 24px 14px;background:linear-gradient(180deg,var(--cyan-dim) 0%,rgba(0,229,255,0.04) 100%);border-bottom:1px solid var(--border);flex:0 0 auto}
+.banner-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:10px}
+.banner-title-block{flex:1 1 auto;min-width:0}
+.banner-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto;padding-top:4px}
+.banner-ist{font-family:var(--mono);font-size:12px;color:var(--cyan)}
 .advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
 .advice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-wrap:wrap}
 .advice-main{flex:1 1 420px;min-width:0}
@@ -258,6 +264,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   .workspace{flex-direction:column;min-height:0}
   .panel-left{flex:none;width:100%;height:auto;max-height:none;border-right:none;border-top:1px solid var(--border);overflow-y:visible}
   .map-zone{flex:none;height:340px;order:-1}
+  .banner-head{flex-wrap:wrap}
+  .banner-controls{width:100%;justify-content:flex-end;padding-top:0}
   .advice-top{gap:16px}
   .hero-stats{width:100%}
   .hstat,#heroStats > .period-toggle-wrap{flex:1;min-width:90px}
@@ -266,19 +274,23 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 </style>
 </head>
 <body>
+<div id="gtp-boot" aria-live="polite">
+  <div class="gtp-boot-title">Gurugram Traffic Predictor</div>
+  <div class="gtp-boot-loading">Loading…</div>
+</div>
+<script src="intro.js"></script>
+<script>
+(function(){
+  var t=setTimeout(function(){
+    document.documentElement.classList.remove('gtp-boot');
+    var b=document.getElementById('gtp-boot');
+    if(b&&b.parentNode)b.parentNode.removeChild(b);
+    if(window.console&&console.warn)console.warn('[gtp-boot] intro did not reveal the app within 1s — showing anyway');
+  },1000);
+  window.__gtpBootFailSafe=function(){clearTimeout(t);};
+})();
+</script>
 <div class="app">
-  <header>
-    <div>
-      <div class="logo-text">Gurugram Traffic Predictor</div>
-      <div class="logo-sub">Find the best time to leave</div>
-    </div>
-    <div class="header-right">
-      <span style="font-family:var(--mono);font-size:12px;color:var(--cyan)">IST</span>
-      <span id="liveTime">--:--:--</span>
-      <button class="theme-btn" id="themeBtn" title="Toggle theme">◐</button>
-    </div>
-  </header>
-
   <!-- Shown only when this file was opened directly (file://) instead of via
        ./run.sh. Blocks nothing — the app still tries to render behind it —
        but explains up front why the map/API will not work. -->
@@ -315,10 +327,19 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
   <!-- HERO — product title when idle, corridor advice when selected -->
   <div class="advice-banner" id="adviceBanner">
-    <div class="advice-top">
-      <div class="advice-main">
+    <div class="banner-head">
+      <div class="banner-title-block">
         <div class="advice-corridor" id="adviceCorridorName">Gurugram Traffic Predictor</div>
         <div class="advice-summary" id="adviceSummary">Find the best time to leave</div>
+      </div>
+      <div class="banner-controls">
+        <span class="banner-ist">IST</span>
+        <span id="liveTime">--:--:--</span>
+        <button class="theme-btn" id="themeBtn" title="Toggle theme" type="button">◐</button>
+      </div>
+    </div>
+    <div class="advice-top">
+      <div class="advice-main">
         <div class="window-chips" id="windowChips"></div>
       </div>
       <div class="hero-stats" id="heroStats">
@@ -1918,6 +1939,5 @@ window.__gtpDebug = function(){
   };
 };
 </script>
-<script src="intro.js"></script>
 </body>
 </html>

@@ -106,7 +106,19 @@
     root.appendChild(hint);
 
     document.body.appendChild(root);
+    dismissBootSplash();
     return root;
+  }
+
+  function dismissBootSplash() {
+    var boot = document.getElementById('gtp-boot');
+    if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
+    if (window.__gtpBootFailSafe) window.__gtpBootFailSafe();
+  }
+
+  function revealApp() {
+    document.documentElement.classList.remove('gtp-boot');
+    if (window.__gtpBootFailSafe) window.__gtpBootFailSafe();
   }
 
   function remove(root) {
@@ -142,6 +154,7 @@
     function safeRemove() {
       if (removed) return;
       removed = true;
+      revealApp();
       remove(root);
     }
 
@@ -159,6 +172,7 @@
       if (skipCleanup) skipCleanup();
       if (fast) root.classList.add('gtp-intro-skip');
       root.classList.add('gtp-intro-out'); // pointer-events:none applies immediately, see intro.css
+      revealApp();
       setTimeout(safeRemove, (fast ? FAST_FADE_MS : FADE_MS) + 60);
     }
 
@@ -235,6 +249,8 @@
       // Never let the intro itself become the reason the page looks broken.
       var stray = document.getElementById('gtp-intro');
       if (stray && stray.parentNode) stray.parentNode.removeChild(stray);
+      dismissBootSplash();
+      revealApp();
       if (window.console && console.error) console.error('[gtp-intro]', e);
     }
   }
