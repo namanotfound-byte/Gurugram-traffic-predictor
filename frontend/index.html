@@ -242,9 +242,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 /* FIRST-LOAD TUTORIAL — moving spotlight + caption card */
 .tutorial-overlay{display:none;position:fixed;inset:0;z-index:11000;cursor:pointer;pointer-events:none}
 .tutorial-overlay.show{display:block;pointer-events:all}
-#tutorialSpotlight{position:fixed;border:2px solid var(--cyan);border-radius:11px;box-shadow:0 0 0 9999px rgba(2,5,12,.78);pointer-events:none;z-index:1;opacity:0;transition:top .35s ease,left .35s ease,width .35s ease,height .35s ease,opacity .2s ease}
+#tutorialSpotlight{position:fixed;border:3px solid var(--cyan);border-radius:11px;box-shadow:0 0 0 9999px rgba(2,5,12,.78),inset 0 0 14px rgba(0,229,255,.22);pointer-events:none;z-index:11001;min-width:40px;min-height:40px;opacity:0;transition:top .35s ease,left .35s ease,width .35s ease,height .35s ease,opacity .2s ease}
 #tutorialSpotlight.ready{opacity:1}
-.tutorial-card{position:fixed;max-width:min(320px,calc(100vw - 32px));min-width:220px;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:10px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45);cursor:pointer;pointer-events:all;z-index:2}
+.tutorial-card{position:fixed;top:16px;left:16px;max-width:min(320px,calc(100vw - 32px));min-width:220px;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:10px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45);cursor:pointer;pointer-events:all;z-index:11002}
 .tutorial-step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
 .tutorial-title{font-family:var(--display);font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:8px;line-height:1.3}
 .tutorial-body{font-family:var(--display);font-size:13px;line-height:1.55;color:var(--sub);margin-bottom:12px}
@@ -328,7 +328,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   <!-- HERO — one row: title | Day/Night + stats | IST clock -->
   <div class="advice-banner" id="adviceBanner">
     <div class="banner-row">
-      <div class="banner-title-block">
+      <div class="banner-title-block" id="bannerTitleBlock">
         <div class="advice-corridor" id="adviceCorridorName">Gurugram Traffic Predictor</div>
         <div class="advice-summary" id="adviceSummary">Find the best time to leave</div>
       </div>
@@ -1803,12 +1803,13 @@ setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().t
 // FIRST-LOAD TUTORIAL
 // ─────────────────────────────────────────────────────────────────────────
 const TUTORIAL_KEY = 'gtp_tutorial_done';
-const TUTORIAL_SPOTLIGHT_PAD = 8;
+const TUTORIAL_SPOTLIGHT_PAD = 10;
+const TUTORIAL_SPOTLIGHT_MIN = 40;
 const TUTORIAL_CARD_GAP = 12;
 const TUTORIAL_CARD_MARGIN = 16;
 const TUTORIAL_STEPS = [
   {
-    target: '#adviceBanner',
+    target: '#bannerTitleBlock',
     title: 'Gurugram Traffic Predictor',
     body: 'This tool helps you pick the best hour to leave on 13 Gurugram road corridors — using measured traffic and a residual forecast model, not guesswork.'
   },
@@ -1858,10 +1859,12 @@ function shouldShowTutorial(){
 function positionTutorialCard(spot, card){
   const margin = TUTORIAL_CARD_MARGIN;
   const gap = TUTORIAL_CARD_GAP;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
   const cardW = card.offsetWidth;
   const cardH = card.offsetHeight;
+  if(cardW === 0 || cardH === 0) return;
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
   let top, left;
 
   if(spot.bottom + gap + cardH <= vh - margin){
@@ -1885,6 +1888,22 @@ function positionTutorialCard(spot, card){
   card.style.left = left + 'px';
 }
 
+function scrollTutorialTargetIntoView(target){
+  const panel = target.closest('.panel-left');
+  if(panel){
+    const panelRect = panel.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const pad = 8;
+    if(targetRect.top < panelRect.top + pad){
+      panel.scrollTop += targetRect.top - panelRect.top - pad;
+    }else if(targetRect.bottom > panelRect.bottom - pad){
+      panel.scrollTop += targetRect.bottom - panelRect.bottom + pad;
+    }
+  }else{
+    target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+}
+
 function applyTutorialSpotlight(){
   const step = TUTORIAL_STEPS[tutorialIndex];
   const spotlight = document.getElementById('tutorialSpotlight');
@@ -1894,13 +1913,25 @@ function applyTutorialSpotlight(){
 
   const rect = target.getBoundingClientRect();
   const pad = TUTORIAL_SPOTLIGHT_PAD;
+  let top = rect.top - pad;
+  let left = rect.left - pad;
+  let width = rect.width + pad * 2;
+  let height = rect.height + pad * 2;
+  if(width < TUTORIAL_SPOTLIGHT_MIN){
+    left -= (TUTORIAL_SPOTLIGHT_MIN - width) / 2;
+    width = TUTORIAL_SPOTLIGHT_MIN;
+  }
+  if(height < TUTORIAL_SPOTLIGHT_MIN){
+    top -= (TUTORIAL_SPOTLIGHT_MIN - height) / 2;
+    height = TUTORIAL_SPOTLIGHT_MIN;
+  }
   const spot = {
-    top: rect.top - pad,
-    left: rect.left - pad,
-    right: rect.right + pad,
-    bottom: rect.bottom + pad,
-    width: rect.width + pad * 2,
-    height: rect.height + pad * 2
+    top,
+    left,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height
   };
 
   spotlight.style.transition = 'none';
@@ -1912,6 +1943,7 @@ function applyTutorialSpotlight(){
   spotlight.style.transition = '';
   spotlight.classList.add('ready');
 
+  if(card.offsetWidth === 0 || card.offsetHeight === 0) return;
   positionTutorialCard(spot, card);
 }
 
@@ -1919,11 +1951,16 @@ function positionTutorialSpotlight(){
   const target = document.querySelector(TUTORIAL_STEPS[tutorialIndex].target);
   if(!target) return;
   const gen = ++tutorialLayoutGen;
-  target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  applyTutorialSpotlight();
+  scrollTutorialTargetIntoView(target);
+  if(tutorialVisible()) applyTutorialSpotlight();
   requestAnimationFrame(() => {
     if(gen !== tutorialLayoutGen) return;
+    scrollTutorialTargetIntoView(target);
     applyTutorialSpotlight();
+    requestAnimationFrame(() => {
+      if(gen !== tutorialLayoutGen) return;
+      applyTutorialSpotlight();
+    });
   });
 }
 
@@ -1982,11 +2019,19 @@ function showTutorial(){
   if(tutorialShown || !shouldShowTutorial()) return;
   tutorialShown = true;
   tutorialIndex = 0;
-  renderTutorialStep();
   bindTutorialReposition();
   const el = document.getElementById('tutorialOverlay');
   el.classList.add('show');
   el.setAttribute('aria-hidden', 'false');
+  el.offsetHeight;
+  let started = false;
+  function kickoff(){
+    if(started) return;
+    started = true;
+    renderTutorialStep();
+  }
+  requestAnimationFrame(() => requestAnimationFrame(kickoff));
+  setTimeout(kickoff, 50);
 }
 
 (function initTutorial(){
