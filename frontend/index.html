@@ -242,9 +242,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 /* FIRST-LOAD TUTORIAL — moving spotlight + caption card */
 .tutorial-overlay{display:none;position:fixed;inset:0;z-index:11000;cursor:pointer;pointer-events:none}
 .tutorial-overlay.show{display:block;pointer-events:all}
-#tutorialSpotlight{position:fixed;border:3px solid var(--cyan);border-radius:11px;box-shadow:0 0 0 9999px rgba(2,5,12,.78),inset 0 0 14px rgba(0,229,255,.22);pointer-events:none;z-index:11001;min-width:40px;min-height:40px;opacity:0;transition:top .35s ease,left .35s ease,width .35s ease,height .35s ease,opacity .2s ease}
+#tutorialSpotlight{position:fixed;border:3px solid var(--cyan);border-radius:11px;box-shadow:0 0 0 9999px rgba(2,5,12,.78),inset 0 0 14px rgba(0,229,255,.22);pointer-events:none;z-index:11001;min-width:40px;min-height:40px;opacity:0;transition:top .55s cubic-bezier(.22,1,.36,1),left .55s cubic-bezier(.22,1,.36,1),width .55s cubic-bezier(.22,1,.36,1),height .55s cubic-bezier(.22,1,.36,1),opacity .25s ease}
 #tutorialSpotlight.ready{opacity:1}
-.tutorial-card{position:fixed;top:16px;left:16px;max-width:min(320px,calc(100vw - 32px));min-width:220px;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:10px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45);cursor:pointer;pointer-events:all;z-index:11002}
+.tutorial-card{position:fixed;top:16px;left:16px;max-width:min(320px,calc(100vw - 32px));min-width:220px;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:10px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45);cursor:pointer;pointer-events:all;z-index:11002;transition:top .55s cubic-bezier(.22,1,.36,1),left .55s cubic-bezier(.22,1,.36,1)}
 .tutorial-step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
 .tutorial-title{font-family:var(--display);font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:8px;line-height:1.3}
 .tutorial-body{font-family:var(--display);font-size:13px;line-height:1.55;color:var(--sub);margin-bottom:12px}
@@ -1844,6 +1844,9 @@ let tutorialShown = false;
 let tutorialLayoutGen = 0;
 let tutorialRepositionHandler = null;
 let tutorialScrollTimer = null;
+let tutorialBoxPlaced = false;
+const TUTORIAL_MOVE = 'top .55s cubic-bezier(.22,1,.36,1), left .55s cubic-bezier(.22,1,.36,1), width .55s cubic-bezier(.22,1,.36,1), height .55s cubic-bezier(.22,1,.36,1), opacity .25s ease';
+const TUTORIAL_CARD_MOVE = 'top .55s cubic-bezier(.22,1,.36,1), left .55s cubic-bezier(.22,1,.36,1)';
 
 function tutorialVisible(){
   const el = document.getElementById('tutorialOverlay');
@@ -1904,7 +1907,7 @@ function scrollTutorialTargetIntoView(target){
   }
 }
 
-function applyTutorialSpotlight(){
+function applyTutorialSpotlight(snap){
   const step = TUTORIAL_STEPS[tutorialIndex];
   const spotlight = document.getElementById('tutorialSpotlight');
   const card = document.getElementById('tutorialCard');
@@ -1934,37 +1937,33 @@ function applyTutorialSpotlight(){
     height
   };
 
-  spotlight.style.transition = 'none';
+  const animate = !snap && tutorialBoxPlaced;
+  spotlight.style.transition = animate ? TUTORIAL_MOVE : 'none';
+  card.style.transition = animate ? TUTORIAL_CARD_MOVE : 'none';
   spotlight.style.top = spot.top + 'px';
   spotlight.style.left = spot.left + 'px';
   spotlight.style.width = spot.width + 'px';
   spotlight.style.height = spot.height + 'px';
-  spotlight.offsetHeight;
-  spotlight.style.transition = '';
+  if(!animate) spotlight.offsetHeight;
   spotlight.classList.add('ready');
+  tutorialBoxPlaced = true;
 
   if(card.offsetWidth === 0 || card.offsetHeight === 0) return;
   positionTutorialCard(spot, card);
 }
 
-function positionTutorialSpotlight(){
+function positionTutorialSpotlight(snap){
   const target = document.querySelector(TUTORIAL_STEPS[tutorialIndex].target);
   if(!target) return;
   const gen = ++tutorialLayoutGen;
   scrollTutorialTargetIntoView(target);
-  if(tutorialVisible()) applyTutorialSpotlight();
-  requestAnimationFrame(() => {
+  requestAnimationFrame(function(){
     if(gen !== tutorialLayoutGen) return;
-    scrollTutorialTargetIntoView(target);
-    applyTutorialSpotlight();
-    requestAnimationFrame(() => {
-      if(gen !== tutorialLayoutGen) return;
-      applyTutorialSpotlight();
-    });
+    applyTutorialSpotlight(snap);
   });
 }
 
-function renderTutorialStep(){
+function renderTutorialStep(snap){
   const step = TUTORIAL_STEPS[tutorialIndex];
   document.getElementById('tutorialStepLabel').textContent = `Step ${tutorialIndex + 1} of ${TUTORIAL_STEPS.length}`;
   document.getElementById('tutorialTitle').textContent = step.title;
@@ -1972,7 +1971,7 @@ function renderTutorialStep(){
   document.getElementById('tutorialDots').innerHTML = TUTORIAL_STEPS.map((_, i)=>
     `<span class="tutorial-dot${i===tutorialIndex?' active':''}"></span>`
   ).join('');
-  positionTutorialSpotlight();
+  positionTutorialSpotlight(snap !== false);
 }
 
 function bindTutorialReposition(){
@@ -1980,7 +1979,7 @@ function bindTutorialReposition(){
   tutorialRepositionHandler = function(){
     if(!tutorialVisible()) return;
     clearTimeout(tutorialScrollTimer);
-    tutorialScrollTimer = setTimeout(applyTutorialSpotlight, 48);
+    tutorialScrollTimer = setTimeout(function(){ applyTutorialSpotlight(true); }, 48);
   };
   window.addEventListener('resize', tutorialRepositionHandler);
   window.addEventListener('scroll', tutorialRepositionHandler, true);
@@ -1999,6 +1998,7 @@ function dismissTutorial(){
   el.classList.remove('show');
   el.setAttribute('aria-hidden', 'true');
   spotlight.classList.remove('ready');
+  tutorialBoxPlaced = false;
   tutorialLayoutGen += 1;
   clearTimeout(tutorialScrollTimer);
   unbindTutorialReposition();
@@ -2012,7 +2012,7 @@ function advanceTutorial(){
     return;
   }
   tutorialIndex += 1;
-  renderTutorialStep();
+  renderTutorialStep(false);
 }
 
 function showTutorial(){
