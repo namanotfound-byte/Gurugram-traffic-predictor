@@ -280,12 +280,41 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   .app{height:auto;min-height:100vh;overflow:visible}
   .workspace{flex-direction:column;min-height:0}
   .panel-left{flex:none;width:100%;height:auto;max-height:none;border-right:none;border-top:1px solid var(--border);overflow-y:visible}
-  .map-zone{flex:none;height:340px;order:-1}
-  .banner-row{flex-wrap:wrap;align-items:flex-start}
-  .banner-title-block{max-width:100%;flex:1 1 100%}
-  .banner-controls{margin-left:0;width:100%;justify-content:flex-end}
-  .hero-stats{width:100%;justify-content:flex-start}
-  .hstat,#heroStats > .period-toggle-wrap{flex:1;min-width:90px}
+  .map-zone{flex:none;height:min(42vh,340px);order:-1}
+  .advice-banner{padding:12px 14px 10px}
+  .banner-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"title clock" "stats stats";
+    gap:10px 10px;
+    align-items:start;
+    min-height:0;
+  }
+  .banner-title-block{grid-area:title;max-width:none;flex:none;width:auto}
+  .advice-corridor{font-size:clamp(16px,4.6vw,22px)}
+  .advice-summary{font-size:12px;margin-top:2px}
+  .banner-controls{grid-area:clock;margin-left:0;width:auto;flex:none;padding-top:2px;white-space:nowrap}
+  #liveTime{font-size:13px}
+  .hero-stats{
+    grid-area:stats;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    width:100%;
+    gap:8px;
+    flex:none;
+    justify-content:stretch;
+  }
+  #heroStats > .period-toggle-wrap{
+    grid-column:1 / -1;
+    min-width:0;
+    flex:none;
+    width:100%;
+  }
+  .period-btn{padding:8px 10px;font-size:13px}
+  .period-range{font-size:8px;white-space:normal}
+  .hstat{min-width:0;flex:none;width:auto;padding:8px 4px}
+  .hstat-val{font-size:14px}
+  .hstat-lbl{font-size:8px;letter-spacing:.06em}
   .time-big{font-size:34px}
 }
 </style>
