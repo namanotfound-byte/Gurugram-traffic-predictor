@@ -12,6 +12,9 @@
    skip-on-any-interaction path. A multi-second overlay that can't be
    gotten out of, on every load, would be a real regression, not polish. */
 
+html[data-theme="light"] #gtp-intro{
+  background:var(--void,#eef3f7);
+}
 #gtp-intro{
   position:fixed;
   inset:0;

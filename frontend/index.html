@@ -4,12 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gurugram Traffic Predictor</title>
+<script>
+(function(){
+  var theme = 'dark';
+  try {
+    var stored = localStorage.getItem('gtp-theme');
+    if (stored === 'light' || stored === 'dark') theme = stored;
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
+  } catch (e) {}
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.style.colorScheme = theme;
+})();
+</script>
 <style id="gtp-boot-critical">
 html.gtp-boot .app{visibility:hidden}
+html[data-theme="light"],html[data-theme="light"] body{background:#eef3f7;color-scheme:light}
 #gtp-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#020408;color:#dff0f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
 #gtp-boot::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(0,229,255,.16) 0%,transparent 62%);pointer-events:none}
 #gtp-boot .gtp-boot-title{position:relative;font-size:clamp(18px,4vw,24px);font-weight:800;letter-spacing:.04em;color:#00e5ff;text-align:center;padding:0 24px}
 #gtp-boot .gtp-boot-loading{position:relative;font-family:'SF Mono','Cascadia Code','Consolas','Menlo',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8ab4cc}
+html[data-theme="light"] #gtp-boot{background:#eef3f7;color:#0b1e28}
+html[data-theme="light"] #gtp-boot::before{background:radial-gradient(ellipse at 50% 42%,rgba(0,134,168,.18) 0%,transparent 62%)}
+html[data-theme="light"] #gtp-boot .gtp-boot-title{color:#0086a8}
+html[data-theme="light"] #gtp-boot .gtp-boot-loading{color:#3f6a80}
 </style>
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <link rel="stylesheet" href="intro.css">
