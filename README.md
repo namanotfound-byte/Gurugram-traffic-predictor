@@ -17,12 +17,16 @@ short version.
 
 ## Live demo
 
-**[namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html](https://namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html)**
+**Live site (Vercel):** https://gurugram-traffic-predictor.vercel.app
 
-Runs entirely as a static site — no backend, just a precomputed JSON snapshot of the same grid
-the API serves (see "Deploying" below). If that link 404s, GitHub Pages hasn't been switched on
-yet for this repo (**Settings → Pages → Deploy from a branch → `main` / `/root`**); everything
-else in this README works regardless.
+The GitHub repo is connected; each push to `main` redeploys. Root Directory stays the repo
+root; `vercel.json` sets `outputDirectory` to `frontend/`. No Flask, no build step — the
+static prediction bundle (`data/bundle.json`) is what the map reads.
+
+**GitHub Pages (optional):**
+[namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html](https://namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html)
+— same static bundle, but the URL includes `/frontend/` because Pages serves the repo root. Enable
+under **Settings → Pages → Deploy from a branch → `main` / `/root`** if you want a second mirror.
 
 ---
 
@@ -53,10 +57,19 @@ automatically.
 
 ## Deploying / viewing the live site
 
-The frontend can run entirely without a backend — GitHub Pages serves static files only, so
-`frontend/index.html` reads `frontend/data/bundle.json` instead of calling the Flask API. That
-bundle is a precomputed snapshot of the same 13-corridor × 7-day × 24-hour grid the backend
-serves live (built by `tools/build_static_bundle.py`, refreshed automatically once a day by
+The frontend can run entirely without a backend. **Production is on Vercel:**
+https://gurugram-traffic-predictor.vercel.app — the GitHub repo is already connected, so each
+push to `main` redeploys. Root Directory stays the repo root (`vercel.json` points
+`outputDirectory` at `frontend/`). No build command, no Node package — Vercel uploads `frontend/` as a plain static site.
+There are no catch-all rewrites to `index.html` (that would break `data/bundle.json` and
+`vendor/`); unknown paths fall through to `frontend/404.html` if present.
+
+GitHub Pages works the same way but is optional: it serves static files only, so
+`frontend/index.html` reads `frontend/data/bundle.json` instead of calling the Flask API.
+
+In both cases the page uses a **precomputed snapshot**, not a live API. The bundle is built from
+the same 13-corridor × 7-day × 24-hour grid the backend serves locally (via
+`tools/build_static_bundle.py`, refreshed automatically once a day by
 `.github/workflows/refresh_bundle.yml`) — same thresholds, same `label`/`typical_minutes` math,
 same advice text, just baked into a file.
 

@@ -238,3 +238,4 @@ data/*.csv
 # of git (avoids noisy diffs / merge conflicts from every collection round).
 data/weather_cache.json
 data/.tomtom_budget.json
+.vercel

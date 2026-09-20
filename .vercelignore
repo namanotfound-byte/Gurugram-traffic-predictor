@@ -1,0 +1,16 @@
+# Python virtual environments (not needed for static frontend)
+.venv*
+.venv_backend/
+.venv_bootstrap/
+.venv_forecast/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Agent / local tooling
+.claude/
+
+# Trained model artifacts (backend-only; site reads frontend/data/bundle.json)
+models/*.joblib
