@@ -1,12 +1,12 @@
 # Forecast model evaluation
 
-_Generated 2026-10-05T10:49:26+00:00 by `tools/evaluate_forecast.py`._
+_Generated 2026-10-12T11:17:11+00:00 by `tools/evaluate_forecast.py`._
 
 ## Holdout split (time-based, last 20% of distinct days)
 
-- Train rows: **16251** (2026-08-16 .. 2026-09-25)
-- Test rows: **2061** (2026-09-26 .. 2026-10-05)
-- Distinct calendar days in table: **51**
+- Train rows: **17324** (2026-08-16 .. 2026-09-30)
+- Test rows: **2235** (2026-10-01 .. 2026-10-12)
+- Distinct calendar days in table: **58**
 
 ## Shipped artifact
 
@@ -18,11 +18,11 @@ _Generated 2026-10-05T10:49:26+00:00 by `tools/evaluate_forecast.py`._
 
 ## Test-set metrics (recomputed this run)
 
-- Baseline MAE (bootstrap vs observed): **0.0932**
-- Model MAE (baseline + residual vs observed): **0.0446**
-- Skill = 1 - model_MAE/baseline_MAE: **0.5211**
-- Label agreement (exact): **80.7%** (n=2061)
-- Hour-ranking pairwise concordance (corridor+date groups, n=128): **90.6%** (2704/2985 pairs)
+- Baseline MAE (bootstrap vs observed): **0.0934**
+- Model MAE (baseline + residual vs observed): **0.0454**
+- Skill = 1 - model_MAE/baseline_MAE: **0.5140**
+- Label agreement (exact): **79.2%** (n=2235)
+- Hour-ranking pairwise concordance (corridor+date groups, n=152): **89.6%** (2537/2830 pairs)
 
 ## Feature importances (shipped model)
 
