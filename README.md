@@ -20,8 +20,9 @@ short version.
 **Live site (Vercel):** https://gurugram-traffic-predictor.vercel.app
 
 The GitHub repo is connected; each push to `main` redeploys. Root Directory stays the repo
-root; `vercel.json` sets `outputDirectory` to `frontend/`. No Flask, no build step — the
-static prediction bundle (`data/bundle.json`) is what the map reads.
+root; `vercel.json` sets `outputDirectory` to `frontend/`. The congestion map still reads the
+static prediction bundle (`data/bundle.json`), while two small Vercel Functions provide
+search-as-you-type places and connected, traffic-aware road routes for the trip planner.
 
 **GitHub Pages (optional):**
 [namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html](https://namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html)
@@ -57,17 +58,26 @@ automatically.
 
 ## Deploying / viewing the live site
 
-The frontend can run entirely without a backend. **Production is on Vercel:**
+The congestion dashboard can run entirely from its static bundle. The real-trip planner needs
+the included `/api/places` and `/api/route` services. **Production is on Vercel:**
 https://gurugram-traffic-predictor.vercel.app — the GitHub repo is already connected, so each
 push to `main` redeploys. Root Directory stays the repo root (`vercel.json` points
-`outputDirectory` at `frontend/`). No build command, no Node package — Vercel uploads `frontend/` as a plain static site.
+`outputDirectory` at `frontend/`). There is no build command or Node package: Vercel uploads
+`frontend/` and deploys the two native `.mjs` functions under `api/`.
 There are no catch-all rewrites to `index.html` (that would break `data/bundle.json` and
 `vendor/`); unknown paths fall through to `frontend/404.html` if present.
 
-GitHub Pages works the same way but is optional: it serves static files only, so
-`frontend/index.html` reads `frontend/data/bundle.json` instead of calling the Flask API.
+Set `TOMTOM_API_KEY` in the Vercel project's environment variables for road routing and
+`GOOGLE_PLACES_API_KEY` for high-coverage place autocomplete. `PHOTON_BASE_URL` is optional and
+defaults to the public Photon service used when Google Places is not configured or unavailable.
+Both paid-provider keys remain server-side and are never exposed to the browser.
 
-In both cases the page uses a **precomputed snapshot**, not a live API. The bundle is built from
+GitHub Pages is optional and serves static files only. The congestion dashboard works there via
+`frontend/data/bundle.json`, but the real-trip planner is unavailable because Pages cannot run
+the `/api/places` and `/api/route` functions.
+
+In both cases the congestion layer uses a **precomputed snapshot**, not a live prediction API.
+The Vercel trip planner still makes live place-search and routing calls. The bundle is built from
 the same 13-corridor × 7-day × 24-hour grid the backend serves locally (via
 `tools/build_static_bundle.py`, refreshed automatically once a day by
 `.github/workflows/refresh_bundle.yml`) — same thresholds, same `label`/`typical_minutes` math,
@@ -85,6 +95,30 @@ The page always tells you which data source it's using:
 - If the bundle can't be loaded and no `?api=` was given, the page falls back to
   `http://localhost:5000` and shows an honest "can't reach the API" message if that fails too — it
   never silently shows nothing or fabricates numbers.
+
+## How the From / To trip planner works
+
+- Typing two or more characters calls `/places` after a short debounce. Google Places (New) is
+  the primary database and searches apartments, businesses, addresses, landmarks, and plus codes
+  inside the Gurugram/Delhi NCR service area. Selecting a Google prediction calls `/place` once
+  to retrieve its exact coordinates using the same billing session token. Photon/OpenStreetMap
+  and the small verified catalog are fallback paths, not the main precision strategy. A typed
+  string is not accepted as a location; the user must choose a suggestion.
+- Once per search, `/route` asks TomTom for a traffic-neutral shortest connected road geometry
+  and a no-traffic travel-time baseline. The browser matches that same geometry to the
+  monitored corridors, scales each corridor's residual-model delay by the actual overlap, and
+  compares **project-model trip estimates** for each selected hour. TomTom's traffic ETA cannot
+  change either the route or the recommended time. Every hour in the selected window is checked.
+  The default 07:00–22:00 window includes both the morning and evening peaks; users can narrow it
+  at any time.
+- The returned road geometry is compared with all 13 tracked corridor polylines. A corridor is
+  shown only when the route has meaningful overlap within 80 metres; the planner can report
+  several corridors or honestly report none. It never substitutes the nearest corridor merely
+  because the endpoints happen to be nearby. Reverse-direction matches are explicitly marked
+  lower confidence because collection currently covers one direction per corridor; unmonitored
+  route sections are conservatively held at free flow and their coverage is disclosed. The
+  planner refuses to name a best time unless at least 1 km and 25% of the trip are model-covered,
+  and it requires at least a two-minute best-to-worst spread before making a recommendation.
 
 ---
 
@@ -190,8 +224,10 @@ available with zero server — this is what the GitHub Pages deployment reads.
 it predicts the **residual** — how far actual conditions deviate from the bootstrap baseline — as
 a function of weather, calendar, incidents, corridor, and leak-safe lags from observed history.
 The trained artifact is `models/forecast_residual_gbt.joblib` (time holdout; re-run
-`model/forecast_model.py train` for current numbers). As of the last training run on this machine:
-holdout **skill = 0.6125** (baseline MAE 0.116 vs GBT MAE 0.045; MLP was worse and not shipped).
+`model/forecast_model.py train` for current numbers). As of the 2026-09-23 training run, the
+leakage-free holdout has **skill = 0.5789** (baseline MAE 0.1029 vs effective model MAE 0.0433;
+MLP was worse and is not shipped). Model selection and reporting use 1,660 later holdout rows;
+after that evaluation is frozen, the production estimator is refit on all **14,895** usable rows.
 
 **The weekly map, advice, best-time, and `/now` all serve this forecast**
 (`clip(baseline + predicted_residual, 0, 1)`, origin `residual_adjusted`). The observed CSV is

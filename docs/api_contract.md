@@ -195,6 +195,78 @@ Static list. Frontend uses this to build its map/selector — it must NOT hardco
 ]}
 ```
 
+### `GET /places?q=<text>`
+
+Search-as-you-type locations for the real-trip planner. Queries must contain
+2–120 characters. Google Places (New) is primary when `GOOGLE_PLACES_API_KEY`
+is configured; requests use a browser-generated `sessionToken`, an India
+region restriction, and the Gurugram/Delhi NCR service bounds. Photon using
+OpenStreetMap data plus the verified catalog is the no-key/provider-failure
+fallback. This endpoint does not require the forecast model to be loaded.
+
+```json
+{
+  "provider": "photon+verified-catalog",
+  "attribution": "OpenStreetMap contributors and verified official place sources",
+  "results": [
+    {
+      "id": "N:123456",
+      "name": "DLF Cyber Hub",
+      "label": "DLF Cyber Hub, Sector 25A, Gurgaon, Haryana, India",
+      "secondary": "Sector 25A, Gurgaon, Haryana, India",
+      "lat": 28.4951,
+      "lon": 77.0890,
+      "type": "commercial"
+    }
+  ]
+}
+```
+
+Successful responses may be cached for 60 seconds. Provider failures return
+429, 502, or 503 with the standard `{"error":"..."}` shape.
+
+### `GET /place?id=<provider-place-id>&sessionToken=<token>`
+
+Resolves a selected Google Places autocomplete prediction to an exact name,
+formatted address, type, latitude, and longitude. The session token must be
+the one used for the preceding `/places` requests. The endpoint rejects
+coordinates outside the configured Gurugram/Delhi NCR service area and is
+never cached. Photon and verified-catalog suggestions already contain
+coordinates and do not call this endpoint.
+
+### `GET /route?origin=<lat,lon>&destination=<lat,lon>&departAt=<ISO-8601>`
+
+Returns TomTom's traffic-neutral shortest connected car-route geometry and
+timing fields for one requested departure time. Coordinates must be inside the Gurugram/Delhi NCR
+service area and `departAt` must include a timezone offset. The trip planner
+uses `geometry` plus `no_traffic_time_seconds` as its route baseline, then
+adds overlap-scaled delay from this project's corridor forecast model. It
+requests this route once and does **not** rank departure times by TomTom's
+`travel_time_seconds`.
+Responses are never cached. The TomTom key stays on the server.
+
+```json
+{
+  "provider": "tomtom",
+  "summary": {
+    "distance_meters": 5498,
+    "travel_time_seconds": 780,
+    "traffic_delay_seconds": 113,
+    "no_traffic_time_seconds": 667,
+    "historic_traffic_time_seconds": 742,
+    "departure_time": "2026-09-23T07:00:00+05:30",
+    "arrival_time": "2026-09-23T07:13:00+05:30"
+  },
+  "geometry": {
+    "type": "LineString",
+    "coordinates": [[77.0890, 28.4951], [77.0887, 28.4948]]
+  }
+}
+```
+
+Invalid coordinates or dates return 400; no connected route returns 422;
+provider/configuration failures return 429, 502, or 503.
+
 ### `GET /predict?corridor=<id>&day=<0-6>&hour=<0-23>`
 Single cell.
 ```json

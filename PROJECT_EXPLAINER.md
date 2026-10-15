@@ -639,7 +639,16 @@ produce a flattering but meaningless number:
    corridors. MAE-based skill score against the baseline is used
    throughout instead.
 
-### 8.3 Honest gating — why no forecast model exists yet
+After the holdout metrics are frozen, the production estimator is cloned and
+refit on **all 14,895 usable rows**. The artifact keeps separate evaluation
+snapshots that have seen only the earlier training period, so
+`tools/evaluate_forecast.py` can reproduce the leakage-free score without
+evaluating the all-data production fit on rows it has already seen. The latest
+holdout (1,660 rows from 2026-09-14 through 2026-09-20) reports model MAE
+**0.0433** versus baseline MAE **0.1029**, skill **0.5789**, label agreement
+**80.4%**, and hour-ranking concordance **91.8%**.
+
+### 8.3 Honest gating — when the forecast model is allowed to train
 
 ```
 MIN_DISTINCT_DAYS            = 14    # need the weekly rhythm to repeat >=2x,
@@ -663,17 +672,11 @@ in the file's own docstring as a feature, not a bug: *"A model trained on
 300 dry rows cannot predict rain, and shipping one anyway would be
 dishonest."*
 
-**Current status, checked directly against the repo while writing this
-document**: `data/gurugram_observed.csv` has **115 rows** (CI appends more
-roughly every 40 minutes, per the collection cadence in §4.2, so this
-number is a moving target — re-run `python model/forecast_model.py
-readiness` for the live figure). 115 rows is nowhere close to the 1,500-row
-floor, and no `models/forecast_residual_gbt.joblib` exists in the repo —
-confirmed by listing `models/`. **Training is currently and correctly
-refused.** If a teacher asks "does the weather/incident model work,"
-the honest and correct answer is: *it hasn't been able to train yet,
-by design, because the data isn't sufficient — and that refusal is itself
-the feature being demonstrated.*
+**Current status (2026-09-23)**: all readiness gates pass. The training table
+contains 14,895 usable rows across 36 days and 13 corridors, including 2,249
+rainy rows and 12,459 incident-affected rows. The production artifact exists
+at `models/forecast_residual_gbt.joblib`; the thresholds above remain active
+and would still refuse a future retrain if its input data fell below them.
 
 ### 8.4 Feature imputation for incidents specifically
 
@@ -1043,6 +1046,17 @@ per request.
 - **`/health`** — model status, version, row count. No model required.
 - **`/corridors`** — the static list from `corridors.py` as JSON; the
   frontend never hardcodes it.
+- **`/places?q=&sessionToken=`** — debounced, Gurugram/Delhi-NCR-restricted
+  Google Places (New) autocomplete when configured. Photon/OpenStreetMap plus
+  `data/place_catalog.json` is the fallback, not the precision strategy.
+- **`/place?id=&sessionToken=`** — resolves one selected Google prediction to
+  exact coordinates and closes the billing session. Provider keys stay on the
+  server; this endpoint also rejects coordinates outside the service area.
+- **`/route?origin=&destination=&departAt=`** — a connected TomTom car route
+  for one departure time, including the road-following `LineString` and a
+  no-traffic baseline. The browser combines that geometry with this project's
+  corridor forecast; TomTom's traffic ETA is diagnostic, not the product
+  ranking signal. The routing key is never sent to the browser.
 - **`/predict?corridor=&day=&hour=`** — single `GRID[...]` lookup.
 - **`/advice?corridor=&day=`** — "the primary endpoint": full 24-hour
   profile plus computed best/worst windows and a natural-language summary
@@ -1254,16 +1268,55 @@ mismatch here would visibly self-contradict on screen (a bar colored
 "orange" next to text saying "Moderate") — good material for "what's a
 maintenance risk in your own codebase" if asked.
 
-### 11.4 Route planner — `geocodeLocation()` / `matchCorridor()`
+### 11.4 Route planner — exact place suggestions and connected roads
 
-Free-text place names ("Cyber Hub" → coordinates) go to OpenStreetMap's
-free Nominatim geocoding service; `matchCorridor()` then finds whichever
-tracked corridor's polyline is geometrically closest to the two resolved
-points (point-to-line-segment distance — the same kind of 2D geometry
-`incidents.py` uses for a different purpose, §6), and calls `/best-time`
-(or its bundle equivalent) for that corridor. If geocoding fails (offline,
-Nominatim unreachable), it falls back gracefully to whichever corridor is
-already selected.
+The old implementation accepted arbitrary text, geocoded only after the
+button was pressed, and picked the single tracked corridor geometrically
+closest to both endpoints. That could recommend a corridor whose road did
+not connect the requested trip at all.
+
+The current flow is deliberately stricter:
+
+1. `initPlaceAutocomplete()` debounces typing for 280 ms and calls
+   `/places` with a UUID session token. Google Places (New) is primary because
+   apartment complexes, businesses, and locally-used place names are often
+   absent from OpenStreetMap; Photon/OSM remains the fallback. Google
+   predictions resolve through `/place` only after selection, avoiding a
+   details request for every keystroke. The response is an accessible
+   combobox list; the button remains disabled until both fields contain exact
+   selected location objects, not merely text that looks like an address.
+2. `findBestDeparture()` creates the next real IST occurrence of each hour
+   in the user's chosen window. It requests one traffic-neutral shortest
+   connected route from TomTom, then matches that fixed geometry to the
+   monitored corridors. For each matched
+   segment it scales the project's predicted corridor delay by
+   `route_overlap / corridor_length`, adds those delays to TomTom's
+   no-traffic baseline, and ranks the resulting **model-predicted trip
+   times** for every hour in the selected window. TomTom traffic is disabled
+   for routing and its traffic-aware travel seconds are ignored, so it cannot
+   influence either the geometry or the ranking; it only guarantees a
+   connected drivable path and supplies the no-traffic baseline.
+3. `showTripOnMap()` draws TomTom's returned road-following `LineString`
+   plus start/end markers. `matchRouteCorridors()` then measures that actual
+   route against every digitized tracked corridor. Route segments must be
+   within 80 m, total overlap must be at least 400–900 m (scaled with route
+   length), and overlap must be meaningful as a share of the route or
+   corridor. Multiple corridors and travel direction are supported. If
+   none qualifies, the UI explicitly says that no monitored corridor was
+   forced onto the otherwise valid trip. Reverse-direction matches are
+   marked lower confidence because the current observations cover only the
+   digitized direction; unmonitored kilometres are held at free flow and the
+   coverage percentage is shown instead of pretending they were predicted.
+   A best time is withheld unless modelled overlap is at least 1 km and 25%
+   of the route. Even with sufficient coverage, a recommendation requires a
+   best-to-worst spread of at least two minutes; smaller differences are shown
+   as "no meaningful time advantage" rather than false precision.
+
+Locally these contracts are served by Flask through `trip_services.py`.
+Vercel production exposes the same contracts through `api/places.mjs` and
+`api/route.mjs`, keeping `TOMTOM_API_KEY` server-side. The congestion
+snapshot remains static-first; only place search and the requested trip
+routes are live provider calls.
 
 ### 11.5 `render()`
 

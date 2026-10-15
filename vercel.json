@@ -4,5 +4,16 @@
   "installCommand": null,
   "buildCommand": null,
   "outputDirectory": "frontend",
+  "functions": {
+    "api/places.mjs": {
+      "maxDuration": 15
+    },
+    "api/place.mjs": {
+      "maxDuration": 15
+    },
+    "api/route.mjs": {
+      "maxDuration": 30
+    }
+  },
   "cleanUrls": false
 }

@@ -182,12 +182,60 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
 /* ROUTE / BEST-TIME TOOL */
 .tool-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:12px}
-.tool-card input,.tool-card select{width:100%;background:var(--void);border:1px solid var(--card-border);color:var(--text);padding:9px 10px;border-radius:6px;margin-bottom:8px;font-family:var(--mono);font-size:11px}
+.tool-title{font-size:13px;font-weight:650;color:var(--text);margin-bottom:3px}
+.tool-subtitle{font-size:10px;color:var(--sub);line-height:1.45;margin-bottom:10px}
+.place-fields{position:relative;display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.place-fields::before{content:'';position:absolute;left:12px;top:23px;bottom:23px;width:1px;background:var(--card-border);z-index:0}
+.place-autocomplete{position:relative;z-index:2}
+.place-autocomplete:focus-within{z-index:900}
+.place-input-wrap{position:relative}
+.place-dot{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:8px;height:8px;border:2px solid var(--cyan);border-radius:50%;z-index:2;background:var(--void)}
+.place-autocomplete.destination .place-dot{border-radius:2px;border-color:var(--magenta)}
+.tool-card .place-input{width:100%;background:var(--void);border:1px solid var(--card-border);color:var(--text);padding:10px 30px 10px 26px;border-radius:7px;margin:0;font-family:var(--display);font-size:12px}
+.tool-card .place-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px var(--cyan-dim)}
+.tool-card .place-input.place-selected{border-color:var(--ok-border)}
+.place-status{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:10px;color:var(--ok-text)}
+.place-status.loading{width:12px;height:12px;border:2px solid var(--card-border);border-top-color:var(--cyan);border-radius:50%;animation:place-spin .7s linear infinite}
+@keyframes place-spin{to{transform:translateY(-50%) rotate(360deg)}}
+.place-list{position:absolute;top:calc(100% + 5px);left:0;right:0;max-height:250px;overflow-x:hidden;overflow-y:auto;background:var(--panel);border:1px solid var(--card-border);border-radius:8px;box-shadow:0 22px 45px rgba(0,0,0,.45);z-index:850}
+.place-option{display:flex;width:100%;align-items:flex-start;gap:9px;padding:10px 11px;border:0;border-bottom:1px solid var(--border);background:transparent;color:inherit;font:inherit;cursor:pointer;text-align:left}
+.place-option:last-child{border-bottom:none}
+.place-option:hover,.place-option.active{background:var(--cyan-dim)}
+.place-pin{color:var(--cyan);font-size:12px;line-height:1.3;flex:none}
+.place-copy{min-width:0;flex:1}
+.place-name{font-size:12px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.place-secondary{font-family:var(--mono);font-size:9px;color:var(--sub);line-height:1.35;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.place-empty{padding:12px;font-family:var(--mono);font-size:9px;line-height:1.5;color:var(--muted);text-align:center}
+.swap-places{position:absolute;right:-2px;top:50%;transform:translateY(-50%);z-index:950;width:24px;height:24px;border-radius:50%;border:1px solid var(--card-border);background:var(--panel);color:var(--sub);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.swap-places:hover{border-color:var(--cyan);color:var(--cyan)}
+.tool-card select{width:100%;background:var(--void);border:1px solid var(--card-border);color:var(--text);padding:9px 10px;border-radius:6px;margin-bottom:8px;font-family:var(--mono);font-size:11px}
 .tool-row{display:flex;gap:8px}
 .tool-row > *{flex:1}
 .tool-btn{width:100%;background:var(--cyan-dim);border:1px solid var(--neu-border);color:var(--cyan);padding:10px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.05em}
 .tool-btn:hover{background:var(--cyan-glow)}
+.tool-btn:disabled{cursor:not-allowed;opacity:.45;background:var(--card-bg)}
+.tool-attribution{font-family:var(--mono);font-size:8px;color:var(--muted);line-height:1.4;margin-top:7px}
+.google-maps-attribution{font-family:Roboto,Arial,sans-serif;font-style:normal;font-weight:400;font-size:12px;letter-spacing:normal;white-space:nowrap;color:var(--sub)}
 .tool-result{margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.6}
+.route-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:9px 0}
+.route-summary.compare{grid-template-columns:repeat(2,minmax(0,1fr))}
+.route-stat{padding:7px 5px;border:1px solid var(--card-border);background:var(--void);border-radius:6px;text-align:center}
+.route-stat b{display:block;font-size:13px;color:var(--text);font-weight:650}
+.route-stat span{display:block;font-size:7px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}
+.route-coverage{margin-top:8px;padding:8px;border-left:2px solid var(--cyan);background:var(--cyan-dim);border-radius:0 5px 5px 0}
+.route-coverage.none{border-left-color:var(--amber);background:rgba(255,184,0,.08);color:var(--amber)}
+.route-coverage,.route-road{min-width:0;max-width:100%;overflow:hidden}
+.route-road{display:block;margin-top:6px;color:var(--text)}
+.route-road span,.route-road small{display:block;max-width:100%;overflow-wrap:anywhere;word-break:normal}
+.route-road small{color:var(--sub);white-space:normal;line-height:1.45}
+.route-times{margin-top:8px}
+.route-times summary{cursor:pointer;color:var(--cyan);list-style-position:inside}
+.route-time-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin-top:6px}
+.route-time{min-width:0;padding:5px 6px;border:1px solid var(--card-border);border-radius:4px;background:var(--void);color:var(--sub);overflow-wrap:anywhere}
+.route-time.best{border-color:var(--ok-border);color:var(--ok-text)}
+.route-time.worst{border-color:var(--warn-border);color:var(--warn-text)}
+.route-marker{width:15px;height:15px;border:3px solid var(--cyan);border-radius:50%;background:var(--void);box-shadow:0 0 0 3px rgba(0,229,255,.18)}
+.route-marker.end{border-radius:3px;border-color:var(--magenta);box-shadow:0 0 0 3px rgba(255,45,107,.18)}
 
 /* MAP — fills all remaining space beside the left panel */
 .map-zone{position:relative;flex:1 1 auto;min-width:0;height:100%;background:
@@ -442,16 +490,38 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       </div>
 
       <div class="tool-card">
-        <div id="tutorialFromTo">
-        <input id="fromInput" placeholder="From" aria-label="From location (optional)">
-        <input id="toInput" placeholder="To" aria-label="To location (optional)">
+        <div class="tool-title">Plan a real trip</div>
+        <div class="tool-subtitle">Choose exact places, then compare connected road routes by departure time.</div>
+        <div id="tutorialFromTo" class="place-fields">
+          <div class="place-autocomplete" id="fromAutocomplete">
+            <div class="place-input-wrap">
+              <span class="place-dot" aria-hidden="true"></span>
+              <input id="fromInput" class="place-input" placeholder="From" aria-label="From location"
+                     autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                     aria-controls="fromSuggestions">
+              <span class="place-status" id="fromStatus" aria-hidden="true"></span>
+            </div>
+            <div class="place-list" id="fromSuggestions" role="listbox" style="display:none"></div>
+          </div>
+          <button class="swap-places" id="swapPlacesBtn" type="button" aria-label="Swap From and To" title="Swap From and To">&#8645;</button>
+          <div class="place-autocomplete destination" id="toAutocomplete">
+            <div class="place-input-wrap">
+              <span class="place-dot" aria-hidden="true"></span>
+              <input id="toInput" class="place-input" placeholder="To" aria-label="To location"
+                     autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                     aria-controls="toSuggestions">
+              <span class="place-status" id="toStatus" aria-hidden="true"></span>
+            </div>
+            <div class="place-list" id="toSuggestions" role="listbox" style="display:none"></div>
+          </div>
         </div>
         <div class="tool-row">
           <select id="earliestSel" aria-label="Earliest departure"></select>
           <select id="latestSel" aria-label="Latest departure"></select>
         </div>
-        <button class="tool-btn" id="findBtn">FIND BEST DEPARTURE</button>
-        <div id="routeResult" class="tool-result"></div>
+        <button class="tool-btn" id="findBtn" disabled>FIND BEST DEPARTURE</button>
+        <div class="tool-attribution" id="placeAttribution">Places: OpenStreetMap via Photon fallback. Routes: TomTom.</div>
+        <div id="routeResult" class="tool-result" aria-live="polite"></div>
       </div>
     </div>
 
@@ -502,6 +572,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
 <!-- Vendored locally (frontend/vendor/) — no CDN, so this keeps working fully offline -->
 <script src="vendor/maplibre-gl.js"></script>
+<script src="route_model.js"></script>
 <script>
 'use strict';
 // ─────────────────────────────────────────────────────────────────────────
@@ -565,6 +636,11 @@ let glListenersAttached = false;
 let corridorGeoJSON = null;
 let glPopup = null;
 let lastFlownCorridor = undefined;
+let fromPlace = null;
+let toPlace = null;
+let currentTripGeoJSON = null;
+let tripMarkers = [];
+let tripRequestGeneration = 0;
 
 function currentMapStyleKey(){
   return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
@@ -1050,13 +1126,18 @@ function showGlMap(){
   document.getElementById('mapAttribution').style.display = 'none';
 }
 
-async function setupCorridorLayers(opts){
-  opts = opts || {};
+async function ensureCorridorGeoJSON(){
   if(!corridorGeoJSON){
     const res = await fetch('corridors.geojson');
     if(!res.ok) throw new Error('corridors.geojson HTTP ' + res.status);
     corridorGeoJSON = await res.json();
   }
+  return corridorGeoJSON;
+}
+
+async function setupCorridorLayers(opts){
+  opts = opts || {};
+  await ensureCorridorGeoJSON();
   glMap.addSource('corridors', {type:'geojson', data: corridorGeoJSON, promoteId: 'corridor_id'});
 
   glMap.addLayer({
@@ -1084,6 +1165,48 @@ async function setupCorridorLayers(opts){
   if(opts.fit){
     recenterMap(0);
   }
+}
+
+function clearTripMarkers(){
+  tripMarkers.forEach(marker=>{ try{ marker.remove(); }catch(e){} });
+  tripMarkers = [];
+}
+
+function setupTripLayer(){
+  if(!glMap || !currentTripGeoJSON || !glMap.isStyleLoaded()) return;
+  const existing = glMap.getSource('trip-route');
+  if(existing){
+    existing.setData(currentTripGeoJSON);
+  }else{
+    glMap.addSource('trip-route', {type:'geojson', data:currentTripGeoJSON});
+    glMap.addLayer({
+      id:'trip-route-casing', type:'line', source:'trip-route',
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':cssVar('--void'),'line-width':9,'line-opacity':0.88}
+    });
+    glMap.addLayer({
+      id:'trip-route-line', type:'line', source:'trip-route',
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':cssVar('--cyan'),'line-width':5,'line-opacity':0.96}
+    });
+  }
+}
+
+function showTripOnMap(geometry){
+  currentTripGeoJSON = {type:'Feature', properties:{kind:'selected-trip'}, geometry};
+  if(!glMapReady || !glMap || !geometry || !geometry.coordinates.length) return;
+  setupTripLayer();
+  clearTripMarkers();
+  const start = geometry.coordinates[0];
+  const end = geometry.coordinates[geometry.coordinates.length-1];
+  [{coord:start, cls:''},{coord:end, cls:' end'}].forEach(item=>{
+    const el = document.createElement('div');
+    el.className = 'route-marker' + item.cls;
+    tripMarkers.push(new maplibregl.Marker({element:el}).setLngLat(item.coord).addTo(glMap));
+  });
+  const bounds = new maplibregl.LngLatBounds();
+  geometry.coordinates.forEach(coord=>bounds.extend(coord));
+  if(!bounds.isEmpty()) glMap.fitBounds(bounds, {padding:70, duration:700, maxZoom:15});
 }
 
 function attachGlEventListenersOnce(){
@@ -1304,6 +1427,7 @@ function initGlMap(){
     if(!mapInitialLoadDone) return;
     setupCorridorLayers({fit: false}).then(()=>{
       glMapReady = true;
+      if(currentTripGeoJSON) setupTripLayer();
       render();
     }).catch(e=>{
       console.warn('[map] failed to re-add corridor layers after theme swap:', e.message);
@@ -1658,79 +1782,445 @@ async function maybeEnrichWithPredict(){
 // ─────────────────────────────────────────────────────────────────────────
 // ROUTE PLANNER
 // ─────────────────────────────────────────────────────────────────────────
-async function geocodeLocation(query){
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Gurugram, India')}`;
+const PLACE_DEBOUNCE_MS = 280;
+const MIN_MEANINGFUL_SAVING_SECONDS = 120;
+let tripLoading = false;
+function newPlaceSessionToken(){
+  if(globalThis.crypto && typeof globalThis.crypto.randomUUID==='function') return globalThis.crypto.randomUUID();
+  return 'gtp-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+}
+const placeUi = {
+  from: {inputId:'fromInput', listId:'fromSuggestions', statusId:'fromStatus', timer:null, controller:null, seq:0, results:[], active:-1, sessionToken:newPlaceSessionToken(), resolving:false},
+  to: {inputId:'toInput', listId:'toSuggestions', statusId:'toStatus', timer:null, controller:null, seq:0, results:[], active:-1, sessionToken:newPlaceSessionToken(), resolving:false}
+};
+
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>'"]/g, ch=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
+  })[ch]);
+}
+
+function selectedPlace(kind){ return kind==='from' ? fromPlace : toPlace; }
+function assignPlace(kind, value){ if(kind==='from') fromPlace=value; else toPlace=value; }
+
+function updateFindButton(){
+  const btn = document.getElementById('findBtn');
+  btn.disabled = tripLoading || !fromPlace || !toPlace;
+  if(!tripLoading) btn.textContent = 'FIND BEST DEPARTURE';
+}
+
+function closePlaceList(kind){
+  const state = placeUi[kind];
+  const input = document.getElementById(state.inputId);
+  document.getElementById(state.listId).style.display='none';
+  input.setAttribute('aria-expanded','false');
+  input.removeAttribute('aria-activedescendant');
+  state.active=-1;
+}
+
+function setPlaceStatus(kind, mode){
+  const status = document.getElementById(placeUi[kind].statusId);
+  status.className = 'place-status' + (mode==='loading'?' loading':'');
+  status.textContent = mode==='selected' ? '✓' : '';
+}
+
+function renderPlaceSuggestions(kind, results, message){
+  const state = placeUi[kind];
+  const list = document.getElementById(state.listId);
+  const input = document.getElementById(state.inputId);
+  state.results = results || [];
+  state.active = -1;
+  if(message){
+    list.innerHTML = `<div class="place-empty">${escapeHtml(message)}</div>`;
+  }else if(state.results.length){
+    list.innerHTML = state.results.map((place,index)=>`<button type="button" class="place-option" role="option" id="${kind}-place-${index}" data-index="${index}">
+      <span class="place-pin" aria-hidden="true">&#9679;</span>
+      <span class="place-copy"><span class="place-name">${escapeHtml(place.name)}</span>
+      <span class="place-secondary">${escapeHtml(place.secondary||place.label)}</span></span>
+    </button>`).join('');
+    list.querySelectorAll('.place-option').forEach(option=>{
+      const commit=()=>choosePlace(kind, state.results[Number(option.dataset.index)]);
+      // Commit the selection before the input can blur and close the popup.
+      // Pointer events cover mouse, touch, and pen input; keyboard selection is
+      // handled separately by the combobox keydown listener below.
+      option.addEventListener('pointerdown', event=>{
+        event.preventDefault();
+        commit();
+      });
+      // Keep semantic/programmatic clicks working for assistive technology and
+      // browser automation. A second commit after pointerdown is harmless.
+      option.addEventListener('click', commit);
+    });
+  }else{
+    list.innerHTML = '<div class="place-empty">No matching places in the Gurugram/Delhi NCR area.</div>';
+  }
+  list.style.display='block';
+  input.setAttribute('aria-expanded','true');
+}
+
+function highlightPlaceOption(kind){
+  const state = placeUi[kind];
+  const list = document.getElementById(state.listId);
+  const input = document.getElementById(state.inputId);
+  const options = Array.from(list.querySelectorAll('.place-option'));
+  options.forEach((option,index)=>option.classList.toggle('active',index===state.active));
+  if(options[state.active]){
+    options[state.active].scrollIntoView({block:'nearest'});
+    input.setAttribute('aria-activedescendant',options[state.active].id);
+  }
+}
+
+async function choosePlace(kind, place){
+  if(!place) return;
+  const state=placeUi[kind];
+  if(state.resolving) return;
+  state.resolving=true;
+  const input = document.getElementById(state.inputId);
+  closePlaceList(kind);
+  setPlaceStatus(kind,place.needs_details?'loading':'selected');
   try{
-    const res = await fetch(url, {headers:{'Accept':'application/json'}});
-    const data = await res.json();
-    if(!data.length) return null;
-    return {lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon)};
-  }catch(e){ return null; }
+    let selected=place;
+    if(place.needs_details){
+      const details=await tripApiGet('/place',{id:place.provider_id,sessionToken:state.sessionToken});
+      selected=details.place;
+    }
+    assignPlace(kind, selected);
+    input.value = selected.label;
+    input.classList.add('place-selected');
+    setPlaceStatus(kind,'selected');
+    state.sessionToken=newPlaceSessionToken();
+    document.getElementById('routeResult').textContent='';
+    updateFindButton();
+  }catch(error){
+    assignPlace(kind,null);
+    input.classList.remove('place-selected');
+    setPlaceStatus(kind,'');
+    renderPlaceSuggestions(kind,[],error.message||'Could not resolve that place.');
+    updateFindButton();
+  }finally{
+    state.resolving=false;
+  }
 }
-function pointSegmentDistance(px,py,x1,y1,x2,y2){
-  const A=px-x1,B=py-y1,C=x2-x1,D=y2-y1;
-  const dot=A*C+B*D, lenSq=C*C+D*D;
-  let t = lenSq!==0 ? dot/lenSq : -1;
-  t = Math.max(0, Math.min(1, t));
-  const xx=x1+t*C, yy=y1+t*D;
-  return Math.hypot(px-xx, py-yy);
+
+function mockTripApi(path, params){
+  if(path==='/places'){
+    const q=String(params.q||'').toLowerCase();
+    const places=[];
+    MOCK_CORRIDORS.forEach(c=>{
+      const names=(c.sub||'').split(' -> ');
+      [{name:names[0],point:c.start},{name:names[1],point:c.end}].forEach(item=>{
+        if(item.name && item.name.toLowerCase().includes(q) && !places.some(p=>p.name===item.name)){
+          places.push({id:'mock-'+item.name,name:item.name,label:item.name+', Gurugram, Haryana, India',secondary:'Gurugram, Haryana, India',lat:item.point[0],lon:item.point[1],type:'place'});
+        }
+      });
+    });
+    return {results:places.slice(0,6),provider:'mock'};
+  }
+  if(path==='/route'){
+    const [lat1,lon1]=params.origin.split(',').map(Number), [lat2,lon2]=params.destination.split(',').map(Number);
+    const distance=haversineMeters([lon1,lat1],[lon2,lat2])*1.28;
+    const hour=new Date(params.departAt).getUTCHours()+5.5;
+    const peak=(hour>=8&&hour<=10)||(hour>=17&&hour<=20)?1.45:1;
+    const noTraffic=Math.max(180,distance/11.1), travel=noTraffic*peak;
+    return {provider:'mock',summary:{distance_meters:Math.round(distance),travel_time_seconds:Math.round(travel),traffic_delay_seconds:Math.round(travel-noTraffic),no_traffic_time_seconds:Math.round(noTraffic)},geometry:{type:'LineString',coordinates:[[lon1,lat1],[lon2,lat2]]}};
+  }
+  throw new Error('Unknown mock trip endpoint');
 }
-function matchCorridor(start,end){
-  let best=null, bestScore=Infinity;
-  CORRIDORS.forEach(c=>{
-    const d1 = pointSegmentDistance(start.lat,start.lon, c.start[0],c.start[1], c.end[0],c.end[1]);
-    const d2 = pointSegmentDistance(end.lat,end.lon, c.start[0],c.start[1], c.end[0],c.end[1]);
-    const score = d1+d2;
-    if(score<bestScore){ bestScore=score; best=c; }
+
+async function tripApiGet(path, params, signal){
+  if(MOCK){ await new Promise(resolve=>setTimeout(resolve,60)); return mockTripApi(path,params||{}); }
+  const base = API_PARAM ? API_BASE : '/api';
+  const url = base + path + '?' + new URLSearchParams(params||{}).toString();
+  const response = await fetch(url,{headers:{Accept:'application/json'},signal});
+  let body={};
+  try{ body=await response.json(); }catch(e){}
+  if(!response.ok){
+    const error=new Error(body.error||('Trip service returned HTTP '+response.status));
+    error.status=response.status;
+    throw error;
+  }
+  return body;
+}
+
+async function requestPlaceSuggestions(kind, query){
+  const state=placeUi[kind];
+  if(state.controller) state.controller.abort();
+  const controller=new AbortController();
+  state.controller=controller;
+  const seq=++state.seq;
+  setPlaceStatus(kind,'loading');
+  try{
+    const data=await tripApiGet('/places',{q:query,sessionToken:state.sessionToken},controller.signal);
+    if(seq!==state.seq) return;
+    setPlaceStatus(kind,'');
+    const attribution=document.getElementById('placeAttribution');
+    if(data.provider==='google_places'){
+      attribution.innerHTML='Places: <span class="google-maps-attribution" translate="no">Google Maps</span>. Routes: TomTom.';
+    }else{
+      attribution.textContent='Places: OpenStreetMap via Photon fallback. Routes: TomTom.';
+    }
+    renderPlaceSuggestions(kind,data.results||[]);
+  }catch(error){
+    if(error.name==='AbortError'||seq!==state.seq) return;
+    setPlaceStatus(kind,'');
+    renderPlaceSuggestions(kind,[],error.message||'Place search is unavailable.');
+  }
+}
+
+function initPlaceAutocomplete(kind){
+  const state=placeUi[kind];
+  const input=document.getElementById(state.inputId);
+  input.addEventListener('input',()=>{
+    assignPlace(kind,null);
+    input.classList.remove('place-selected');
+    setPlaceStatus(kind,'');
+    updateFindButton();
+    clearTimeout(state.timer);
+    const query=input.value.trim();
+    if(query.length<2){ closePlaceList(kind); return; }
+    renderPlaceSuggestions(kind,[],'Searching…');
+    state.timer=setTimeout(()=>requestPlaceSuggestions(kind,query),PLACE_DEBOUNCE_MS);
   });
+  input.addEventListener('focus',()=>{
+    if(state.results.length && !selectedPlace(kind)) renderPlaceSuggestions(kind,state.results);
+  });
+  input.addEventListener('blur',()=>setTimeout(()=>closePlaceList(kind),140));
+  input.addEventListener('keydown',event=>{
+    if(event.key==='ArrowDown'){
+      event.preventDefault();
+      if(document.getElementById(state.listId).style.display==='none' && state.results.length) renderPlaceSuggestions(kind,state.results);
+      state.active=Math.min(state.active+1,state.results.length-1); highlightPlaceOption(kind);
+    }else if(event.key==='ArrowUp'){
+      event.preventDefault(); state.active=Math.max(state.active-1,0); highlightPlaceOption(kind);
+    }else if(event.key==='Enter' && state.active>=0){
+      event.preventDefault(); choosePlace(kind,state.results[state.active]);
+    }else if(event.key==='Escape'){
+      closePlaceList(kind);
+    }
+  });
+}
+
+function swapPlaces(){
+  const oldFrom=fromPlace, oldTo=toPlace;
+  fromPlace=oldTo; toPlace=oldFrom;
+  [['from',fromPlace],['to',toPlace]].forEach(([kind,place])=>{
+    const input=document.getElementById(placeUi[kind].inputId);
+    input.value=place?place.label:'';
+    input.classList.toggle('place-selected',!!place);
+    setPlaceStatus(kind,place?'selected':'');
+    closePlaceList(kind);
+  });
+  document.getElementById('routeResult').textContent='';
+  updateFindButton();
+}
+
+function haversineMeters(a,b){
+  const R=6371008.8, rad=Math.PI/180;
+  const p1=a[1]*rad,p2=b[1]*rad,dp=(b[1]-a[1])*rad,dl=(b[0]-a[0])*rad;
+  const h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+
+function pointToSegmentMeters(point,a,b){
+  const R=6371008.8, rad=Math.PI/180, cos=Math.cos(point[1]*rad);
+  const ax=(a[0]-point[0])*rad*R*cos, ay=(a[1]-point[1])*rad*R;
+  const bx=(b[0]-point[0])*rad*R*cos, by=(b[1]-point[1])*rad*R;
+  const dx=bx-ax,dy=by-ay,lenSq=dx*dx+dy*dy;
+  const t=lenSq?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/lenSq)):0;
+  return Math.hypot(ax+t*dx,ay+t*dy);
+}
+
+function minDistanceToLine(point,coordinates){
+  let best=Infinity;
+  for(let i=1;i<coordinates.length;i++) best=Math.min(best,pointToSegmentMeters(point,coordinates[i-1],coordinates[i]));
   return best;
+}
+
+async function matchRouteCorridors(routeGeometry){
+  try{ await ensureCorridorGeoJSON(); }catch(e){ return {corridors:[],coveragePct:0,geometryUnavailable:true}; }
+  const route=routeGeometry.coordinates||[];
+  const features=(corridorGeoJSON.features||[]).filter(f=>f.geometry&&f.geometry.type==='LineString');
+  const stats=new Map();
+  let routeLength=0;
+  for(let i=1;i<route.length;i++){
+    const a=route[i-1],b=route[i],segLength=haversineMeters(a,b);
+    routeLength+=segLength;
+    const mid=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+    let closest=null,best=80;
+    features.forEach(feature=>{
+      const distance=minDistanceToLine(mid,feature.geometry.coordinates);
+      if(distance<best){best=distance;closest=feature;}
+    });
+    if(!closest) continue;
+    const id=Number(closest.properties.corridor_id);
+    const item=stats.get(id)||{id,overlapMeters:0,first:i,last:i,entry:a,exit:b,feature:closest};
+    item.overlapMeters+=segLength; item.last=i; item.exit=b;
+    stats.set(id,item);
+  }
+  const minimumOverlap=Math.max(400,Math.min(routeLength*0.05,900));
+  const matched=Array.from(stats.values()).filter(item=>{
+    const corridorLength=Math.max(1,Number(item.feature.properties.length_km||0)*1000);
+    return item.overlapMeters>=minimumOverlap && (item.overlapMeters/routeLength>=0.05 || item.overlapMeters/corridorLength>=0.12);
+  }).map(item=>{
+    const coords=item.feature.geometry.coordinates,start=coords[0],end=coords[coords.length-1];
+    const forward=haversineMeters(item.entry,start)+haversineMeters(item.exit,end);
+    const reverse=haversineMeters(item.entry,end)+haversineMeters(item.exit,start);
+    const corridor=CORRIDORS.find(c=>c.id===item.id);
+    return {id:item.id,name:corridor?corridor.name:item.feature.properties.name,
+      direction:forward<=reverse?'forward':'reverse',overlapMeters:item.overlapMeters,
+      routeSharePct:routeLength?item.overlapMeters/routeLength*100:0,first:item.first};
+  }).sort((a,b)=>a.first-b.first);
+  const covered=matched.reduce((sum,item)=>sum+item.overlapMeters,0);
+  return {corridors:matched,coveragePct:routeLength?Math.min(100,covered/routeLength*100):0};
+}
+
+function selectedWindowHours(earliest,latest){
+  return latest<earliest ? [...rangeHours(earliest,24),...rangeHours(0,latest+1)] : rangeHours(earliest,latest+1);
+}
+
+function nextDepartureIso(day,hour){
+  const current=nowIST();
+  const dateParts=current.iso.slice(0,10).split('-').map(Number);
+  const baseMs=Date.UTC(dateParts[0],dateParts[1]-1,dateParts[2]);
+  const today=(new Date(baseMs).getUTCDay()+6)%7;
+  let delta=(day-today+7)%7;
+  if(delta===0 && hour<=current.hour) delta=7;
+  const target=new Date(baseMs+delta*86400000);
+  return `${target.getUTCFullYear()}-${pad2(target.getUTCMonth()+1)}-${pad2(target.getUTCDate())}T${pad2(hour)}:00:00+05:30`;
 }
 
 function populateHourSelects(){
   const e = document.getElementById('earliestSel'), l = document.getElementById('latestSel');
   for(let h=0; h<24; h++){
     e.innerHTML += `<option value="${h}" ${h===7?'selected':''}>${fmtHour(h)}</option>`;
-    l.innerHTML += `<option value="${h}" ${h===11?'selected':''}>${fmtHour(h)}</option>`;
+    l.innerHTML += `<option value="${h}" ${h===22?'selected':''}>${fmtHour(h)}</option>`;
   }
 }
 
 async function findBestDeparture(){
   const result = document.getElementById('routeResult');
-  const from = document.getElementById('fromInput').value.trim();
-  const to = document.getElementById('toInput').value.trim();
   const earliest = parseInt(document.getElementById('earliestSel').value);
   const latest = parseInt(document.getElementById('latestSel').value);
-
-  if(!CORRIDORS.length){ result.textContent = 'Corridor data not loaded yet.'; return; }
-
-  let corridor = selCorridor!==null ? CORRIDORS.find(c=>c.id===selCorridor) : CORRIDORS[0];
-
-  if(from && to){
-    result.textContent = 'Locating corridor…';
-    const [start, end] = await Promise.all([geocodeLocation(from), geocodeLocation(to)]);
-    if(start && end){
-      corridor = matchCorridor(start, end);
-      selCorridor = corridor.id;
-      selectCorridor(corridor.id);
-    } else {
-      result.innerHTML = '<span style="color:var(--warn-text)">Could not geocode one or both locations (offline?). Using selected corridor instead.</span><br>';
-    }
+  if(!fromPlace||!toPlace){ result.textContent='Choose a suggestion for both From and To.'; return; }
+  if(haversineMeters([fromPlace.lon,fromPlace.lat],[toPlace.lon,toPlace.lat])<75){
+    result.textContent='From and To are effectively the same place.'; return;
   }
-
-  result.textContent = (result.innerHTML.includes('warn')?result.innerHTML:'') + 'Fetching best departure…';
+  const generation=++tripRequestGeneration;
+  const allHours=selectedWindowHours(earliest,latest);
+  // The connected geometry is fetched once, so checking every hour is cheap
+  // and lets us identify the actual worst hour in the selected window.
+  const hours=allHours;
+  tripLoading=true; updateFindButton();
+  document.getElementById('findBtn').textContent=`CHECKING ${hours.length} TIME${hours.length===1?'':'S'}…`;
+  result.textContent=`Finding one connected road route, then applying the prediction model for ${hours.map(fmtAmpm).join(', ')}…`;
   try{
-    const bt = await apiGet('/best-time', {corridor: corridor.id, day: curDay, earliest, latest});
-    const degraded = isDegraded(bt.confidence);
-    const originBadge = bt.origin ? originBadgeHtml(bt.origin) : '';
+    // Fetch one traffic-neutral connected geometry. Every candidate hour is
+    // then evaluated on that exact same road path, so provider traffic cannot
+    // influence the route choice or the departure-time ranking.
+    const route=await tripApiGet('/route',{
+      origin:`${fromPlace.lat},${fromPlace.lon}`,
+      destination:`${toPlace.lat},${toPlace.lon}`,
+      departAt:nextDepartureIso(curDay,hours[0])
+    });
+    const coverage=await matchRouteCorridors(route.geometry);
+    const modelledMeters=coverage.corridors.reduce((sum,item)=>sum+item.overlapMeters,0);
+    const coverageAssessment=GTPRouteModel.assessCoverage(
+      route.summary.distance_meters,
+      modelledMeters
+    );
+    if(!coverageAssessment.sufficient){
+      if(generation!==tripRequestGeneration) return;
+      showTripOnMap(route.geometry);
+      const distanceKm=Number(route.summary.distance_meters||0)/1000;
+      const matchedRoads=coverage.corridors.map(item=>{
+        const direction=item.direction==='forward'?'listed direction':'reverse direction';
+        return `<div class="route-road"><span>${escapeHtml(item.name)}</span><small>${(item.overlapMeters/1000).toFixed(1)} km · ${direction}</small></div>`;
+      }).join('');
+      result.innerHTML = `
+        <div style="color:var(--amber);font-size:12px;font-weight:700">No reliable departure-time recommendation</div>
+        <div style="margin-top:3px;color:var(--text)">${escapeHtml(fromPlace.name)} → ${escapeHtml(toPlace.name)}</div>
+        <div class="route-summary">
+          <div class="route-stat"><b>${distanceKm.toFixed(1)} km</b><span>Connected route</span></div>
+          <div class="route-stat"><b>${(modelledMeters/1000).toFixed(1)} km</b><span>Modelled road</span></div>
+          <div class="route-stat"><b>${Math.round(coverageAssessment.coverage_pct)}%</b><span>Route coverage</span></div>
+        </div>
+        <div class="route-coverage none"><b>Insufficient prediction-model coverage.</b>${matchedRoads}<div style="margin-top:6px">A recommendation requires at least ${(coverageAssessment.minimum_modelled_meters/1000).toFixed(1)} km and ${coverageAssessment.minimum_coverage_pct}% of the route on monitored roads.</div></div>
+        <div style="margin-top:8px;color:var(--muted)">The route is connected, but the model does not cover enough of it to name a best time or claim any minutes saved.</div>`;
+      return;
+    }
+    const candidates=hours.map(hour=>{
+      const segments=coverage.corridors.map(item=>{
+        const corridor=CORRIDORS.find(c=>c.id===item.id);
+        const info=currentValueFor(item.id,curDay,hour);
+        return {
+          id:item.id,
+          overlapMeters:item.overlapMeters,
+          corridorLengthKm:corridor ? Number(corridor.length_km||0) : 0,
+          delayMinutes:info ? info.delay : null,
+          confidence:info ? info.conf : 0,
+          direction:item.direction
+        };
+      });
+      const estimate=GTPRouteModel.estimateRoute(route.summary,segments);
+      return {hour,route,coverage,estimate};
+    });
+    if(generation!==tripRequestGeneration) return;
+    const ranked=GTPRouteModel.rankCandidates(candidates);
+    if(!ranked.length){
+      throw new Error("A connected route was found, but it does not overlap enough of the 13 monitored roads for this project's prediction model to recommend a departure time.");
+    }
+    const best=ranked[0],worst=ranked[ranked.length-1];
+    const bestCoverage=best.coverage;
+    const bestTravelMinutes=best.estimate.travel_time_seconds/60;
+    const worstTravelMinutes=worst.estimate.travel_time_seconds/60;
+    const distanceKm=best.route.summary.distance_meters/1000;
+    const savingSeconds=Math.max(0,worst.estimate.travel_time_seconds-best.estimate.travel_time_seconds);
+    const savingMinutes=savingSeconds/60;
+    const meaningfulSaving=savingSeconds>=MIN_MEANINGFUL_SAVING_SECONDS;
+    if(meaningfulSaving){
+      curHour=best.hour;
+      document.getElementById('timeSlider').value=curHour;
+      document.getElementById('timeDisp').textContent=fmtHour(curHour);
+      updateSliderTrack();
+      render();
+    }
+    showTripOnMap(best.route.geometry);
+    const roads=bestCoverage.corridors.map(item=>{
+      const direction=item.direction==='forward'?'listed direction':'reverse direction (lower confidence)';
+      return `<div class="route-road"><span>${escapeHtml(item.name)}</span><small>${(item.overlapMeters/1000).toFixed(1)} km · ${direction}</small></div>`;
+    }).join('');
+    const coverageHtml=bestCoverage.corridors.length
+      ? `<div class="route-coverage"><b>Prediction-model coverage: ${Math.round(bestCoverage.coveragePct)}% · ${Math.round(best.estimate.confidence*100)}% confidence</b>${roads}</div>`
+      : `<div class="route-coverage none"><b>No monitored corridor forced onto this trip.</b><br>The road route is valid, but it does not meaningfully overlap any of the predictor's 13 tracked corridors.</div>`;
+    const timeRows=candidates.map(item=>{
+      const classes=['route-time'];
+      if(item.hour===best.hour) classes.push('best');
+      if(item.hour===worst.hour) classes.push('worst');
+      const trip=(item.estimate.travel_time_seconds/60).toFixed(1);
+      const delay=(item.estimate.model_delay_seconds/60).toFixed(1);
+      return `<div class="${classes.join(' ')}">${fmtAmpm(item.hour)} · ${trip} min · +${delay}</div>`;
+    }).join('');
+    const title=meaningfulSaving?`Best departure: ${fmtAmpm(best.hour)}`:'No meaningful time advantage';
+    const comparison=meaningfulSaving
+      ? `Leave at ${fmtAmpm(best.hour)} to save about ${savingMinutes.toFixed(1)} min versus ${fmtAmpm(worst.hour)}, the slowest time in the selected window.`
+      : `The fastest and slowest predictions differ by only ${savingMinutes.toFixed(1)} min, below the 2.0-minute recommendation threshold. No departure time is recommended.`;
     result.innerHTML = `
-      <div style="color:var(--cyan);font-size:12px;font-weight:600;margin-bottom:6px">${corridor.name}</div>
-      <div style="font-size:20px;color:${colorForLabel(bt.label)};font-family:var(--mono)" class="${degraded?'degraded':''}">${fmtHour(bt.recommended_hour)}</div>
-      ${originBadge ? `<div style="margin:8px 0">${originBadge}</div>` : ''}
-      <div style="margin:6px 0">${bt.summary}</div>
-      <div>Saves ~${bt.saving_vs_worst_minutes} min vs the worst hour in this window.</div>`;
-    render();
+      <div style="color:${meaningfulSaving?'var(--cyan)':'var(--amber)'};font-size:12px;font-weight:700">${title}</div>
+      <div style="margin-top:3px;color:var(--text)">${escapeHtml(fromPlace.name)} → ${escapeHtml(toPlace.name)}</div>
+      <div class="route-summary compare">
+        <div class="route-stat"><b>${bestTravelMinutes.toFixed(1)} min</b><span>Fastest · ${fmtAmpm(best.hour)}</span></div>
+        <div class="route-stat"><b>${worstTravelMinutes.toFixed(1)} min</b><span>Slowest · ${fmtAmpm(worst.hour)}</span></div>
+        <div class="route-stat"><b>${savingMinutes.toFixed(1)} min</b><span>Difference</span></div>
+        <div class="route-stat"><b>${distanceKm.toFixed(1)} km</b><span>Road distance</span></div>
+      </div>
+      <div>${comparison}</div>
+      ${coverageHtml}
+      <details class="route-times"><summary>See all ${hours.length} hourly predictions</summary><div class="route-time-grid">${timeRows}</div></details>
+      <div style="margin-top:7px;color:var(--muted)">Every hour in the selected window was compared. Trip times come from this project's residual forecast model on the monitored part of one traffic-neutral connected route. Unmonitored sections are held at free flow.</div>`;
   }catch(e){
     result.innerHTML = `<span style="color:var(--warn-text)">${e.message}</span>`;
+  }finally{
+    if(generation===tripRequestGeneration){tripLoading=false;updateFindButton();}
   }
 }
 
@@ -1811,6 +2301,9 @@ document.addEventListener('click', function(e){
   if(!document.getElementById('corridorCombo').contains(e.target)) closeCombo();
 });
 
+initPlaceAutocomplete('from');
+initPlaceAutocomplete('to');
+document.getElementById('swapPlacesBtn').onclick = swapPlaces;
 document.getElementById('findBtn').onclick = findBestDeparture;
 document.getElementById('errBannerRetry').onclick = refreshAll;
 
@@ -1871,13 +2364,13 @@ const TUTORIAL_STEPS = [
   },
   {
     target: '#tutorialFromTo',
-    title: 'From / To (optional)',
-    body: 'Enter start and end locations if you want the route planner to match your trip to a corridor. Leave them blank to explore corridors directly.'
+    title: 'Choose exact places',
+    body: 'Start typing, then choose a suggestion under each box. The planner stores the exact coordinates instead of guessing from unfinished text.'
   },
   {
     target: '#findBtn',
     title: 'Find best departure',
-    body: 'Set your earliest and latest departure window, then tap FIND BEST DEPARTURE. The app scans hours in that range and picks the least congested slot.'
+    body: 'Set a time window and tap FIND BEST DEPARTURE. The app compares modelled times on one connected road route and only names a monitored corridor when that route actually uses it.'
   },
   {
     target: '#dataInfoBtn',
@@ -2140,6 +2633,10 @@ window.__gtpDebug = function(){
     sourceExists: !!(glMap && glMap.getSource && glMap.getSource('corridors')),
     lineLayerExists: !!(glMap && glMap.getLayer && glMap.getLayer('corridor-line')),
     glowLayerExists: !!(glMap && glMap.getLayer && glMap.getLayer('corridor-glow')),
+    tripSourceExists: !!(glMap && glMap.getSource && glMap.getSource('trip-route')),
+    tripLayerExists: !!(glMap && glMap.getLayer && glMap.getLayer('trip-route-line')),
+    fromSelected: !!fromPlace,
+    toSelected: !!toPlace,
     selCorridor: selCorridor,
     popupOpen: !!(glPopup && glPopup.isOpen && glPopup.isOpen())
   };

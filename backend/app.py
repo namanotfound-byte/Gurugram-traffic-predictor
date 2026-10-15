@@ -7,6 +7,9 @@ names/types — this module must not diverge from it.
 Endpoints:
   GET /health          -> service + model status
   GET /corridors       -> static corridor list (from corridors.py, never hardcoded)
+  GET /places          -> typeahead place search for the From/To fields
+  GET /place           -> resolve a selected high-precision place to coordinates
+  GET /route           -> connected TomTom road route for one departure time
   GET /predict          -> single (corridor, day, hour) cell
   GET /advice            -> "when should I go?" for one corridor/day
   GET /advice/all        -> /advice for all 8 corridors in one call
@@ -49,6 +52,13 @@ except ImportError:  # pragma: no cover - Python >=3.9 always has zoneinfo
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from corridors import CORRIDORS, ROAD_CLASS_ENC  # noqa: E402
 from model.forecast_model import lags_at_datetime  # noqa: E402
+from trip_services import (  # noqa: E402
+    TripServiceError,
+    calculate_route,
+    parse_coordinate,
+    resolve_google_place,
+    search_places,
+)
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 FORECAST_MODEL_PATH = os.path.join(BASE_DIR, "models", "forecast_residual_gbt.joblib")
@@ -103,25 +113,22 @@ def label_for(idx: float) -> str:
     return "Severe"
 
 
-# Sourced verbatim from docs/accuracy_report.md (generated 2026-09-18 by
-# tools/evaluate_accuracy.py, n=15234 observed rows / 100% cell coverage --
-# see that file for the full methodology and confidence-tier caveats).
-# NOT re-derived here -- these are the headline figures from that report,
-# Forecast holdout metrics from docs/forecast_eval.md — re-derived 2026-09-19.
-# Residual GBT vs later live observations on a time-based test split, NOT
-# TomTom historical bootstrap vs the full observed CSV. Surfaced via /health
-# and the static bundle so the Data & model panel quotes the shipped predictor.
+# Forecast holdout metrics from docs/forecast_eval.md, re-derived 2026-10-15.
+# The evaluation snapshots were trained only on the earlier time period; the
+# production estimator was then refit on all usable rows after validation.
+# Surfaced via /health and the static bundle so the Data & model panel quotes
+# the shipped residual predictor rather than the historical bootstrap lookup.
 ACCURACY_SUMMARY = {
-    "label_agreement_pct": 78.6,
-    "hour_ranking_concordance_pct": 91.1,
-    "sample_size": 1789,
-    "as_of": "2026-09-19",
+    "label_agreement_pct": 77.9,
+    "hour_ranking_concordance_pct": 88.1,
+    "sample_size": 2218,
+    "as_of": "2026-10-15",
     "note": (
         "Forecast holdout (time-based split): residual GBT vs later live "
-        "observations on 1,789 test rows (2026-09-13 .. 2026-09-19). "
-        "NOT TomTom historical bootstrap vs all 15,234 rows. "
-        "Skill 0.5575 (model MAE 0.0441, baseline MAE 0.0997). "
-        "Label agreement 78.6%; hour-ranking concordance 91.1%. "
+        "observations on 2,218 test rows (2026-10-04 .. 2026-10-15). "
+        "Skill 0.5417 (model MAE 0.0461, baseline MAE 0.1007). "
+        "Label agreement 77.9%; hour-ranking concordance 88.1%. "
+        "Production estimator refit on all 20,198 usable rows after validation. "
         "Source: docs/forecast_eval.md."
     ),
 }
@@ -631,14 +638,19 @@ if GRID_READY:
         import weather as wx  # noqa: WPS433
 
         target_dates = [target_date_for_weekday(d) for d in range(7)]
-        weather_offline = False
+        skip_live_prefetch = os.environ.get("GTP_SKIP_LIVE_PREFETCH") == "1"
+        weather_offline = skip_live_prefetch
         try:
-            wx.get_weather_range(min(target_dates), max(target_dates))
+            if not skip_live_prefetch:
+                wx.get_weather_range(min(target_dates), max(target_dates))
         except Exception as wx_err:
             weather_offline = True
             print(f"[app] weather prefetch failed ({wx_err}); grid build uses neutral weather defaults")
         today = datetime.datetime.now(IST).date()
-        live_incidents_today = fetch_live_incident_features() if today in target_dates else {}
+        live_incidents_today = (
+            fetch_live_incident_features()
+            if not skip_live_prefetch and today in target_dates else {}
+        )
 
         residual_count = 0
         bootstrap_fallback_count = 0
@@ -1092,6 +1104,69 @@ def corridors_list():
         }
         for c in CORRIDORS
     ]})
+
+
+@app.route("/places")
+def places_search():
+    """Return Gurugram-biased search-as-you-type suggestions.
+
+    This endpoint is intentionally independent of the forecast model: users
+    must still be able to choose a real place even when model loading fails.
+    """
+    try:
+        results = search_places(
+            request.args.get("q", ""),
+            limit=6,
+            session_token=request.args.get("sessionToken", ""),
+        )
+        uses_google = any(place.get("source") == "google_places" for place in results)
+        response = jsonify({
+            "results": results,
+            "provider": "google_places" if uses_google else "photon+verified-catalog",
+            "attribution": (
+                "Google Places" if uses_google
+                else "OpenStreetMap contributors and verified official place sources"
+            ),
+        })
+        response.headers["Cache-Control"] = (
+            "private, no-store" if uses_google else "public, max-age=60"
+        )
+        return response
+    except TripServiceError as exc:
+        return jsonify({"error": str(exc)}), exc.status
+
+
+@app.route("/place")
+def place_details():
+    """Resolve a selected high-precision autocomplete result to coordinates."""
+    try:
+        place = resolve_google_place(
+            request.args.get("id", ""),
+            request.args.get("sessionToken", ""),
+        )
+        response = jsonify({
+            "place": place,
+            "provider": "google_places",
+            "attribution": "Google Places",
+        })
+        response.headers["Cache-Control"] = "private, no-store"
+        return response
+    except TripServiceError as exc:
+        return jsonify({"error": str(exc)}), exc.status
+
+
+@app.route("/route")
+def trip_route():
+    """Calculate one real connected driving route at a requested time."""
+    try:
+        origin = parse_coordinate(request.args.get("origin", ""), "origin")
+        destination = parse_coordinate(request.args.get("destination", ""), "destination")
+        payload = calculate_route(origin, destination, request.args.get("departAt", ""))
+        response = jsonify(payload)
+        response.headers["Cache-Control"] = "private, no-store"
+        return response
+    except TripServiceError as exc:
+        return jsonify({"error": str(exc)}), exc.status
 
 
 @app.route("/predict")

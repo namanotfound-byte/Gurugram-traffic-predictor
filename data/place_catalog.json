@@ -1,0 +1,37 @@
+[
+  {
+    "id": "verified:elevate-hines",
+    "name": "Elevate (Conscient Hines)",
+    "label": "Elevate (Conscient Hines), Sector 59, Gurugram, Haryana, India",
+    "secondary": "Sector 59, Golf Course Extension Road, Gurugram, Haryana, India",
+    "lat": 28.409,
+    "lon": 77.1054,
+    "type": "residential",
+    "aliases": [
+      "Elevate Hines",
+      "Hines Elevate",
+      "Conscient Hines Elevate",
+      "Conscient Elevate",
+      "Elevate Sector 59"
+    ],
+    "source": "Hines official property page",
+    "source_url": "https://www.hines.com/properties/elevate-gurugram"
+  },
+  {
+    "id": "verified:dlf-cyber-hub",
+    "name": "DLF Cyber Hub",
+    "label": "DLF Cyber Hub, Sector 25A, Gurugram, Haryana, India",
+    "secondary": "Sector 25A, Gurugram, Haryana, India",
+    "lat": 28.4951011,
+    "lon": 77.0885127,
+    "type": "commercial",
+    "aliases": [
+      "CyberHub",
+      "Cyber Hub",
+      "DLF CyberHub",
+      "DLF Cyber Hub"
+    ],
+    "source": "OpenStreetMap",
+    "source_url": "https://www.openstreetmap.org/way/1449268449"
+  }
+]

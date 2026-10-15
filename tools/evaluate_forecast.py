@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Standalone evaluation of the shipped residual forecast model.
+Standalone evaluation of the residual forecast model.
 
 Rebuilds the same training table as model/forecast_model.py, applies the
-same time-based holdout (last 20% of distinct days), and scores the
-*shipped* models/forecast_residual_gbt.joblib artifact on the holdout
-test rows — no Flask, no website.
+same time-based holdout (last 20% of distinct days), and scores the stored
+holdout-only evaluation snapshot. The production estimator may be refitted
+on all rows after model selection; it is never scored against rows it saw.
 
 Usage:
     .venv_forecast/bin/python tools/evaluate_forecast.py
@@ -174,6 +174,7 @@ def format_report(results: dict) -> str:
         f"- Model type: **{results['model_type']}**",
         f"- Dwarka corridor override (id {DWARKA_CORRIDOR_ID}): **{results['dwarka_override']}**",
         f"- Trained at (artifact): {results['trained_at']}",
+        f"- Production fit rows: **{results['fit_rows']}** (all rows after holdout validation)",
         f"- Artifact skill_score: {results['artifact_skill']:.4f}",
         "",
         "## Test-set metrics (recomputed this run)",
@@ -203,9 +204,10 @@ def format_report(results: dict) -> str:
 
 def evaluate(write_md: bool = True) -> dict:
     payload = load_shipped_payload()
-    model = payload["model"]
-    dwarka_override = payload.get("dwarka_override")
-    model_type = payload.get("model_type") or type(model).__name__
+    shipped_model = payload["model"]
+    model = payload.get("evaluation_model", shipped_model)
+    dwarka_override = payload.get("evaluation_dwarka_override", payload.get("dwarka_override"))
+    model_type = payload.get("model_type") or type(shipped_model).__name__
 
     df = build_training_table()
     if df is None or df.empty:
@@ -232,9 +234,9 @@ def evaluate(write_md: bool = True) -> dict:
     )
 
     importances = None
-    if hasattr(model, "feature_importances_"):
+    if hasattr(shipped_model, "feature_importances_"):
         importances = sorted(
-            zip(FEATURE_COLS, model.feature_importances_), key=lambda x: -x[1]
+            zip(FEATURE_COLS, shipped_model.feature_importances_), key=lambda x: -x[1]
         )
 
     results = {
@@ -243,6 +245,7 @@ def evaluate(write_md: bool = True) -> dict:
         "model_type": model_type,
         "dwarka_override": "yes" if dwarka_override is not None else "no",
         "trained_at": payload.get("trained_at", "unknown"),
+        "fit_rows": int(payload.get("train_rows") or len(train_df)),
         "artifact_skill": float(payload["skill_score"]),
         "n_train": len(train_df),
         "n_test": len(test_df),

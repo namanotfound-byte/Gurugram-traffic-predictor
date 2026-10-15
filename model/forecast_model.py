@@ -148,6 +148,7 @@ import sys
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.neural_network import MLPRegressor
@@ -830,6 +831,21 @@ def train():
         else:
             print("  -> keeping global model for Dwarka.")
 
+    # Score the exact evaluation combination that will be represented by the
+    # production artifact (global winner plus an optional Dwarka override).
+    # The earlier GBT/MLP figures remain useful for model selection, while
+    # these effective figures are the honest headline for what we ship.
+    effective_pred_resid = model.predict(X_test).astype(float)
+    if dwarka_override is not None:
+        dwarka_mask = test_df["corridor_id"].values == DWARKA_CORRIDOR_ID
+        if dwarka_mask.any():
+            effective_pred_resid[dwarka_mask] = dwarka_override.predict(
+                X_test.loc[dwarka_mask]
+            ).astype(float)
+    effective_pred = (test_df["baseline_idx"].values + effective_pred_resid).clip(0, 1)
+    effective_mae = mean_absolute_error(test_df["congestion_idx"], effective_pred)
+    effective_skill = 1 - (effective_mae / baseline_mae) if baseline_mae > 0 else float("nan")
+
     print()
     print("=" * 70)
     print("TIME-BASED HOLDOUT EVALUATION")
@@ -842,8 +858,9 @@ def train():
     print(f"  GBT   MAE (baseline + predicted residual): {gbt_mae:.4f}  skill={gbt_skill:.4f}")
     print(f"  MLP   MAE (baseline + predicted residual): {mlp_mae:.4f}  skill={mlp_skill:.4f}")
     print(f"  SHIPPED: {winner_name} (lower holdout MAE)")
-    print(f"  SKILL SCORE = 1 - model_MAE/baseline_MAE: {skill:.4f}")
-    if skill > 0:
+    print(f"  effective artifact MAE (including overrides): {effective_mae:.4f}")
+    print(f"  SKILL SCORE = 1 - model_MAE/baseline_MAE: {effective_skill:.4f}")
+    if effective_skill > 0:
         print("  -> model adds value over 'just use the historical average'.")
     else:
         print("  -> model does NOT beat the baseline. Report this honestly; do not ship it "
@@ -860,22 +877,43 @@ def train():
             print(f"    {name:28s} {imp:.4f}")
     print("=" * 70)
 
+    # The holdout-fitted objects above exist only to choose and validate the
+    # model without future leakage. Once that decision is made, refit the
+    # selected estimator on every available row so Production is not forever
+    # missing the newest 20% of observations. Keep the evaluation snapshots in
+    # the artifact so the published holdout score remains independently
+    # reproducible and is never recomputed with the all-data model.
+    evaluation_model = model
+    evaluation_dwarka_override = dwarka_override
+    final_model = clone(evaluation_model)
+    final_model.fit(df[FEATURE_COLS], df["residual"])
+    final_dwarka_override = None
+    if evaluation_dwarka_override is not None:
+        dwarka_all = df[df["corridor_id"] == DWARKA_CORRIDOR_ID]
+        final_dwarka_override = clone(evaluation_dwarka_override)
+        final_dwarka_override.fit(dwarka_all[FEATURE_COLS], dwarka_all["residual"])
+
     os.makedirs(os.path.dirname(MODEL_FILE), exist_ok=True)
     joblib.dump(
         {
-            "model": model,
+            "model": final_model,
             "model_type": winner_name,
             "features": FEATURE_COLS,
-            "skill_score": skill,
-            "model_mae": model_mae,
+            "skill_score": effective_skill,
+            "model_mae": effective_mae,
             "baseline_mae": baseline_mae,
             "holdout_gbt_mae": gbt_mae,
             "holdout_gbt_skill": gbt_skill,
             "holdout_mlp_mae": mlp_mae,
             "holdout_mlp_skill": mlp_skill,
-            "dwarka_override": dwarka_override,
+            "dwarka_override": final_dwarka_override,
+            "evaluation_model": evaluation_model,
+            "evaluation_dwarka_override": evaluation_dwarka_override,
+            "training_scope": "all_rows_after_time_holdout_validation",
             "trained_at": datetime.datetime.now().isoformat(),
-            "train_rows": len(train_df),
+            "train_rows": len(df),
+            "evaluation_train_rows": len(train_df),
+            "evaluation_test_rows": len(test_df),
             "test_rows": len(test_df),
         },
         MODEL_FILE,
