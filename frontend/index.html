@@ -16,13 +16,19 @@
   document.documentElement.style.colorScheme = theme;
 })();
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Playfair+Display:wght@500;600;700&display=swap">
 <style id="gtp-boot-critical">
 html.gtp-boot .app{visibility:hidden}
 html[data-theme="light"],html[data-theme="light"] body{background:#eef3f7;color-scheme:light}
-#gtp-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#020408;color:#dff0f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+#gtp-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#020408;color:#dff0f8;font-family:'Playfair Display',Georgia,'Iowan Old Style',serif}
 #gtp-boot::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(0,229,255,.16) 0%,transparent 62%);pointer-events:none}
-#gtp-boot .gtp-boot-title{position:relative;font-size:clamp(18px,4vw,24px);font-weight:800;letter-spacing:.04em;color:#00e5ff;text-align:center;padding:0 24px}
-#gtp-boot .gtp-boot-loading{position:relative;font-family:'SF Mono','Cascadia Code','Consolas','Menlo',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8ab4cc}
+#gtp-boot .gtp-boot-title{position:relative;font-family:'Playfair Display',Georgia,serif;font-size:clamp(26px,5vw,40px);font-weight:600;letter-spacing:.01em;color:#00e5ff;text-align:center;padding:0 24px}
+#gtp-boot .gtp-boot-loading{position:relative;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8ab4cc}
+#gtp-boot .gtp-boot-bar{position:relative;width:min(220px,60vw);height:2px;background:rgba(0,229,255,.15);overflow:hidden;border-radius:2px}
+#gtp-boot .gtp-boot-bar::after{content:'';position:absolute;inset:0 auto 0 0;width:40%;background:#00e5ff;animation:gtp-boot-slide 1.1s ease-in-out infinite}
+@keyframes gtp-boot-slide{0%{transform:translateX(-120%)}100%{transform:translateX(350%)}}
 html[data-theme="light"] #gtp-boot{background:#eef3f7;color:#0b1e28}
 html[data-theme="light"] #gtp-boot::before{background:radial-gradient(ellipse at 50% 42%,rgba(0,134,168,.18) 0%,transparent 62%)}
 html[data-theme="light"] #gtp-boot .gtp-boot-title{color:#0086a8}
@@ -39,6 +45,8 @@ html[data-theme="light"] #gtp-boot .gtp-boot-loading{color:#3f6a80}
   --text:#dff0f8;--sub:#8ab4cc;--muted:#4a6a82;--border:rgba(0,229,255,0.1);
   --mono:'SF Mono','Cascadia Code','Consolas','Menlo',monospace;
   --display:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --heading:'Playfair Display',Georgia,'Times New Roman',serif;
+  --num:'Fraunces','Iowan Old Style','Palatino Linotype',Georgia,serif;
   --card-bg:rgba(0,229,255,0.04);--card-border:rgba(0,229,255,0.08);
   --warn-bg:rgba(255,45,107,0.10);--warn-border:rgba(255,45,107,0.4);--warn-text:#ff8fab;
   --ok-bg:rgba(0,255,157,0.06);--ok-border:rgba(0,255,157,0.25);--ok-text:#5ad89a;
@@ -95,7 +103,7 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 .proto-overlay.show{display:flex}
 .proto-card{max-width:min(500px, calc(100vw - 48px));width:100%;min-width:0;background:var(--panel);border:1px solid var(--warn-border);border-radius:12px;padding:28px 26px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
 .proto-icon{font-size:26px;margin-bottom:10px;line-height:1}
-.proto-title{font-family:var(--display);font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px}
+.proto-title{font-family:var(--heading);font-size:20px;font-weight:600;color:var(--text);margin-bottom:10px}
 .proto-body{font-family:var(--display);font-size:13px;line-height:1.65;color:var(--sub);margin-bottom:18px;overflow-wrap:anywhere}
 .proto-body code{font-family:var(--mono);background:var(--card-bg);padding:1px 6px;border-radius:4px;color:var(--text);overflow-wrap:anywhere;word-break:break-all}
 .proto-fix{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:14px 16px}
@@ -110,7 +118,9 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 .banner-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto;margin-left:auto}
 .banner-ist{font-family:var(--mono);font-size:12px;color:var(--cyan)}
 .advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
-.advice-corridor{font-size:clamp(18px,2.4vw,28px);font-weight:700;color:var(--cyan);line-height:1.15}
+.advice-corridor{font-family:var(--heading);font-size:clamp(18px,2.4vw,28px);font-weight:600;color:var(--cyan);line-height:1.15;letter-spacing:.01em}
+.advice-corridor.is-selected{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.advice-corridor.is-selected::after{content:'Selected';font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--void);background:var(--cyan);border-radius:999px;padding:3px 8px;line-height:1}
 .period-toggle-wrap{display:flex;flex-direction:column;justify-content:center;gap:4px}
 .period-toggle{display:flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
 .period-btn{flex:1;font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -126,16 +136,14 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 .chip.worst{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
 .advice-empty{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
-.hero-stats{display:flex;gap:8px;flex:1 1 auto;flex-wrap:wrap;align-items:stretch;justify-content:center;min-width:0}
-.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:7px 14px;text-align:center;min-width:72px}
-.hstat-val{font-family:var(--mono);font-size:16px;font-weight:600;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;transition:color .2s ease}
+.hero-stats{display:flex;gap:18px;flex:1 1 auto;flex-wrap:wrap;align-items:flex-end;justify-content:center;min-width:0}
+.hstat{display:flex;flex-direction:column;align-items:center;gap:6px;background:transparent;border:0;padding:0;text-align:center;min-width:84px}
+.hstat-lbl{font-family:var(--display);font-size:10px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin:0}
+.hstat-val{font-family:var(--num);font-size:22px;font-weight:500;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:10px 16px;min-width:88px}
 .hstat-val.tick{animation:stat-tick .35s ease}
 @keyframes stat-tick{0%{transform:translateY(4px);opacity:.35}100%{transform:none;opacity:1}}
-.hstat-lbl{font-family:var(--mono);font-size:8px;color:var(--sub);margin-top:4px;letter-spacing:.1em;text-transform:uppercase}
-.hstat.conf{border-color:var(--ok-border);background:var(--ok-bg)}
-.hstat.conf .hstat-val{color:var(--ok-text)}
-.hstat.conf.low{border-color:var(--warn-border);background:var(--warn-bg)}
-.hstat.conf.low .hstat-val{color:var(--warn-text)}
+.hstat.conf .hstat-val{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok-text)}
+.hstat.conf.low .hstat-val{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
 /* Day/Night as the hero-stats row's 4th element: no extra box/caption, just
    the toggle (+ its two ranges below) stretched by the row's default
    align-items to match the (now-compacted) stat cards' height; justify-content:
@@ -318,7 +326,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 #tutorialSpotlight.ready{opacity:1}
 .tutorial-card{position:fixed;top:16px;left:16px;max-width:min(320px,calc(100vw - 32px));min-width:220px;background:var(--panel);border:1px solid var(--cyan-glow);border-radius:10px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45);cursor:pointer;pointer-events:all;z-index:11002;transition:top .55s cubic-bezier(.22,1,.36,1),left .55s cubic-bezier(.22,1,.36,1)}
 .tutorial-step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
-.tutorial-title{font-family:var(--display);font-size:16px;font-weight:700;color:var(--cyan);margin-bottom:8px;line-height:1.3}
+.tutorial-title{font-family:var(--heading);font-size:18px;font-weight:600;color:var(--cyan);margin-bottom:8px;line-height:1.3}
 .tutorial-body{font-family:var(--display);font-size:13px;line-height:1.55;color:var(--sub);margin-bottom:12px}
 .tutorial-hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;line-height:1.4}
 .tutorial-dots{display:flex;gap:6px;margin-bottom:10px}
@@ -367,9 +375,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   }
   .period-btn{padding:8px 10px;font-size:13px}
   .period-range{font-size:8px;white-space:normal}
-  .hstat{min-width:0;flex:none;width:auto;padding:8px 4px}
-  .hstat-val{font-size:14px}
-  .hstat-lbl{font-size:8px;letter-spacing:.06em}
+  .hstat{min-width:0;flex:none;width:auto;padding:0}
+  .hstat-val{font-size:18px;padding:8px 10px;min-width:0;width:100%}
+  .hstat-lbl{font-size:8px;letter-spacing:.08em}
   .time-big{font-size:34px}
 }
 </style>
@@ -377,7 +385,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 <body>
 <div id="gtp-boot" aria-live="polite">
   <div class="gtp-boot-title">Gurugram Traffic Predictor</div>
-  <div class="gtp-boot-loading">Loading…</div>
+  <div class="gtp-boot-bar" aria-hidden="true"></div>
+  <div class="gtp-boot-loading">Finding the best hour…</div>
 </div>
 <script src="intro.js"></script>
 <script>
@@ -444,9 +453,18 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
             <span class="period-range" id="periodRangeNight"></span>
           </div>
         </div>
-        <div class="hstat"><div class="hstat-val" id="hsBest">--</div><div class="hstat-lbl">Best time</div></div>
-        <div class="hstat"><div class="hstat-val" id="hsSave">--</div><div class="hstat-lbl" id="hsSaveLbl">You save</div></div>
-        <div class="hstat conf" id="hsConfWrap"><div class="hstat-val" id="hsConf">--</div><div class="hstat-lbl">Confidence</div></div>
+        <div class="hstat">
+          <div class="hstat-lbl">Best time</div>
+          <div class="hstat-val" id="hsBest">--</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-lbl" id="hsSaveLbl">You save</div>
+          <div class="hstat-val" id="hsSave">--</div>
+        </div>
+        <div class="hstat conf" id="hsConfWrap">
+          <div class="hstat-lbl">Confidence</div>
+          <div class="hstat-val" id="hsConf">--</div>
+        </div>
       </div>
       <div class="banner-controls">
         <span class="banner-ist">IST</span>
@@ -621,6 +639,7 @@ const _bootIST = nowIST();
 let curDay = _bootIST.day;
 let curHour = _bootIST.hour;
 let selCorridor = null;
+let corridorPinned = false;
 let curPeriod = 'day'; // 'day' | 'night' — defaults to day (primary audience); night kept for shift/truck drivers
 let BUNDLE = null;
 let BUNDLE_MODE = false;
@@ -1112,7 +1131,7 @@ function drawMap(){
     line.setAttribute('stroke-linecap','round'); line.setAttribute('opacity', isSel?1:0.85);
     if(!info) line.setAttribute('stroke-dasharray','4 5');
     line.style.cursor='pointer';
-    line.addEventListener('click', ()=>{ selCorridor = (selCorridor===c.id?null:c.id); onSelectionChanged(); });
+    line.addEventListener('click', ()=>{ corridorPinned = true; selCorridor = c.id; onSelectionChanged(); });
 
     const midx=(x1+x2)/2, midy=(y1+y2)/2;
     const text = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -1259,7 +1278,8 @@ function attachGlEventListenersOnce(){
   glMap.on('click', 'corridor-line', (e)=>{
     if(!e.features.length) return;
     const cid = e.features[0].properties.corridor_id;
-    selCorridor = (selCorridor === cid ? null : cid);
+    corridorPinned = true;
+    selCorridor = cid;
     onSelectionChanged();
   });
 }
@@ -1378,7 +1398,7 @@ function syncGlSelection(){
   if(!mid) return;
   if(!glPopup){
     glPopup = new maplibregl.Popup({closeButton:true, closeOnClick:false, maxWidth:'280px'});
-    glPopup.on('close', ()=>{ if(selCorridor!==null){ selCorridor = null; onSelectionChanged(); } });
+    glPopup.on('close', ()=>{ glPopup = null; });
   }
   glPopup.setLngLat(mid).setHTML(glPopupHtml(selCorridor));
   if(!glPopup.isOpen()) glPopup.addTo(glMap);
@@ -1520,7 +1540,43 @@ function renderCorridorCombo(){
   });
   activeComboIndex = -1;
 }
+function corridorExtraAtHour(cid, hour){
+  const stats = extraDelayVsBest(h=>{
+    const info = currentValueFor(cid, curDay, h);
+    return info && typeof info.delay === 'number' ? info.delay : null;
+  });
+  if(hour !== curHour){
+    const info = currentValueFor(cid, curDay, hour);
+    const delay = info && typeof info.delay === 'number' ? info.delay : null;
+    const extra = (typeof delay === 'number' && Number.isFinite(stats.bestDelay))
+      ? Math.max(0, delay - stats.bestDelay) : 0;
+    return {id: cid, extra, bestHour: stats.bestHour};
+  }
+  return {id: cid, extra: stats.extra || 0, bestHour: stats.bestHour};
+}
+
+function busiestCorridorId(){
+  if(!CORRIDORS.length) return null;
+  let best = null;
+  CORRIDORS.forEach(c=>{
+    const row = corridorExtraAtHour(c.id, curHour);
+    if(!best || row.extra > best.extra) best = row;
+  });
+  return best ? best.id : CORRIDORS[0].id;
+}
+
+function followBusiestRoad(){
+  if(corridorPinned || !CORRIDORS.length) return;
+  const id = busiestCorridorId();
+  if(id==null || id===selCorridor) return;
+  selCorridor = id;
+  const c = CORRIDORS.find(x=>x.id===id);
+  const input = document.getElementById('corridorInput');
+  if(input && document.activeElement !== input) input.value = c ? c.name : '';
+}
+
 function selectCorridor(id){
+  corridorPinned = true;
   selCorridor = id;
   const c = CORRIDORS.find(x=>x.id===id);
   document.getElementById('corridorInput').value = c ? c.name : '';
@@ -1657,6 +1713,7 @@ function renderAdvice(){
   const hsConfWrap = document.getElementById('hsConfWrap');
 
   if(selCorridor===null || !CORRIDORS.length){
+    nameEl.classList.remove('is-selected');
     nameEl.textContent = CORRIDORS.length ? 'Gurugram Traffic Predictor' : 'Loading corridors…';
     sumEl.textContent = CORRIDORS.length ? 'Find the best time to leave' : '';
     chipsEl.innerHTML = '';
@@ -1668,6 +1725,7 @@ function renderAdvice(){
   const key = selCorridor+'_'+curDay;
   const a = adviceCache[key];
   nameEl.textContent = c.name;
+  nameEl.classList.add('is-selected');
   if(!a){
     sumEl.textContent = 'Fetching advice…';
     chipsEl.innerHTML = '';
@@ -1753,7 +1811,11 @@ function renderDetail(){
       <div class="df-stat"><div class="l">Peak hour</div><div class="v">${fmtHour(a.peak_hour)}</div></div>
       <div class="df-stat"><div class="l">Best hour</div><div class="v" style="color:var(--green)">${fmtHour(a.best_hour)}</div></div>
     </div>`;
-  document.getElementById('dfClose').onclick = ()=>{ selCorridor=null; onSelectionChanged(); };
+  document.getElementById('dfClose').onclick = ()=>{
+    corridorPinned = false;
+    followBusiestRoad();
+    onSelectionChanged();
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1881,16 +1943,17 @@ async function refreshAll(){
   if(!corridorsFailed){
     await loadHealth();
     if(selCorridor===null && CORRIDORS.length){
-      // Land on the whole-city overview by default (same framing the
-      // recenter button gives you, matching the intro animation) — only an
-      // explicit ?sel=<id> deep link pins a corridor on load. This used to
-      // fall back to CORRIDORS[0] (NH-48), which forced a corridor selection
-      // — and the camera fly-to that comes with it — on every fresh load.
       const selParam = new URLSearchParams(location.search).get('sel');
       const wanted = selParam!==null ? parseInt(selParam,10) : null;
-      if(wanted!==null && CORRIDORS.some(c=>c.id===wanted)) selCorridor = wanted;
+      if(wanted!==null && CORRIDORS.some(c=>c.id===wanted)){
+        corridorPinned = true;
+        selCorridor = wanted;
+      } else {
+        followBusiestRoad();
+      }
     }
     await loadAdviceForDay(curDay);
+    if(!corridorPinned) followBusiestRoad();
     render();
   }
 }
@@ -2415,6 +2478,7 @@ document.querySelectorAll('.day-btn').forEach(btn=>{
     document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
     this.classList.add('active');
     curDay = parseInt(this.dataset.d);
+    if(!corridorPinned) followBusiestRoad();
     render();
     await loadAdviceForDay(curDay);
   };
@@ -2427,6 +2491,7 @@ document.querySelectorAll('.period-btn').forEach(btn=>{
     if(curPeriod==='day' && !hourIsDay(curHour)) curHour = 8;
     if(curPeriod==='night' && hourIsDay(curHour)) curHour = 22;
     configureTimeSlider();
+    if(!corridorPinned) followBusiestRoad();
     render();
   };
 });
