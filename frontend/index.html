@@ -117,14 +117,7 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 .banner-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 .advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
 .advice-corridor{font-family:var(--heading);font-size:clamp(16px,2.4vw,28px);font-weight:600;color:var(--cyan);line-height:1.15;letter-spacing:.01em;white-space:nowrap;overflow:hidden;max-width:100%}
-.period-toggle-wrap{display:flex;flex-direction:column;justify-content:center;gap:4px}
-.period-toggle{display:flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
-.period-btn{flex:1;font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.period-btn.active{background:var(--cyan);color:var(--void);box-shadow:0 4px 14px var(--cyan-dim)}
-/* Ranges live outside the pill now (below it), one per button, aligned under
-   their button via the matching flex:1/gap/padding split below. */
-.period-ranges{display:flex;gap:4px;padding:0 3px}
-.period-range{flex:1;text-align:center;font-family:var(--mono);font-size:9px;color:var(--sub);opacity:1;white-space:nowrap}
+.period-btn{cursor:pointer}
 .advice-summary{font-size:clamp(12px,1.4vw,15px);font-weight:500;line-height:1.35;margin-top:3px;color:var(--sub);letter-spacing:normal}
 .window-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
 .chip{font-family:var(--display);font-size:12px;font-weight:650;padding:7px 14px;border-radius:8px;border:0;display:inline-flex;align-items:center;gap:8px;letter-spacing:.01em}
@@ -138,18 +131,13 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 .hero-stats{display:flex;gap:18px;align-items:flex-end;justify-content:flex-end;margin-left:auto;flex:0 0 auto;white-space:nowrap}
 .hstat{display:flex;flex-direction:column;align-items:center;gap:6px;background:transparent;border:0;padding:0;text-align:center;min-width:84px}
 .hstat-lbl{font-family:var(--display);font-size:10px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin:0}
-.hstat-val{font-family:var(--num);font-size:22px;font-weight:500;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:10px 16px;min-width:88px}
+.hstat-val{font-family:var(--num);font-size:22px;font-weight:500;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:10px 16px;min-width:88px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;min-height:44px}
+button.hstat-val{appearance:none;-webkit-appearance:none;margin:0}
+.period-btn.active{background:var(--cyan);color:var(--void);border-color:var(--cyan)}
 .hstat-val.tick{animation:stat-tick .35s ease}
 @keyframes stat-tick{0%{transform:translateY(4px);opacity:.35}100%{transform:none;opacity:1}}
 .hstat.conf .hstat-val{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok-text)}
 .hstat.conf.low .hstat-val{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
-/* Day/Night as the hero-stats row's 4th element: no extra box/caption, just
-   the toggle (+ its two ranges below) stretched by the row's default
-   align-items to match the (now-compacted) stat cards' height; justify-content:
-   center on .period-toggle-wrap keeps the pill+ranges block centered in
-   that stretched height instead of pinned to the top. */
-#heroStats > .period-toggle-wrap{margin:0}
-#heroStats > .period-toggle-wrap .period-btn{padding:8px 18px;font-size:13px}
 
 /* WORKSPACE — fills remaining viewport height; only .panel-left scrolls internally */
 .workspace{display:flex;flex-direction:row;flex:1 1 auto;min-height:0}
@@ -360,21 +348,13 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     grid-area:stats;
     margin-left:0;
     display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:repeat(5,minmax(0,1fr));
     width:100%;
     gap:8px;
     flex:none;
     justify-content:stretch;
     white-space:normal;
   }
-  #heroStats > .period-toggle-wrap{
-    grid-column:1 / -1;
-    min-width:0;
-    flex:none;
-    width:100%;
-  }
-  .period-btn{padding:8px 10px;font-size:13px}
-  .period-range{font-size:8px;white-space:normal}
   .hstat{min-width:0;flex:none;width:auto;padding:0}
   .hstat-val{font-size:18px;padding:8px 10px;min-width:0;width:100%}
   .hstat-lbl{font-size:8px;letter-spacing:.08em}
@@ -443,15 +423,13 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <div class="advice-summary" id="adviceSummary">Find the best time to leave</div>
       </div>
       <div class="hero-stats" id="heroStats">
-        <div class="period-toggle-wrap" id="periodToggleWrap">
-          <div class="period-toggle" id="periodToggle">
-            <button class="period-btn active" data-period="day" type="button">Day</button>
-            <button class="period-btn" data-period="night" type="button">Night</button>
-          </div>
-          <div class="period-ranges" id="periodRanges">
-            <span class="period-range" id="periodRangeDay"></span>
-            <span class="period-range" id="periodRangeNight"></span>
-          </div>
+        <div class="hstat">
+          <div class="hstat-lbl" id="periodRangeDay">6 AM – 10 PM</div>
+          <button class="hstat-val period-btn active" data-period="day" type="button">Day</button>
+        </div>
+        <div class="hstat">
+          <div class="hstat-lbl" id="periodRangeNight">10 PM – 6 AM</div>
+          <button class="hstat-val period-btn" data-period="night" type="button">Night</button>
         </div>
         <div class="hstat">
           <div class="hstat-lbl">Best time</div>
@@ -1663,25 +1641,13 @@ function windowText(w){
   const wrap = w.start_hour > w.end_hour;
   return `${fmtHour(w.start_hour)}–${fmtHour(w.end_hour)}${wrap?' (overnight)':''}`;
 }
-function updatePeriodButtons(a){
-  // Buttons hold only "Day"/"Night" now; the hour ranges render as their own
-  // line below the pill (one per button, aligned under it via matching
-  // flex:1 columns) so the pill stays a plain two-word toggle.
+function updatePeriodButtons(){
+  const dayHours = periodHours('day');
+  const nightHours = periodHours('night');
   const dayRangeEl = document.getElementById('periodRangeDay');
   const nightRangeEl = document.getElementById('periodRangeNight');
-  // The day/night boundary is a fixed constant (periodHours(), mirroring
-  // backend/app.py's DAY_HOURS/NIGHT_HOURS), not something that varies by
-  // corridor -- so fall back to it whenever no advice has loaded yet
-  // (e.g. the whole-city landing view, before a corridor is selected)
-  // rather than leaving the range blank.
-  const dayHours = periodHours('day'), nightHours = periodHours('night');
-  const dayPb = a && a.day_period, nightPb = a && a.night_period;
-  const dayStart = dayPb ? dayPb.start_hour : dayHours[0];
-  const dayEnd = dayPb ? dayPb.end_hour : dayHours[dayHours.length-1];
-  const nightStart = nightPb ? nightPb.start_hour : nightHours[0];
-  const nightEnd = nightPb ? nightPb.end_hour : nightHours[nightHours.length-1];
-  dayRangeEl.textContent = `${fmtHour(dayStart)}–${fmtHourRangeEnd(dayEnd)}`;
-  nightRangeEl.textContent = `${fmtHour(nightStart)}–${fmtHourRangeEnd(nightEnd)}`;
+  if(dayRangeEl) dayRangeEl.textContent = `${fmtAmpm(dayHours[0])} – ${fmtAmpm((dayHours[dayHours.length-1] + 1) % 24)}`;
+  if(nightRangeEl) nightRangeEl.textContent = `${fmtAmpm(nightHours[0])} – ${fmtAmpm((nightHours[nightHours.length-1] + 1) % 24)}`;
 }
 function meanCityDelay(hour){
   if(!(BUNDLE && BUNDLE.grid) || !CORRIDORS.length) return null;
