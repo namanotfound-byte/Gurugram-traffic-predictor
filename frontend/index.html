@@ -114,13 +114,11 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 /* HERO / ADVICE BANNER — single compact row: title | stats | clock */
 .advice-banner{padding:10px 20px 8px;background:linear-gradient(180deg,var(--cyan-dim) 0%,rgba(0,229,255,0.04) 100%);border-bottom:1px solid var(--border);flex:0 0 auto}
 .banner-row{display:flex;align-items:center;gap:16px;min-height:52px}
-.banner-title-block{flex:0 1 auto;min-width:0;max-width:38%}
+.banner-title-block{flex:1 1 42%;min-width:0;max-width:52%}
 .banner-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto;margin-left:auto}
 .banner-ist{font-family:var(--mono);font-size:12px;color:var(--cyan)}
 .advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
-.advice-corridor{font-family:var(--heading);font-size:clamp(18px,2.4vw,28px);font-weight:600;color:var(--cyan);line-height:1.15;letter-spacing:.01em}
-.advice-corridor.is-selected{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.advice-corridor.is-selected::after{content:'Selected';font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--void);background:var(--cyan);border-radius:999px;padding:3px 8px;line-height:1}
+.advice-corridor{font-family:var(--heading);font-size:clamp(16px,2.4vw,28px);font-weight:600;color:var(--cyan);line-height:1.15;letter-spacing:.01em;white-space:nowrap;overflow:hidden;max-width:100%}
 .period-toggle-wrap{display:flex;flex-direction:column;justify-content:center;gap:4px}
 .period-toggle{display:flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
 .period-btn{flex:1;font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -1759,6 +1757,22 @@ function hoursInGrid(){
   return !!(CORRIDORS.length && BUNDLE && BUNDLE.grid);
 }
 
+function fitCorridorName(){
+  const el = document.getElementById('adviceCorridorName');
+  const box = document.getElementById('bannerTitleBlock');
+  if(!el || !box) return;
+  el.style.fontSize = '';
+  const cap = parseFloat(getComputedStyle(el).fontSize) || 28;
+  let size = cap;
+  const min = 13;
+  const maxW = box.clientWidth;
+  if(!maxW) return;
+  while(size > min && el.scrollWidth > maxW){
+    size -= 0.5;
+    el.style.fontSize = size + 'px';
+  }
+}
+
 function renderAdvice(){
   const nameEl = document.getElementById('adviceCorridorName');
   const sumEl = document.getElementById('adviceSummary');
@@ -1769,8 +1783,8 @@ function renderAdvice(){
   const hsConfWrap = document.getElementById('hsConfWrap');
 
   if(selCorridor===null || !CORRIDORS.length){
-    nameEl.classList.remove('is-selected');
     nameEl.textContent = CORRIDORS.length ? 'Gurugram Traffic Predictor' : 'Loading corridors…';
+    fitCorridorName();
     sumEl.style.display = '';
     sumEl.textContent = CORRIDORS.length ? 'Find the best time to leave' : '';
     chipsEl.innerHTML = '';
@@ -1784,7 +1798,7 @@ function renderAdvice(){
   const key = selCorridor+'_'+curDay;
   const a = adviceCache[key];
   nameEl.textContent = c.name;
-  nameEl.classList.add('is-selected');
+  fitCorridorName();
   if(!a){
     sumEl.style.display = '';
     sumEl.textContent = 'Fetching advice…';
@@ -2615,7 +2629,7 @@ document.addEventListener('keydown', function(e){
   }
 });
 
-window.addEventListener('resize', function(){ if(glMap) glMap.resize(); });
+window.addEventListener('resize', function(){ if(glMap) glMap.resize(); fitCorridorName(); });
 
 setInterval(()=>{ document.getElementById('liveTime').textContent = new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'}); }, 1000);
 
