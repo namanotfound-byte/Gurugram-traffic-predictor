@@ -274,9 +274,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{border-top-color:var(--panel)}
 .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--panel)}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--panel)}
-.gl-popup-title{font-size:13px;font-weight:700;color:var(--cyan)}
-.gl-popup-sub{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:1px;margin-bottom:9px}
-.gl-popup-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.gl-popup-title{font-family:var(--heading);font-size:15px;font-weight:600;color:var(--cyan);margin-bottom:10px;line-height:1.25}
+.gl-popup-row{display:flex;align-items:center;gap:10px;margin:0}
 .gl-popup-pct{font-family:var(--mono);font-size:19px;font-weight:600}
 .gl-popup-label{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:4px;letter-spacing:.06em;font-weight:700}
 .gl-popup-window{font-family:var(--mono);font-size:10px;color:var(--ok-text);margin-bottom:3px}
@@ -1372,26 +1371,18 @@ function glPopupHtml(cid){
   const c = CORRIDORS.find(x=>x.id===cid);
   if(!c) return '';
   const info = currentValueFor(cid, curDay, curHour);
-  const a = adviceCache[cid+'_'+curDay];
-  const pb = a ? (a.day_period || a.night_period) : null;
-  const bestWin = pb && (pb.best_windows||[])[0];
-  let html = `<div class="gl-popup-title">${c.name}</div><div class="gl-popup-sub">${c.sub}</div>`;
+  let html = `<div class="gl-popup-title">${c.name}</div>`;
   if(info){
     const col = colorFor(info.v);
     const delay = typeof info.delay === 'number'
       ? info.delay
       : (()=>{ const bc = bundleCorridor(cid); return bc ? minutesFromIndex(bc.free_flow_minutes, info.v)[1] : null; })();
     const delayTxt = typeof delay === 'number' ? `+${delay} min vs empty` : '—';
-    const pctFree = ((1 - info.v) * 100).toFixed(1);
     html += `<div class="gl-popup-row"><span class="gl-popup-pct" style="color:${col}">${delayTxt}</span>
-      <span class="gl-popup-label" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</span></div>
-      <div class="gl-popup-muted">${pctFree}% free · Vs a road with no traffic (TomTom empty-road time).</div>`;
-    if(info.prov) html += `<div style="margin-top:6px">${originBadgeHtml(info.prov)}</div>`;
-    if(typeof info.conf === 'number') html += `<div style="margin-top:6px">confidence ${Math.round(info.conf*100)}%</div>`;
+      <span class="gl-popup-label" style="background:${badgeBg(info.v)};color:${col}">${labelFor(info.v).toUpperCase()}</span></div>`;
   } else {
     html += `<div class="gl-popup-muted">Loading congestion…</div>`;
   }
-  if(bestWin) html += `<div class="gl-popup-window">&#10003; Best window: ${windowText(bestWin)}</div>`;
   return html;
 }
 
