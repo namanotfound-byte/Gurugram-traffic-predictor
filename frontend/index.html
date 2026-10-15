@@ -56,12 +56,13 @@ html[data-theme="light"] #gtp-boot .gtp-boot-loading{color:#3f6a80}
   --neu-bg:rgba(0,134,168,0.06);--neu-border:rgba(0,134,168,0.25);--neu-text:#0086a8;
   --demo-bg:rgba(109,40,217,0.08);--demo-border:rgba(109,40,217,0.35);--demo-text:#6d28d9;
 }
-html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-family:var(--display)}
+html,body{width:100%;height:100%;background:var(--void);color:var(--text);font-family:var(--display);-webkit-font-smoothing:antialiased}
 body{overflow-x:hidden;overflow-y:hidden}
 .app{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+button,input,select{transition:border-color .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease,opacity .18s ease,transform .18s ease}
 
-.theme-btn{font-family:var(--mono);font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:6px;padding:6px 10px;cursor:pointer;flex:none}
-.theme-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.theme-btn{font-family:var(--mono);font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--sub);border-radius:999px;padding:6px 10px;cursor:pointer;flex:none}
+.theme-btn:hover{border-color:var(--cyan);color:var(--cyan);transform:translateY(-1px)}
 #liveTime{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--cyan);letter-spacing:.08em;white-space:nowrap}
 
 /* GLOBAL BANNERS */
@@ -113,7 +114,7 @@ body{overflow-x:hidden;overflow-y:hidden}
 .period-toggle-wrap{display:flex;flex-direction:column;justify-content:center;gap:4px}
 .period-toggle{display:flex;gap:4px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:3px}
 .period-btn{flex:1;font-family:var(--display);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;background:transparent;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.period-btn.active{background:var(--cyan);color:var(--void)}
+.period-btn.active{background:var(--cyan);color:var(--void);box-shadow:0 4px 14px var(--cyan-dim)}
 /* Ranges live outside the pill now (below it), one per button, aligned under
    their button via the matching flex:1/gap/padding split below. */
 .period-ranges{display:flex;gap:4px;padding:0 3px}
@@ -126,8 +127,10 @@ body{overflow-x:hidden;overflow-y:hidden}
 .advice-empty{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
 .hero-stats{display:flex;gap:8px;flex:1 1 auto;flex-wrap:wrap;align-items:stretch;justify-content:center;min-width:0}
-.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:6px 12px;text-align:center}
-.hstat-val{font-family:var(--mono);font-size:16px;font-weight:600;line-height:1;color:var(--text)}
+.hstat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:7px 14px;text-align:center;min-width:72px}
+.hstat-val{font-family:var(--mono);font-size:16px;font-weight:600;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;transition:color .2s ease}
+.hstat-val.tick{animation:stat-tick .35s ease}
+@keyframes stat-tick{0%{transform:translateY(4px);opacity:.35}100%{transform:none;opacity:1}}
 .hstat-lbl{font-family:var(--mono);font-size:8px;color:var(--sub);margin-top:4px;letter-spacing:.1em;text-transform:uppercase}
 .hstat.conf{border-color:var(--ok-border);background:var(--ok-bg)}
 .hstat.conf .hstat-val{color:var(--ok-text)}
@@ -149,16 +152,17 @@ body{overflow-x:hidden;overflow-y:hidden}
 
 /* TIME BLOCK */
 .time-block{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:14px}
-.time-big{font-family:var(--mono);font-size:44px;color:var(--cyan);letter-spacing:.02em;line-height:1;text-shadow:0 0 24px var(--cyan-glow)}
+.time-big{font-family:var(--mono);font-size:44px;color:var(--cyan);letter-spacing:.02em;line-height:1;text-shadow:0 0 24px var(--cyan-glow);font-variant-numeric:tabular-nums}
 .time-desc{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.5;background:var(--cyan-dim);border-left:2px solid var(--cyan);padding:6px 8px;border-radius:0 4px 4px 0}
 
 .day-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
-.day-btn{font-family:var(--mono);font-size:9px;padding:7px 2px;text-align:center;border:1px solid var(--card-border);border-radius:4px;cursor:pointer;background:var(--card-bg);color:var(--sub);transition:all .2s;letter-spacing:.04em}
+.day-btn{font-family:var(--mono);font-size:9px;padding:7px 2px;text-align:center;border:1px solid var(--card-border);border-radius:6px;cursor:pointer;background:var(--card-bg);color:var(--sub);letter-spacing:.04em}
 .day-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .day-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);box-shadow:0 0 10px var(--cyan-dim);font-weight:600}
 
-input[type=range]{width:100%;-webkit-appearance:none;height:4px;background:linear-gradient(to right,var(--cyan) 0%,var(--cyan) var(--pct,33%),var(--cyan-dim) var(--pct,33%));border-radius:2px;outline:none;cursor:pointer;margin:12px 0 4px}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--void);border:2px solid var(--cyan);box-shadow:0 0 14px var(--cyan-glow);cursor:pointer}
+input[type=range]{width:100%;-webkit-appearance:none;height:5px;background:linear-gradient(to right,var(--cyan) 0%,var(--cyan) var(--pct,33%),var(--cyan-dim) var(--pct,33%));border-radius:999px;outline:none;cursor:pointer;margin:12px 0 4px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--void);border:2px solid var(--cyan);box-shadow:0 0 14px var(--cyan-glow);cursor:pointer;transition:transform .15s ease}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12)}
 input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--void);border:2px solid var(--cyan);cursor:pointer}
 .slider-marks{display:flex;justify-content:space-between;margin-top:4px}
 .slider-mark{font-family:var(--mono);font-size:8px;color:var(--muted)}
@@ -211,9 +215,14 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .tool-card select{width:100%;background:var(--void);border:1px solid var(--card-border);color:var(--text);padding:9px 10px;border-radius:6px;margin-bottom:8px;font-family:var(--mono);font-size:11px}
 .tool-row{display:flex;gap:8px}
 .tool-row > *{flex:1}
-.tool-btn{width:100%;background:var(--cyan-dim);border:1px solid var(--neu-border);color:var(--cyan);padding:10px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.05em}
-.tool-btn:hover{background:var(--cyan-glow)}
-.tool-btn:disabled{cursor:not-allowed;opacity:.45;background:var(--card-bg)}
+.tool-btn{width:100%;background:var(--cyan);border:1px solid var(--cyan);color:var(--void);padding:11px;border-radius:8px;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.06em;font-weight:700}
+.tool-btn:hover{filter:brightness(1.06);box-shadow:0 8px 20px var(--cyan-dim)}
+.tool-btn:disabled{cursor:wait;opacity:.65;filter:none;box-shadow:none}
+.tool-btn.needs-places{background:var(--cyan-dim);border-color:var(--neu-border);color:var(--cyan);font-weight:650}
+.place-prompt{display:none;margin:8px 0 0;padding:8px 10px;border-radius:8px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);font-family:var(--display);font-size:12px;line-height:1.4}
+.place-prompt.show{display:block;animation:stat-tick .28s ease}
+.tool-card .place-input.place-need{border-color:var(--warn-border);box-shadow:0 0 0 3px var(--warn-bg);animation:place-need .45s ease}
+@keyframes place-need{0%,100%{transform:none}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .tool-attribution{font-family:var(--mono);font-size:8px;color:var(--muted);line-height:1.4;margin-top:7px}
 .google-maps-attribution{font-family:Roboto,Arial,sans-serif;font-style:normal;font-weight:400;font-size:12px;letter-spacing:normal;white-space:nowrap;color:var(--sub)}
 .tool-result{margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.6}
@@ -248,7 +257,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .map-hud-br{position:absolute;bottom:14px;right:14px;z-index:10;text-align:right;font-family:var(--mono);font-size:8px;color:var(--muted);pointer-events:none}
 .map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--muted);z-index:12;background:var(--void);pointer-events:none}
 .map-offline-notice{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:16;display:none;align-items:center;gap:6px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);font-family:var(--mono);font-size:10px;padding:6px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.3)}
-.map-legend{position:absolute;left:14px;bottom:14px;z-index:15;display:flex;flex-direction:column;gap:5px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:var(--mono);font-size:9px;color:var(--sub);pointer-events:none}
+.map-legend{position:absolute;left:14px;bottom:58px;z-index:15;display:flex;flex-direction:column;gap:5px;background:var(--void);border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-family:var(--mono);font-size:9px;color:var(--sub);pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.18)}
 .map-legend-title{font-size:8px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:1px}
 .map-legend-row{display:flex;align-items:center;gap:7px}
 .map-legend-swatch{width:10px;height:10px;border-radius:3px;flex:none}
@@ -292,13 +301,11 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .df-close{cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 6px}
 .df-close:hover{color:var(--text)}
 
-/* FOOTER — slim, fixed height, houses the "Data & model" provenance popover */
-.footer-strip{background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-start;padding:4px 16px;flex:0 0 auto}
-.info-btn{font-family:var(--mono);font-size:9px;letter-spacing:.06em;background:transparent;border:1px solid var(--card-border);color:var(--sub);border-radius:20px;padding:5px 12px;cursor:pointer;display:flex;align-items:center}
+.info-btn{position:absolute;left:14px;bottom:14px;z-index:21;font-family:var(--mono);font-size:10px;letter-spacing:.06em;background:var(--void);border:1px solid var(--card-border);color:var(--sub);border-radius:20px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;box-shadow:0 8px 22px rgba(0,0,0,.16)}
 .info-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .info-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;margin-right:7px}
 .info-dot.off{background:var(--magenta);box-shadow:0 0 6px var(--magenta)}
-.info-popover{position:fixed;bottom:44px;left:16px;z-index:5000;width:min(340px, calc(100vw - 32px));background:var(--void);border:1px solid var(--card-border);border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,0.45);padding:14px 16px}
+.info-popover{position:absolute;left:14px;bottom:52px;z-index:22;width:min(320px, calc(100vw - 48px));background:var(--void);border:1px solid var(--card-border);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,0.45);padding:14px 16px}
 .info-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--sub);padding:5px 0;border-bottom:1px solid var(--border)}
 .info-row:last-of-type{border-bottom:none}
 .info-row b{color:var(--text);font-weight:500}
@@ -519,8 +526,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
           <select id="earliestSel" aria-label="Earliest departure"></select>
           <select id="latestSel" aria-label="Latest departure"></select>
         </div>
-        <button class="tool-btn" id="findBtn" disabled>FIND BEST DEPARTURE</button>
-        <div class="tool-attribution" id="placeAttribution">Places: OpenStreetMap via Photon fallback. Routes: TomTom.</div>
+        <button class="tool-btn needs-places" id="findBtn" type="button">FIND BEST DEPARTURE</button>
+        <div class="place-prompt" id="placePrompt" role="status"></div>
+        <div class="tool-attribution" id="placeAttribution">Places: Google Maps. Routes: TomTom.</div>
         <div id="routeResult" class="tool-result" aria-live="polite"></div>
       </div>
     </div>
@@ -540,15 +548,21 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <div class="map-legend-row"><div class="map-legend-swatch" style="background:var(--orange)"></div>Heavy</div>
         <div class="map-legend-row"><div class="map-legend-swatch" style="background:var(--magenta)"></div>Severe</div>
       </div>
+      <button class="info-btn" id="dataInfoBtn" type="button" aria-haspopup="true" aria-expanded="false">
+        <span class="info-dot" id="infoDot"></span>About
+      </button>
+      <div class="info-popover" id="dataInfoPopover" role="dialog" aria-label="About" style="display:none">
+        <div class="info-row"><span>Hour ranking</span><b id="mAccuracyPct">--</b></div>
+        <div class="info-row"><span>Label match</span><b id="mLabelPct">--</b></div>
+        <div class="info-row"><span>Skill vs average</span><b id="mSkill">--</b></div>
+        <div class="info-row"><span>Trained on</span><b id="mRows">--</b></div>
+        <div class="info-row"><span>Updated</span><b id="mAsOf">--</b></div>
+        <div class="info-row"><span>Data</span><b>TomTom</b></div>
+        <div class="info-accuracy" id="mAccuracyNote">Residual forecast checked against later live traffic, not a live sensor replay.</div>
+      </div>
       <div class="detail-float" id="detailFloat"></div>
       <div class="map-empty" id="mapEmpty" style="display:none">Waiting for corridor data…</div>
     </div>
-  </div>
-
-  <div class="footer-strip">
-    <button class="info-btn" id="dataInfoBtn" type="button" aria-haspopup="true" aria-expanded="false">
-      <span class="info-dot" id="infoDot"></span>About
-    </button>
   </div>
   <!-- First-load tutorial: spotlight + caption, blocks interaction until dismissed -->
   <div class="tutorial-overlay" id="tutorialOverlay" aria-hidden="true">
@@ -560,13 +574,6 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <div class="tutorial-dots" id="tutorialDots"></div>
       <div class="tutorial-hint">Click anywhere to continue · click escape to skip tutorial</div>
     </div>
-  </div>
-
-  <div class="info-popover" id="dataInfoPopover" role="dialog" aria-label="About" style="display:none">
-    <div class="info-row"><span>Accuracy</span><b id="mAccuracyPct">--</b></div>
-    <div class="info-row"><span>Trained on</span><b id="mRows">--</b></div>
-    <div class="info-row"><span>Data</span><b>TomTom</b></div>
-    <div class="info-accuracy">How often the model ranks hours in the right order, checked against later real traffic.</div>
   </div>
 </div>
 
@@ -671,6 +678,21 @@ function visualFrac(v){ return Math.max(0, Math.min(1, v / VISUAL_MAX)); }
 // ─────────────────────────────────────────────────────────────────────────
 function rangeHours(a,b){ const out=[]; for(let h=a;h<b;h++) out.push(h); return out; }
 function periodHours(period){ return period==='day' ? rangeHours(6,22) : [...rangeHours(22,24), ...rangeHours(0,6)]; }
+function hourIsDay(hour){ return hour>=6 && hour<22; }
+function syncPeriodToHour(hour){
+  const next = hourIsDay(hour) ? 'day' : 'night';
+  if(next===curPeriod) return;
+  curPeriod = next;
+  document.querySelectorAll('.period-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.period===next));
+}
+function setHeroText(el, text){
+  if(!el) return;
+  if(el.textContent===text) return;
+  el.textContent = text;
+  el.classList.remove('tick');
+  void el.offsetWidth;
+  el.classList.add('tick');
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // MOCK FIXTURES (?mock=1)
@@ -1534,43 +1556,60 @@ function updatePeriodButtons(a){
   dayRangeEl.textContent = `${fmtHour(dayStart)}–${fmtHourRangeEnd(dayEnd)}`;
   nightRangeEl.textContent = `${fmtHour(nightStart)}–${fmtHourRangeEnd(nightEnd)}`;
 }
-function fillCitywideHeroStats(hsBest, hsSave, hsConf, hsConfWrap){
+function meanCityDelay(hour){
+  if(!(BUNDLE && BUNDLE.grid) || !CORRIDORS.length) return null;
+  let delaySum = 0, n = 0, confSum = 0, confN = 0;
+  CORRIDORS.forEach(c=>{
+    try{
+      const cell = bundleCell(c.id, curDay, hour);
+      if(!cell || typeof cell.delay_minutes !== 'number') return;
+      delaySum += cell.delay_minutes;
+      n++;
+      if(typeof cell.confidence === 'number'){ confSum += cell.confidence; confN++; }
+    }catch(e){}
+  });
+  if(!n) return null;
+  return {delay: delaySum / n, conf: confN ? confSum / confN : null};
+}
+
+function extraDelayVsBest(getDelay){
   const hours = periodHours(curPeriod);
-  if(!hours.length || !CORRIDORS.length || !(BUNDLE && BUNDLE.grid)){
-    hsBest.textContent = '--'; hsSave.textContent = '--'; hsConf.textContent = '--';
+  let bestHour = hours[0], bestDelay = Infinity;
+  hours.forEach(h=>{
+    const delay = getDelay(h);
+    if(typeof delay !== 'number' || !Number.isFinite(delay)) return;
+    if(delay < bestDelay){ bestDelay = delay; bestHour = h; }
+  });
+  const nowDelay = getDelay(curHour);
+  const extra = (typeof nowDelay === 'number' && Number.isFinite(bestDelay))
+    ? Math.max(0, nowDelay - bestDelay)
+    : null;
+  return {bestHour, bestDelay, extra};
+}
+
+function fillCitywideHeroStats(hsBest, hsSave, hsConf, hsConfWrap){
+  if(!hoursInGrid()){
+    setHeroText(hsBest,'--'); setHeroText(hsSave,'--'); setHeroText(hsConf,'--');
     hsConfWrap.classList.remove('low');
     return;
   }
-  let bestHour = hours[0], bestDelay = Infinity, worstDelay = -Infinity;
-  hours.forEach(h=>{
-    let delaySum = 0, n = 0;
-    CORRIDORS.forEach(c=>{
-      try{
-        const cell = bundleCell(c.id, curDay, h);
-        if(!cell || typeof cell.delay_minutes !== 'number') return;
-        delaySum += cell.delay_minutes;
-        n++;
-      }catch(e){}
-    });
-    if(!n) return;
-    const meanDelay = delaySum / n;
-    if(meanDelay < bestDelay){ bestDelay = meanDelay; bestHour = h; }
-    if(meanDelay > worstDelay) worstDelay = meanDelay;
+  const stats = extraDelayVsBest(h=>{
+    const row = meanCityDelay(h);
+    return row ? row.delay : null;
   });
-  let confSum = 0, confN = 0;
-  CORRIDORS.forEach(c=>{
-    try{
-      const cell = bundleCell(c.id, curDay, curHour);
-      if(cell && typeof cell.confidence === 'number'){ confSum += cell.confidence; confN++; }
-    }catch(e){}
-  });
-  const saveMin = (Number.isFinite(bestDelay) && Number.isFinite(worstDelay)) ? (worstDelay - bestDelay) : null;
-  const conf = confN ? (confSum / confN) : null;
-  hsBest.textContent = Number.isFinite(bestDelay) ? fmtHour(bestHour) : '--';
-  hsSave.textContent = (typeof saveMin === 'number') ? `${Math.round(saveMin)} min` : '--';
-  hsSave.title = 'Across all 13 corridors, extra minutes you avoid vs the worst hour in this period.';
-  hsConf.textContent = typeof conf === 'number' ? Math.round(conf * 100) + '%' : '--';
+  const now = meanCityDelay(curHour);
+  setHeroText(hsBest, Number.isFinite(stats.bestDelay) ? fmtHour(stats.bestHour) : '--');
+  setHeroText(hsSave, typeof stats.extra === 'number' ? `${Math.round(stats.extra)} min` : '--');
+  hsSave.title = stats.extra
+    ? `Leaving at ${fmtHour(curHour)} costs about ${Math.round(stats.extra)} extra minutes versus ${fmtHour(stats.bestHour)}, the quietest hour in this period.`
+    : `You are already on the quietest hour in this period (${fmtHour(stats.bestHour)}).`;
+  const conf = now ? now.conf : null;
+  setHeroText(hsConf, typeof conf === 'number' ? Math.round(conf * 100) + '%' : '--');
   hsConfWrap.classList.toggle('low', isDegraded(conf));
+}
+
+function hoursInGrid(){
+  return !!(CORRIDORS.length && BUNDLE && BUNDLE.grid);
 }
 
 function renderAdvice(){
@@ -1630,12 +1669,18 @@ function renderAdvice(){
     chipsEl.innerHTML = '<span class="advice-empty">No strong pattern detected for this period.</span>';
   }
 
-  hsBest.textContent = typeof pb.best_hour === 'number' ? fmtHour(pb.best_hour) : '--';
-  const saveMin = pb.saving_minutes, savePct = pb.saving_pct;
-  hsSave.textContent = (typeof saveMin === 'number') ? `${Math.round(saveMin)} min` : '--';
-  hsSave.title = (typeof savePct === 'number') ? `${Math.round(savePct)}% shorter than the worst hour` : '';
+  const stats = extraDelayVsBest(h=>{
+    const info = currentValueFor(selCorridor, curDay, h);
+    return info && typeof info.delay === 'number' ? info.delay : null;
+  });
+  const bestHour = typeof stats.bestHour === 'number' ? stats.bestHour : pb.best_hour;
+  setHeroText(hsBest, typeof bestHour === 'number' ? fmtHour(bestHour) : '--');
+  setHeroText(hsSave, typeof stats.extra === 'number' ? `${Math.round(stats.extra)} min` : '--');
+  hsSave.title = stats.extra
+    ? `Leaving at ${fmtHour(curHour)} costs about ${Math.round(stats.extra)} extra minutes versus ${fmtHour(bestHour)}.`
+    : (typeof bestHour === 'number' ? `Already at the quietest hour (${fmtHour(bestHour)}).` : '');
   const confPct = typeof conf === 'number' ? Math.round(conf*100) : null;
-  hsConf.textContent = confPct===null ? '--' : confPct+'%';
+  setHeroText(hsConf, confPct===null ? '--' : confPct+'%');
   hsConfWrap.classList.toggle('low', isDegraded(conf));
 }
 
@@ -1679,13 +1724,27 @@ function renderDetail(){
 // ─────────────────────────────────────────────────────────────────────────
 function renderInfoPopover(){
   const accBlock = (BUNDLE_MODE && BUNDLE && BUNDLE.accuracy) || (health && health.accuracy) || null;
+  const forecast = (BUNDLE_MODE && BUNDLE && BUNDLE.forecast) || (health && health.forecast) || null;
   const accRaw = accBlock && accBlock.hour_ranking_concordance_pct;
+  const labelRaw = accBlock && accBlock.label_agreement_pct;
   const accPct = typeof accRaw === 'number' ? Math.round(accRaw) : null;
+  const labelPct = typeof labelRaw === 'number' ? Math.round(labelRaw) : null;
   document.getElementById('mAccuracyPct').textContent = accPct !== null ? accPct + '%' : '--';
+  document.getElementById('mLabelPct').textContent = labelPct !== null ? labelPct + '%' : '--';
+  const skill = forecast && typeof forecast.skill_score === 'number' ? forecast.skill_score : null;
+  document.getElementById('mSkill').textContent = skill !== null ? skill.toFixed(2) : '--';
   const rows = health ? health.trained_rows : (BUNDLE_MODE && BUNDLE ? BUNDLE.trained_rows : null);
   document.getElementById('mRows').textContent = rows != null
     ? rows.toLocaleString('en-IN') + ' readings'
     : '--';
+  const asOf = accBlock && accBlock.as_of;
+  document.getElementById('mAsOf').textContent = asOf || (BUNDLE && BUNDLE.generated_at ? String(BUNDLE.generated_at).slice(0,10) : '--');
+  const note = document.getElementById('mAccuracyNote');
+  if(note){
+    note.textContent = (accBlock && accBlock.note)
+      ? `Hour ranking ${accPct}% · labels ${labelPct}%. Residual forecast, not a live sensor replay.`
+      : 'Residual forecast checked against later live traffic, not a live sensor replay.';
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1843,8 +1902,21 @@ function assignPlace(kind, value){ if(kind==='from') fromPlace=value; else toPla
 
 function updateFindButton(){
   const btn = document.getElementById('findBtn');
-  btn.disabled = tripLoading || !fromPlace || !toPlace;
+  btn.disabled = tripLoading;
+  btn.classList.toggle('needs-places', !tripLoading && (!fromPlace || !toPlace));
   if(!tripLoading) btn.textContent = 'FIND BEST DEPARTURE';
+}
+
+function promptMissingPlace(kind){
+  const input = document.getElementById(placeUi[kind].inputId);
+  const prompt = document.getElementById('placePrompt');
+  prompt.textContent = kind==='to'
+    ? 'Please choose a destination first.'
+    : 'Please choose a starting place first.';
+  prompt.classList.add('show');
+  input.classList.add('place-need');
+  input.focus();
+  setTimeout(()=>input.classList.remove('place-need'), 700);
 }
 
 function closePlaceList(kind){
@@ -1926,6 +1998,7 @@ async function choosePlace(kind, place){
     input.value = selected.label;
     input.classList.add('place-selected');
     setPlaceStatus(kind,'selected');
+    document.getElementById('placePrompt').classList.remove('show');
     state.sessionToken=newPlaceSessionToken();
     document.getElementById('routeResult').textContent='';
     updateFindButton();
@@ -1993,9 +2066,9 @@ async function requestPlaceSuggestions(kind, query){
     setPlaceStatus(kind,'');
     const attribution=document.getElementById('placeAttribution');
     if(data.provider==='google_places'){
-      attribution.innerHTML='Places: <span class="google-maps-attribution" translate="no">Google Maps</span>. Routes: TomTom.';
+      attribution.innerHTML='Places: Google Maps. Routes: TomTom.';
     }else{
-      attribution.textContent='Places: OpenStreetMap via Photon fallback. Routes: TomTom.';
+      attribution.textContent='Places: Google Maps fallback via OpenStreetMap. Routes: TomTom.';
     }
     renderPlaceSuggestions(kind,data.results||[]);
   }catch(error){
@@ -2139,7 +2212,13 @@ async function findBestDeparture(){
   const result = document.getElementById('routeResult');
   const earliest = parseInt(document.getElementById('earliestSel').value);
   const latest = parseInt(document.getElementById('latestSel').value);
-  if(!fromPlace||!toPlace){ result.textContent='Choose a suggestion for both From and To.'; return; }
+  if(tripLoading) return;
+  if(!fromPlace || !toPlace){
+    const missing = !toPlace ? 'to' : 'from';
+    promptMissingPlace(missing);
+    return;
+  }
+  document.getElementById('placePrompt').classList.remove('show');
   if(haversineMeters([fromPlace.lon,fromPlace.lat],[toPlace.lon,toPlace.lat])<75){
     result.textContent='From and To are effectively the same place.'; return;
   }
@@ -2288,6 +2367,7 @@ document.getElementById('themeBtn').onclick = function(){
 document.getElementById('timeSlider').oninput = function(){
   curHour = parseInt(this.value);
   document.getElementById('timeDisp').textContent = fmtHour(curHour);
+  syncPeriodToHour(curHour);
   updateSliderTrack();
   render();
   maybeEnrichWithPredict();
@@ -2307,7 +2387,12 @@ document.querySelectorAll('.period-btn').forEach(btn=>{
   btn.onclick = function(){
     curPeriod = this.dataset.period;
     document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('active', b===this));
-    renderAdvice();
+    if(curPeriod==='day' && !hourIsDay(curHour)) curHour = 8;
+    if(curPeriod==='night' && hourIsDay(curHour)) curHour = 22;
+    document.getElementById('timeSlider').value = curHour;
+    document.getElementById('timeDisp').textContent = fmtHour(curHour);
+    updateSliderTrack();
+    render();
   };
 });
 
@@ -2649,6 +2734,7 @@ function showTutorial(){
     if(loaded){ BUNDLE = loaded; BUNDLE_MODE = true; }
   }
   populateHourSelects();
+  updateFindButton();
   const hourParam = new URLSearchParams(location.search).get('hour');
   if(hourParam!==null){
     const h = parseInt(hourParam,10);
