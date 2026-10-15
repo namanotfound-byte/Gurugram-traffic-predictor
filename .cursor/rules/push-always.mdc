@@ -1,0 +1,14 @@
+---
+description: Commit finished work and push to origin without waiting to be asked.
+alwaysApply: true
+---
+
+# Push always
+
+When you finish a change in this repo, commit the relevant files and `git push origin HEAD`. Do not wait for “push” or “commit”.
+
+- Never force-push.
+- Never skip hooks.
+- Do not commit secrets, `.env`, `.claude/`, or unsolicited docs (`PROJECT_DESCRIPTION.*`, `START_HERE.md`).
+- If the working tree is clean, do not create an empty commit.
+- If push is rejected because `origin/main` moved (collector commits), pull/rebase then push again. `frontend/data/bundle.json` is regenerated daily and is safe to discard with `git checkout -- frontend/data/bundle.json` if it blocks the pull.
