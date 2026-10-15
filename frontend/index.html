@@ -130,10 +130,13 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 .period-ranges{display:flex;gap:4px;padding:0 3px}
 .period-range{flex:1;text-align:center;font-family:var(--mono);font-size:9px;color:var(--sub);opacity:1;white-space:nowrap}
 .advice-summary{font-size:clamp(12px,1.4vw,15px);font-weight:500;line-height:1.35;margin-top:3px;color:var(--sub);letter-spacing:normal}
-.window-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-.chip{font-family:var(--mono);font-size:10px;padding:6px 11px;border-radius:6px;border:1px solid;display:flex;align-items:center;gap:6px}
-.chip.best{border-color:var(--ok-border);background:var(--ok-bg);color:var(--ok-text)}
-.chip.worst{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
+.window-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.chip{font-family:var(--display);font-size:12px;font-weight:650;padding:7px 14px;border-radius:8px;border:0;display:inline-flex;align-items:center;gap:8px;letter-spacing:.01em}
+.chip .chip-k{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.92}
+.chip.best{background:var(--green);color:#04140c}
+.chip.worst{background:#e03131;color:#fff}
+:root[data-theme="light"] .chip.best{color:#fff}
+:root[data-theme="light"] .chip.worst{color:#fff}
 .advice-empty{font-family:var(--mono);font-size:11px;color:var(--muted)}
 
 .hero-stats{display:flex;gap:18px;flex:1 1 auto;flex-wrap:wrap;align-items:flex-end;justify-content:center;min-width:0}
@@ -1768,8 +1771,11 @@ function renderAdvice(){
   if(selCorridor===null || !CORRIDORS.length){
     nameEl.classList.remove('is-selected');
     nameEl.textContent = CORRIDORS.length ? 'Gurugram Traffic Predictor' : 'Loading corridors…';
+    sumEl.style.display = '';
     sumEl.textContent = CORRIDORS.length ? 'Find the best time to leave' : '';
     chipsEl.innerHTML = '';
+    const hideBadge = document.getElementById('adviceOriginBadge');
+    if(hideBadge) hideBadge.innerHTML = '';
     fillCitywideHeroStats(hsBest, hsSave, hsConf, hsConfWrap);
     updatePeriodButtons(null);
     return;
@@ -1780,6 +1786,7 @@ function renderAdvice(){
   nameEl.textContent = c.name;
   nameEl.classList.add('is-selected');
   if(!a){
+    sumEl.style.display = '';
     sumEl.textContent = 'Fetching advice…';
     chipsEl.innerHTML = '';
     hsBest.textContent = '--'; hsSave.textContent = '--'; hsConf.textContent = '--';
@@ -1792,27 +1799,22 @@ function renderAdvice(){
   const cellInfo = currentValueFor(selCorridor, curDay, curHour);
   const conf = (cellInfo && typeof cellInfo.conf === 'number') ? cellInfo.conf : null;
 
-  sumEl.textContent = pb.summary || a.summary || '';
-  sumEl.classList.toggle('degraded', isDegraded(conf));
-  const curOrigin = (a.profile_origins && a.profile_origins[curHour]) || null;
-  let badgeEl = document.getElementById('adviceOriginBadge');
-  if(!badgeEl){
-    badgeEl = document.createElement('div');
-    badgeEl.id = 'adviceOriginBadge';
-    badgeEl.style.marginTop = '8px';
-    sumEl.parentNode.insertBefore(badgeEl, sumEl.nextSibling);
-  }
-  badgeEl.innerHTML = curOrigin ? originBadgeHtml(curOrigin) : '';
+  sumEl.textContent = '';
+  sumEl.style.display = 'none';
+  const badgeEl = document.getElementById('adviceOriginBadge');
+  if(badgeEl) badgeEl.innerHTML = '';
 
+  const bestW = (pb.best_windows||[])[0];
+  const worstW = (pb.worst_windows||[])[0];
   chipsEl.innerHTML = '';
-  (pb.best_windows||[]).forEach(w=>{
-    chipsEl.innerHTML += `<span class="chip best">✓ BEST ${windowText(w)} — ${w.text||w.label}</span>`;
-  });
-  (pb.worst_windows||[]).forEach(w=>{
-    chipsEl.innerHTML += `<span class="chip worst">✕ AVOID ${windowText(w)} — ${w.text||w.label}</span>`;
-  });
-  if(!(pb.best_windows||[]).length && !(pb.worst_windows||[]).length){
-    chipsEl.innerHTML = '<span class="advice-empty">No strong pattern detected for this period.</span>';
+  if(bestW){
+    chipsEl.innerHTML += `<span class="chip best"><span class="chip-k">Best time</span>${windowText(bestW)}</span>`;
+  }
+  if(worstW){
+    chipsEl.innerHTML += `<span class="chip worst"><span class="chip-k">Avoid</span>${windowText(worstW)}</span>`;
+  }
+  if(!bestW && !worstW){
+    chipsEl.innerHTML = '<span class="advice-empty">No strong pattern for this period.</span>';
   }
 
   const saveLbl = document.getElementById('hsSaveLbl');
