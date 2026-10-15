@@ -180,7 +180,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .combo input{width:100%;background:var(--void);border:1px solid var(--card-border);color:var(--text);padding:12px 13px;border-radius:8px;font-family:var(--display);font-size:14px;font-weight:500}
 .combo input:focus{outline:none;border-color:var(--cyan)}
 .combo-list{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow-y:auto;background:var(--panel);border:1px solid var(--card-border);border-radius:8px;box-shadow:0 24px 50px rgba(0,0,0,0.4);z-index:600}
-.combo-opt{display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border)}
+.combo-opt{display:flex;align-items:center;gap:9px;padding:14px 14px;cursor:pointer;font-size:14px;min-height:48px;border-bottom:1px solid var(--border)}
 .combo-opt:last-child{border-bottom:none}
 .combo-opt:hover,.combo-opt.active{background:var(--cyan-dim)}
 .combo-opt.sel{background:var(--cyan-dim)}
@@ -1112,7 +1112,7 @@ function drawMap(){
     const [x1,y1] = proj(c.start[0], c.start[1]);
     const [x2,y2] = proj(c.end[0], c.end[1]);
     const isSel = selCorridor === c.id;
-    const weight = c.road_class==='highway'?7:c.road_class==='expressway'?6:4;
+    const weight = c.road_class==='highway'?10:c.road_class==='expressway'?9:7;
 
     const g = document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('class','corridor-line');
@@ -1120,18 +1120,24 @@ function drawMap(){
 
     const glow = document.createElementNS('http://www.w3.org/2000/svg','line');
     glow.setAttribute('x1',x1); glow.setAttribute('y1',y1); glow.setAttribute('x2',x2); glow.setAttribute('y2',y2);
-    glow.setAttribute('stroke', col); glow.setAttribute('stroke-width', weight+10);
+    glow.setAttribute('stroke', col); glow.setAttribute('stroke-width', weight+16);
     glow.setAttribute('stroke-linecap','round'); glow.setAttribute('opacity', isSel?0.28:0.12);
     glow.setAttribute('class','corridor-line-glow');
     if(!info) glow.setAttribute('stroke-dasharray','2 6');
 
     const line = document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1',x1); line.setAttribute('y1',y1); line.setAttribute('x2',x2); line.setAttribute('y2',y2);
-    line.setAttribute('stroke', col); line.setAttribute('stroke-width', isSel?weight+2:weight);
+    line.setAttribute('stroke', col); line.setAttribute('stroke-width', isSel?weight+3:weight);
     line.setAttribute('stroke-linecap','round'); line.setAttribute('opacity', isSel?1:0.85);
     if(!info) line.setAttribute('stroke-dasharray','4 5');
-    line.style.cursor='pointer';
-    line.addEventListener('click', ()=>{ corridorPinned = true; selCorridor = c.id; onSelectionChanged(); });
+    line.style.pointerEvents='none';
+
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hit.setAttribute('x1',x1); hit.setAttribute('y1',y1); hit.setAttribute('x2',x2); hit.setAttribute('y2',y2);
+    hit.setAttribute('stroke', 'transparent'); hit.setAttribute('stroke-width', 28);
+    hit.setAttribute('stroke-linecap','round');
+    hit.style.cursor='pointer';
+    hit.addEventListener('click', ()=>{ corridorPinned = true; selCorridor = c.id; onSelectionChanged(); });
 
     const midx=(x1+x2)/2, midy=(y1+y2)/2;
     const text = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -1139,9 +1145,11 @@ function drawMap(){
     text.setAttribute('class','corridor-label');
     text.setAttribute('fill', col);
     text.setAttribute('text-anchor','middle');
+    text.style.cursor='pointer';
     text.textContent = c.name + (info ? ' · ' + labelFor(info.v) : ' · —');
+    text.addEventListener('click', ()=>{ corridorPinned = true; selCorridor = c.id; onSelectionChanged(); });
 
-    g.appendChild(glow); g.appendChild(line); g.appendChild(text);
+    g.appendChild(glow); g.appendChild(line); g.appendChild(hit); g.appendChild(text);
     svg.appendChild(g);
   });
 }
@@ -1161,9 +1169,17 @@ function glLineColorExpr(){
   ];
 }
 const glSelectedExpr = ['boolean', ['feature-state','selected'], false];
-function glBaseWidthExpr(){ return ['match', ['get','road_class'], 'highway', 6, 'expressway', 5.5, 4]; }
-function glLineWidthExpr(){ return ['case', glSelectedExpr, ['+', glBaseWidthExpr(), 2.5], glBaseWidthExpr()]; }
-function glGlowWidthExpr(){ return ['+', glBaseWidthExpr(), 14]; }
+function glBaseWidthExpr(){ return ['match', ['get','road_class'], 'highway', 9, 'expressway', 8, 6.5]; }
+function glLineWidthExpr(){ return ['case', glSelectedExpr, ['+', glBaseWidthExpr(), 3.5], glBaseWidthExpr()]; }
+function glGlowWidthExpr(){ return ['+', glBaseWidthExpr(), 18]; }
+function glHitWidthExpr(){
+  return ['interpolate', ['linear'], ['zoom'],
+    9, 34,
+    11, 26,
+    13, 20,
+    15, 16
+  ];
+}
 
 function fallbackToSchematic(reason){
   if(glMapFailed) return;
@@ -1199,6 +1215,12 @@ async function ensureCorridorGeoJSON(){
 async function setupCorridorLayers(opts){
   opts = opts || {};
   await ensureCorridorGeoJSON();
+  if(glMap.getSource('corridors')){
+    glMap.getSource('corridors').setData(corridorGeoJSON);
+    attachGlEventListenersOnce();
+    if(opts.fit) recenterMap(0);
+    return;
+  }
   glMap.addSource('corridors', {type:'geojson', data: corridorGeoJSON, promoteId: 'corridor_id'});
 
   glMap.addLayer({
@@ -1218,6 +1240,15 @@ async function setupCorridorLayers(opts){
       'line-color': glLineColorExpr(),
       'line-width': glLineWidthExpr(),
       'line-opacity': ['case', glSelectedExpr, 1, 0.88]
+    }
+  });
+  glMap.addLayer({
+    id: 'corridor-hit', type: 'line', source: 'corridors',
+    layout: {'line-cap':'round','line-join':'round'},
+    paint: {
+      'line-color': '#000000',
+      'line-width': glHitWidthExpr(),
+      'line-opacity': 0.01
     }
   });
 
@@ -1273,11 +1304,12 @@ function showTripOnMap(geometry){
 function attachGlEventListenersOnce(){
   if(glListenersAttached) return;
   glListenersAttached = true;
-  glMap.on('mouseenter', 'corridor-line', ()=>{ glMap.getCanvas().style.cursor = 'pointer'; });
-  glMap.on('mouseleave', 'corridor-line', ()=>{ glMap.getCanvas().style.cursor = ''; });
-  glMap.on('click', 'corridor-line', (e)=>{
+  glMap.on('mouseenter', 'corridor-hit', ()=>{ glMap.getCanvas().style.cursor = 'pointer'; });
+  glMap.on('mouseleave', 'corridor-hit', ()=>{ glMap.getCanvas().style.cursor = ''; });
+  glMap.on('click', 'corridor-hit', (e)=>{
     if(!e.features.length) return;
-    const cid = e.features[0].properties.corridor_id;
+    const cid = parseInt(e.features[0].properties.corridor_id, 10);
+    if(!Number.isFinite(cid)) return;
     corridorPinned = true;
     selCorridor = cid;
     onSelectionChanged();
