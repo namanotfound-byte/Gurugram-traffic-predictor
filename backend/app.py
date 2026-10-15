@@ -165,7 +165,7 @@ def load_free_flow_minutes():
         if not os.path.exists(path):
             continue
         try:
-            df = pd.read_csv(path)
+            df = pd.read_csv(path, low_memory=False)
         except Exception as e:
             print(f"[app] could not read {path}: {e}")
             continue
@@ -228,7 +228,7 @@ def load_measured_grid():
 
     if os.path.exists(OBSERVED_CSV):
         try:
-            df = pd.read_csv(OBSERVED_CSV)
+            df = pd.read_csv(OBSERVED_CSV, low_memory=False)
             for _, row in df.iterrows():
                 cid, d, h = int(row["corridor_id"]), int(row["day_of_week"]), int(row["hour"])
                 measured[(cid, d, h)] = {
@@ -265,7 +265,7 @@ def load_observed_cell_stats():
     if not os.path.exists(OBSERVED_CSV):
         return stats
     try:
-        df = pd.read_csv(OBSERVED_CSV)
+        df = pd.read_csv(OBSERVED_CSV, low_memory=False)
         if "route_stable" in df.columns:
             df = df[df["route_stable"].astype(bool)]
         if df.empty:
@@ -425,7 +425,7 @@ def load_observed_for_lags():
     if not os.path.exists(OBSERVED_CSV):
         return pd.DataFrame()
     try:
-        df = pd.read_csv(OBSERVED_CSV)
+        df = pd.read_csv(OBSERVED_CSV, low_memory=False)
     except Exception as e:
         print(f"[app] could not read {OBSERVED_CSV} for lag lookup: {e}")
         return pd.DataFrame()

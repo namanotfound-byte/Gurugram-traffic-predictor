@@ -298,7 +298,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .info-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .info-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;margin-right:7px}
 .info-dot.off{background:var(--magenta);box-shadow:0 0 6px var(--magenta)}
-.info-popover{position:fixed;bottom:44px;left:16px;z-index:900;width:min(340px, calc(100vw - 32px));background:var(--panel);border:1px solid var(--card-border);border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,0.45);padding:14px 16px}
+.info-popover{position:fixed;bottom:44px;left:16px;z-index:5000;width:min(340px, calc(100vw - 32px));background:var(--void);border:1px solid var(--card-border);border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,0.45);padding:14px 16px}
 .info-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--sub);padding:5px 0;border-bottom:1px solid var(--border)}
 .info-row:last-of-type{border-bottom:none}
 .info-row b{color:var(--text);font-weight:500}
@@ -858,7 +858,7 @@ function bundleAdvice(cid, day){ return BUNDLE.advice.find(a=>a.corridor_id===ci
 function bundleFetch(path, params){
   const p = params || {};
   if(path==='/health') return {status:'ok', model_version: BUNDLE.model_version, provenance: BUNDLE.provenance,
-    corridors: BUNDLE.corridors.length, trained_rows: BUNDLE.trained_rows};
+    corridors: BUNDLE.corridors.length, trained_rows: BUNDLE.trained_rows, accuracy: BUNDLE.accuracy};
   if(path==='/corridors') return {corridors: BUNDLE.corridors};
   if(path==='/advice'){
     const cid=+p.corridor, day=+p.day;
@@ -1534,6 +1534,45 @@ function updatePeriodButtons(a){
   dayRangeEl.textContent = `${fmtHour(dayStart)}–${fmtHourRangeEnd(dayEnd)}`;
   nightRangeEl.textContent = `${fmtHour(nightStart)}–${fmtHourRangeEnd(nightEnd)}`;
 }
+function fillCitywideHeroStats(hsBest, hsSave, hsConf, hsConfWrap){
+  const hours = periodHours(curPeriod);
+  if(!hours.length || !CORRIDORS.length || !(BUNDLE && BUNDLE.grid)){
+    hsBest.textContent = '--'; hsSave.textContent = '--'; hsConf.textContent = '--';
+    hsConfWrap.classList.remove('low');
+    return;
+  }
+  let bestHour = hours[0], bestDelay = Infinity, worstDelay = -Infinity;
+  hours.forEach(h=>{
+    let delaySum = 0, n = 0;
+    CORRIDORS.forEach(c=>{
+      try{
+        const cell = bundleCell(c.id, curDay, h);
+        if(!cell || typeof cell.delay_minutes !== 'number') return;
+        delaySum += cell.delay_minutes;
+        n++;
+      }catch(e){}
+    });
+    if(!n) return;
+    const meanDelay = delaySum / n;
+    if(meanDelay < bestDelay){ bestDelay = meanDelay; bestHour = h; }
+    if(meanDelay > worstDelay) worstDelay = meanDelay;
+  });
+  let confSum = 0, confN = 0;
+  CORRIDORS.forEach(c=>{
+    try{
+      const cell = bundleCell(c.id, curDay, curHour);
+      if(cell && typeof cell.confidence === 'number'){ confSum += cell.confidence; confN++; }
+    }catch(e){}
+  });
+  const saveMin = (Number.isFinite(bestDelay) && Number.isFinite(worstDelay)) ? (worstDelay - bestDelay) : null;
+  const conf = confN ? (confSum / confN) : null;
+  hsBest.textContent = Number.isFinite(bestDelay) ? fmtHour(bestHour) : '--';
+  hsSave.textContent = (typeof saveMin === 'number') ? `${Math.round(saveMin)} min` : '--';
+  hsSave.title = 'Across all 13 corridors, extra minutes you avoid vs the worst hour in this period.';
+  hsConf.textContent = typeof conf === 'number' ? Math.round(conf * 100) + '%' : '--';
+  hsConfWrap.classList.toggle('low', isDegraded(conf));
+}
+
 function renderAdvice(){
   const nameEl = document.getElementById('adviceCorridorName');
   const sumEl = document.getElementById('adviceSummary');
@@ -1547,8 +1586,7 @@ function renderAdvice(){
     nameEl.textContent = CORRIDORS.length ? 'Gurugram Traffic Predictor' : 'Loading corridors…';
     sumEl.textContent = CORRIDORS.length ? 'Find the best time to leave' : '';
     chipsEl.innerHTML = '';
-    hsBest.textContent = '--'; hsSave.textContent = '--'; hsConf.textContent = '--';
-    hsConfWrap.classList.remove('low');
+    fillCitywideHeroStats(hsBest, hsSave, hsConf, hsConfWrap);
     updatePeriodButtons(null);
     return;
   }
@@ -2394,7 +2432,12 @@ function tutorialVisible(){
 
 function shouldShowTutorial(){
   if(MOCK) return false;
-  if(new URLSearchParams(location.search).has('tutorial')) return true;
+  const raw = new URLSearchParams(location.search).get('tutorial');
+  if(raw !== null){
+    const value = String(raw).trim().toLowerCase();
+    if(value === '0' || value === 'false' || value === 'no') return false;
+    return true;
+  }
   try{ return !localStorage.getItem(TUTORIAL_KEY); }catch(e){ return false; }
 }
 

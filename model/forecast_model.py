@@ -350,7 +350,7 @@ def load_bootstrap_raw_stable():
 def load_observed_raw():
     if not os.path.exists(OBSERVED_FILE):
         return pd.DataFrame()
-    df = pd.read_csv(OBSERVED_FILE)
+    df = pd.read_csv(OBSERVED_FILE, low_memory=False)
     if df.empty:
         return df
     df["collected_at"] = pd.to_datetime(df["collected_at"])
