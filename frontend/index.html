@@ -445,7 +445,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
           </div>
         </div>
         <div class="hstat"><div class="hstat-val" id="hsBest">--</div><div class="hstat-lbl">Best time</div></div>
-        <div class="hstat"><div class="hstat-val" id="hsSave">--</div><div class="hstat-lbl">You save</div></div>
+        <div class="hstat"><div class="hstat-val" id="hsSave">--</div><div class="hstat-lbl" id="hsSaveLbl">You save</div></div>
         <div class="hstat conf" id="hsConfWrap"><div class="hstat-val" id="hsConf">--</div><div class="hstat-lbl">Confidence</div></div>
       </div>
       <div class="banner-controls">
@@ -473,11 +473,11 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
             <button class="day-btn" data-d="5">SAT</button>
             <button class="day-btn" data-d="6">SUN</button>
           </div>
-          <input type="range" id="timeSlider" min="0" max="23" value="8" aria-label="Departure hour">
-          <div class="slider-marks">
-            <span class="slider-mark">12AM</span><span class="slider-mark">6AM</span>
-            <span class="slider-mark">12PM</span><span class="slider-mark">6PM</span>
-            <span class="slider-mark">11PM</span>
+          <input type="range" id="timeSlider" min="0" max="15" value="2" aria-label="Departure hour">
+          <div class="slider-marks" id="sliderMarks">
+            <span class="slider-mark">6AM</span><span class="slider-mark">10AM</span>
+            <span class="slider-mark">2PM</span><span class="slider-mark">6PM</span>
+            <span class="slider-mark">9PM</span>
           </div>
         </div>
       </div>
@@ -679,11 +679,31 @@ function visualFrac(v){ return Math.max(0, Math.min(1, v / VISUAL_MAX)); }
 function rangeHours(a,b){ const out=[]; for(let h=a;h<b;h++) out.push(h); return out; }
 function periodHours(period){ return period==='day' ? rangeHours(6,22) : [...rangeHours(22,24), ...rangeHours(0,6)]; }
 function hourIsDay(hour){ return hour>=6 && hour<22; }
+function periodHourList(){ return periodHours(curPeriod); }
 function syncPeriodToHour(hour){
   const next = hourIsDay(hour) ? 'day' : 'night';
   if(next===curPeriod) return;
   curPeriod = next;
   document.querySelectorAll('.period-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.period===next));
+  configureTimeSlider();
+}
+function configureTimeSlider(){
+  const hours = periodHourList();
+  const sl = document.getElementById('timeSlider');
+  sl.min = 0;
+  sl.max = Math.max(0, hours.length - 1);
+  sl.step = 1;
+  let i = hours.indexOf(curHour);
+  if(i < 0){
+    curHour = hours[0];
+    i = 0;
+  }
+  sl.value = i;
+  document.getElementById('timeDisp').textContent = fmtHour(curHour);
+  document.getElementById('sliderMarks').innerHTML = curPeriod==='day'
+    ? '<span class="slider-mark">6AM</span><span class="slider-mark">10AM</span><span class="slider-mark">2PM</span><span class="slider-mark">6PM</span><span class="slider-mark">9PM</span>'
+    : '<span class="slider-mark">10PM</span><span class="slider-mark">12AM</span><span class="slider-mark">2AM</span><span class="slider-mark">4AM</span><span class="slider-mark">5AM</span>';
+  updateSliderTrack();
 }
 function setHeroText(el, text){
   if(!el) return;
@@ -1588,21 +1608,36 @@ function extraDelayVsBest(getDelay){
 }
 
 function fillCitywideHeroStats(hsBest, hsSave, hsConf, hsConfWrap){
+  const saveLbl = document.getElementById('hsSaveLbl');
+  if(saveLbl) saveLbl.textContent = 'Up to';
   if(!hoursInGrid()){
     setHeroText(hsBest,'--'); setHeroText(hsSave,'--'); setHeroText(hsConf,'--');
     hsConfWrap.classList.remove('low');
     return;
   }
-  const stats = extraDelayVsBest(h=>{
+  let bestHour = periodHourList()[0], maxExtra = 0, confSum = 0, confN = 0;
+  CORRIDORS.forEach(c=>{
+    const stats = extraDelayVsBest(h=>{
+      try{
+        const cell = bundleCell(c.id, curDay, h);
+        return cell && typeof cell.delay_minutes === 'number' ? cell.delay_minutes : null;
+      }catch(e){ return null; }
+    });
+    if(typeof stats.extra === 'number' && stats.extra > maxExtra){
+      maxExtra = stats.extra;
+      bestHour = stats.bestHour;
+    }
+  });
+  const now = meanCityDelay(curHour);
+  const quietest = extraDelayVsBest(h=>{
     const row = meanCityDelay(h);
     return row ? row.delay : null;
   });
-  const now = meanCityDelay(curHour);
-  setHeroText(hsBest, Number.isFinite(stats.bestDelay) ? fmtHour(stats.bestHour) : '--');
-  setHeroText(hsSave, typeof stats.extra === 'number' ? `${Math.round(stats.extra)} min` : '--');
-  hsSave.title = stats.extra
-    ? `Leaving at ${fmtHour(curHour)} costs about ${Math.round(stats.extra)} extra minutes versus ${fmtHour(stats.bestHour)}, the quietest hour in this period.`
-    : `You are already on the quietest hour in this period (${fmtHour(stats.bestHour)}).`;
+  setHeroText(hsBest, fmtHour(quietest.bestHour));
+  setHeroText(hsSave, `${Math.round(maxExtra)} min`);
+  hsSave.title = maxExtra
+    ? `On the busiest monitored road, leaving at ${fmtHour(curHour)} costs up to ${Math.round(maxExtra)} extra minutes versus that road's quietest hour (${fmtHour(bestHour)}). Typical week, not the worst jam day.`
+    : `Every monitored road is near its quietest hour in this period.`;
   const conf = now ? now.conf : null;
   setHeroText(hsConf, typeof conf === 'number' ? Math.round(conf * 100) + '%' : '--');
   hsConfWrap.classList.toggle('low', isDegraded(conf));
@@ -1669,6 +1704,8 @@ function renderAdvice(){
     chipsEl.innerHTML = '<span class="advice-empty">No strong pattern detected for this period.</span>';
   }
 
+  const saveLbl = document.getElementById('hsSaveLbl');
+  if(saveLbl) saveLbl.textContent = 'You save';
   const stats = extraDelayVsBest(h=>{
     const info = currentValueFor(selCorridor, curDay, h);
     return info && typeof info.delay === 'number' ? info.delay : null;
@@ -1757,7 +1794,8 @@ function renderHud(){
 }
 function updateSliderTrack(){
   const sl = document.getElementById('timeSlider');
-  sl.style.setProperty('--pct', (parseInt(sl.value)/23*100).toFixed(1)+'%');
+  const max = Math.max(1, parseInt(sl.max, 10) || 1);
+  sl.style.setProperty('--pct', (parseInt(sl.value, 10) / max * 100).toFixed(1)+'%');
 }
 function updateTimeDesc(){
   const desc = document.getElementById('timeDesc');
@@ -2296,9 +2334,8 @@ async function findBestDeparture(){
     const meaningfulSaving=savingSeconds>=MIN_MEANINGFUL_SAVING_SECONDS;
     if(meaningfulSaving){
       curHour=best.hour;
-      document.getElementById('timeSlider').value=curHour;
-      document.getElementById('timeDisp').textContent=fmtHour(curHour);
-      updateSliderTrack();
+      syncPeriodToHour(curHour);
+      configureTimeSlider();
       render();
     }
     showTripOnMap(best.route.geometry);
@@ -2365,9 +2402,9 @@ document.getElementById('themeBtn').onclick = function(){
 // CONTROLS
 // ─────────────────────────────────────────────────────────────────────────
 document.getElementById('timeSlider').oninput = function(){
-  curHour = parseInt(this.value);
+  const hours = periodHourList();
+  curHour = hours[parseInt(this.value, 10)] ?? hours[0];
   document.getElementById('timeDisp').textContent = fmtHour(curHour);
-  syncPeriodToHour(curHour);
   updateSliderTrack();
   render();
   maybeEnrichWithPredict();
@@ -2389,9 +2426,7 @@ document.querySelectorAll('.period-btn').forEach(btn=>{
     document.querySelectorAll('.period-btn').forEach(b=>b.classList.toggle('active', b===this));
     if(curPeriod==='day' && !hourIsDay(curHour)) curHour = 8;
     if(curPeriod==='night' && hourIsDay(curHour)) curHour = 22;
-    document.getElementById('timeSlider').value = curHour;
-    document.getElementById('timeDisp').textContent = fmtHour(curHour);
-    updateSliderTrack();
+    configureTimeSlider();
     render();
   };
 });
@@ -2747,9 +2782,10 @@ function showTutorial(){
   }
   const dayBtns = document.querySelectorAll('.day-btn');
   dayBtns[curDay].classList.add('active');
-  document.getElementById('timeSlider').value = curHour;
-  document.getElementById('timeDisp').textContent = fmtHour(curHour);
-  updateSliderTrack();
+  if(hourIsDay(curHour)) curPeriod = 'day';
+  else curPeriod = 'night';
+  document.querySelectorAll('.period-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.period===curPeriod));
+  configureTimeSlider();
   render();
   initGlMap();
   await refreshAll();
