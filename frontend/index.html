@@ -111,15 +111,15 @@ button,input,select{transition:border-color .18s ease,background .18s ease,color
 .proto-fix-sub{font-family:var(--mono);font-size:10px;color:var(--sub);line-height:1.5}
 
 /* HERO / ADVICE BANNER — title left, four stat boxes centred, theme right */
-.advice-banner{padding:18px 20px 14px;background:linear-gradient(180deg,var(--cyan-dim) 0%,rgba(0,229,255,0.04) 100%);border-bottom:1px solid var(--border);flex:0 0 auto}
-.banner-row{display:flex;align-items:center;gap:16px;min-height:52px}
+.advice-banner{padding:22px 20px 12px;background:linear-gradient(180deg,var(--cyan-dim) 0%,rgba(0,229,255,0.04) 100%);border-bottom:1px solid var(--border);flex:0 0 auto}
+.banner-row{display:flex;align-items:flex-end;gap:16px;min-height:52px}
 .banner-title-block{flex:1 1 auto;min-width:0;max-width:none}
-.banner-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.banner-controls{display:flex;align-items:flex-end;gap:10px;flex:0 0 auto;padding-bottom:4px}
 .advice-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--sub);text-transform:uppercase;margin-bottom:4px}
 .advice-corridor{font-family:var(--heading);font-size:clamp(16px,2.4vw,28px);font-weight:600;color:var(--cyan);line-height:1.15;letter-spacing:.01em;white-space:nowrap;overflow:hidden;max-width:100%}
 .period-btn{cursor:pointer}
 .advice-summary{font-size:clamp(12px,1.4vw,15px);font-weight:500;line-height:1.35;margin-top:3px;color:var(--sub);letter-spacing:normal}
-.window-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.window-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
 .chip{font-family:var(--display);font-size:12px;font-weight:650;padding:7px 14px;border-radius:8px;border:0;display:inline-flex;align-items:center;gap:8px;letter-spacing:.01em}
 .chip .chip-k{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.92}
 .chip.best{background:var(--green);color:#04140c}
@@ -421,6 +421,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <div class="banner-title-block" id="bannerTitleBlock">
         <div class="advice-corridor" id="adviceCorridorName">Gurugram Traffic Predictor</div>
         <div class="advice-summary" id="adviceSummary">Find the best time to leave</div>
+        <div class="window-chips" id="windowChips"></div>
       </div>
       <div class="hero-stats" id="heroStats">
         <div class="hstat">
@@ -448,7 +449,6 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <button class="theme-btn" id="themeBtn" title="Toggle theme" type="button">◐</button>
       </div>
     </div>
-    <div class="window-chips" id="windowChips"></div>
   </div>
 
   <div class="workspace">
