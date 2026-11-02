@@ -1,6 +1,6 @@
 # Forecast model evaluation
 
-_Generated 2026-10-26T09:19:50+00:00 by `tools/evaluate_forecast.py`._
+_Generated 2026-11-02T10:32:25+00:00 by `tools/evaluate_forecast.py`._
 
 ## Holdout split (time-based, last 20% of distinct days)
 
@@ -13,7 +13,7 @@ _Generated 2026-10-26T09:19:50+00:00 by `tools/evaluate_forecast.py`._
 - Path: `models/forecast_residual_gbt.joblib`
 - Model type: **GBT**
 - Dwarka corridor override (id 4): **yes**
-- Trained at (artifact): 2026-10-15T23:14:53.011636
+- Trained at (artifact): 2026-11-02T10:31:25.444166
 - Production fit rows: **20198** (all rows after holdout validation)
 - Artifact skill_score: 0.5417
 
