@@ -1,6 +1,6 @@
 # Forecast model evaluation
 
-_Generated 2026-11-16T10:38:02+00:00 by `tools/evaluate_forecast.py`._
+_Generated 2026-11-16T11:58:45+00:00 by `tools/evaluate_forecast.py`._
 
 ## Holdout split (time-based, last 20% of distinct days)
 
