@@ -1,6 +1,6 @@
 # Forecast model evaluation
 
-_Generated 2026-11-09T12:01:23+00:00 by `tools/evaluate_forecast.py`._
+_Generated 2026-11-16T10:38:02+00:00 by `tools/evaluate_forecast.py`._
 
 ## Holdout split (time-based, last 20% of distinct days)
 
@@ -13,41 +13,41 @@ _Generated 2026-11-09T12:01:23+00:00 by `tools/evaluate_forecast.py`._
 - Path: `models/forecast_residual_gbt.joblib`
 - Model type: **GBT**
 - Dwarka corridor override (id 4): **yes**
-- Trained at (artifact): 2026-11-09T10:53:27.965295
+- Trained at (artifact): 2026-11-16T10:37:21.739394
 - Production fit rows: **20198** (all rows after holdout validation)
-- Artifact skill_score: 0.5424
+- Artifact skill_score: 0.5425
 
 ## Test-set metrics (recomputed this run)
 
 - Baseline MAE (bootstrap vs observed): **0.1007**
 - Model MAE (baseline + residual vs observed): **0.0461**
-- Skill = 1 - model_MAE/baseline_MAE: **0.5424**
-- Label agreement (exact): **77.9%** (n=2218)
-- Hour-ranking pairwise concordance (corridor+date groups, n=154): **88.1%** (2278/2585 pairs)
+- Skill = 1 - model_MAE/baseline_MAE: **0.5425**
+- Label agreement (exact): **78.0%** (n=2218)
+- Hour-ranking pairwise concordance (corridor+date groups, n=154): **88.2%** (2279/2585 pairs)
 
 ## Feature importances (shipped model)
 
-- `hour_sin`: 0.5471
-- `lag_prior_idx`: 0.1603
-- `hour_cos`: 0.1174
-- `incident_total_delay_s`: 0.0556
-- `road_class_enc`: 0.0492
+- `hour_sin`: 0.5468
+- `lag_prior_idx`: 0.1604
+- `hour_cos`: 0.1176
+- `incident_total_delay_s`: 0.0555
+- `road_class_enc`: 0.0490
 - `lag_week_idx`: 0.0258
 - `nearest_incident_m`: 0.0148
+- `corridor_id`: 0.0101
 - `is_weekend`: 0.0101
-- `corridor_id`: 0.0099
-- `temperature_c`: 0.0054
-- `incident_count`: 0.0025
-- `days_to_nearest_holiday`: 0.0010
+- `temperature_c`: 0.0055
+- `incident_count`: 0.0023
+- `days_to_nearest_holiday`: 0.0009
+- `incident_max_magnitude`: 0.0003
 - `visibility_m`: 0.0003
-- `incident_max_magnitude`: 0.0002
+- `is_holiday_i`: 0.0003
 - `incident_data_known`: 0.0002
 - `has_road_closure_i`: 0.0001
-- `is_holiday_i`: 0.0001
-- `rain_last_3h`: 0.0001
+- `rain_last_3h`: 0.0000
 - `is_festival_period_i`: 0.0000
+- `is_month_end_i`: 0.0000
 - `precipitation_mm`: 0.0000
 - `is_raining_i`: 0.0000
 - `low_visibility_i`: 0.0000
-- `is_month_end_i`: 0.0000
 - `has_jam_i`: 0.0000
