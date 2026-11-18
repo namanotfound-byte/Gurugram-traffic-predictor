@@ -74,14 +74,10 @@ h1 + p{color:var(--sub);font-size:11pt;margin-bottom:2px}
 <tr><td>Labels</td><td>Free &lt; 0.091 · Moderate &lt; 0.200 · Heavy &lt; 0.310 · Severe ≥ 0.310</td></tr>
 <tr><td>Model</td><td>Gradient boosting of the leftover vs TomTom’s typical hour</td></tr>
 <tr><td>What it looks at</td><td>Hour of day, recent lag, incidents, road class</td></tr>
-<tr><td>Accuracy</td><td>Skill <strong>0.5417</strong> · labels 77.9% · ranking 88.1% (later days, not training days)</td></tr>
+<tr><td>Accuracy</td><td>Labels 77.9% · ranking 88.1%</td></tr>
 <tr><td>Biggest typical extra</td><td>~13 min (KMP, Monday 08:00 vs 22:00)</td></tr>
 <tr><td>Stack</td><td>Python, Flask, MapLibre · 77 tests passed</td></tr>
-<tr><td>Limit</td><td>A typical week, not this minute. Missing model → HTTP 503.</td></tr>
 </tbody>
 </table></div>
-<p>Run locally: <code>./run.sh</code>. Open the site link, not a saved HTML file.</p>
-<hr>
-<p><em>Numbers from the live CSV, the 15 Oct 2026 model file, and the evaluation script — not from an old README.</em></p>
 </body>
 </html>

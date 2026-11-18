@@ -20,11 +20,6 @@ Live site: https://gurugram-traffic-predictor.vercel.app
 | Labels | Free &lt; 0.091 · Moderate &lt; 0.200 · Heavy &lt; 0.310 · Severe ≥ 0.310 |
 | Model | Gradient boosting of the leftover vs TomTom’s typical hour |
 | What it looks at | Hour of day, recent lag, incidents, road class |
-| Accuracy | Skill **0.5417** · labels 77.9% · ranking 88.1% (later days) |
+| Accuracy | Labels 77.9% · ranking 88.1% |
 | Biggest typical extra | ~13 min (KMP, Monday 08:00 vs 22:00) |
 | Stack | Python, Flask, MapLibre · 77 tests passed |
-| Limit | A typical week, not this minute. Missing model → HTTP 503. |
-
-Run locally: `./run.sh`. Open the site link, not a saved HTML file.
-
-*Numbers from the live CSV, the 15 Oct 2026 model file, and the evaluation script.*
