@@ -27,9 +27,9 @@ congestion_index = 1 − (free-flow travel time ÷ expected travel time)
 | Heavy | below 0.310 | 1.25× to 1.45× |
 | Severe | 0.310 and above | over 1.45× |
 
-## 2. Why it is built this way
+## 2. How this version works
 
-An earlier version invented its own traffic and scored itself against it. That was deleted. Everything now is measured TomTom Routing data. Missing model → HTTP 503, no fake table.
+Typical week on 13 corridors from measured TomTom Routing times: date-blind average plus a residual (weather, incidents, calendar, lags). The map colours roads, names best/avoid hours, and can apply the same forecast to a real trip. Missing model or skill ≤ 0 → HTTP 503, no fake table. Accuracy numbers come from the evaluation script.
 
 ## 3. Data
 
@@ -65,7 +65,7 @@ Time holdout, last 20% of days:
 | Hour-ranking concordance | **88.1%** |
 | Production refit | 20,198 rows |
 
-An older bootstrap-vs-observed diagnostic on small n looked like 89% ranking; at full sample it was ~57% ranking / ~43% labels. That was the date-blind formula. The residual model is what the map uses now.
+The date-blind average alone, scored against live rows, is weaker (~57% ranking, ~43% labels). The residual is what the map uses.
 
 Typical-week extra delay tops out around **13 minutes** (KMP, Monday 08:00 vs 22:00). That is not a 30-minute jam day.
 

@@ -80,9 +80,9 @@ h1 + p{color:var(--sub);font-size:11pt;margin-bottom:2px}
 <p>A raw decimal is not useful to a driver, so the index is converted into four labels. The cut-offs are round travel-time multipliers, not percentiles of my own data, so the boundaries do not drift as more rows arrive.</p>
 <div class="tw"><table><thead><tr><th>Label</th><th>Index</th><th>Meaning</th></tr></thead><tbody><tr><td>Free</td><td>below 0.091</td><td>under 1.10× free-flow time</td></tr><tr><td>Moderate</td><td>below 0.200</td><td>1.10× to 1.25×</td></tr><tr><td>Heavy</td><td>below 0.310</td><td>1.25× to 1.45×</td></tr><tr><td>Severe</td><td>0.310 and above</td><td>over 1.45×</td></tr></tbody></table></div>
 
-<h2>2. Why I built it the way I did</h2>
-<p>My first version generated its own traffic from a formula I wrote. It looked convincing and it was worthless — I was grading a model against numbers I had invented. I deleted that and rebuilt on measured TomTom readings only. Nothing in the repository is synthetic now.</p>
-<p>That decision drove the rest. Real data is slow, gappy, and often less flattering than you would like. A lot of the engineering exists to deal with those facts honestly rather than to paper over them: fail with HTTP 503 if no model is loaded, never invent a fallback table, and only quote accuracy numbers that an evaluation script printed.</p>
+<h2>2. How this version works</h2>
+<p>This version predicts a <strong>typical week</strong> on 13 Gurugram corridors from measured TomTom Routing times. Each of the 2,184 slots is TomTom’s date-blind average for that weekday and hour, plus a residual from a gradient-boosting model (weather, incidents, calendar, recent lags). The site colours the map, names a best and worst hour, and can apply the same forecast to a real trip.</p>
+<p>If the model file is missing or does not beat that average on later days, the API returns <strong>HTTP 503</strong> rather than a made-up table. Accuracy figures in this write-up are what the evaluation script printed.</p>
 
 <h2>3. Where the data comes from</h2>
 <p><strong>The baseline grid.</strong> <code>bootstrap_collect.py</code> swept the TomTom Routing API once for all 2,184 slots. Requesting a route with a future <code>departAt</code> and <code>computeTravelTimeFor=all</code> returns TomTom’s historical model for that road at that hour. I had planned to use Flow Segment Data; that endpoint returned 403 on this project’s key, so Routing became the only live and historical source. The limitation of this baseline is that it is <strong>date-blind</strong>: six future Fridays at 6 PM return the same answer, festival week included.</p>
@@ -140,7 +140,7 @@ h1 + p{color:var(--sub);font-size:11pt;margin-bottom:2px}
 <p><strong>Hour-ranking concordance</strong> — given two hours on the same road and date, how often the model correctly says which is worse. 50% is a coin flip. This is closest to “when should I leave?”</p>
 </div>
 <p>The production estimator is then refit on all 20,198 rows. The numbers above are from the holdout-only snapshot, so they are not an in-sample exam on homework questions.</p>
-<p>Earlier, with only 115 live rows, bootstrap-versus-observed ranking looked like 89%. On thousands of rows that diagnostic fell to about 57% ranking and about 42–43% labels. That was the date-blind average, not this residual model. I kept that episode in the story because it is why the residual model exists: the formula could not see rain, incidents, or yesterday.</p>
+<p>The date-blind average alone, scored against live rows, is weaker (~57% ranking, ~43% labels). The residual is what the map uses.</p>
 <p>What the site will not claim: a typical-week residual will not reproduce the worst jam you remember. The largest extra delay on the served typical-week grid is about <strong>13 minutes</strong> (KMP Expressway, Monday 08:00 versus 22:00). A 30-minute one-off jam is a different question (a peak/quantile model), not a fatter number on this grid.</p>
 
 <h2>7. Decisions I would defend</h2>
