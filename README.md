@@ -15,19 +15,11 @@ short version.
 
 ---
 
-## Live demo
+## Try it
 
-**Live site (Vercel):** https://gurugram-traffic-predictor.vercel.app
+Pick a corridor and a day. The map colours **13 Gurugram roads** by typical congestion for that weekday and hour, and tells you when to leave. You can also plan a trip and see extra delay versus the quietest hour.
 
-The GitHub repo is connected; each push to `main` redeploys. Root Directory stays the repo
-root; `vercel.json` sets `outputDirectory` to `frontend/`. The congestion map still reads the
-static prediction bundle (`data/bundle.json`), while two small Vercel Functions provide
-search-as-you-type places and connected, traffic-aware road routes for the trip planner.
-
-**GitHub Pages (optional):**
-[namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html](https://namanotfound-byte.github.io/Gurugram-traffic-predictor/frontend/index.html)
-— same static bundle, but the URL includes `/frontend/` because Pages serves the repo root. Enable
-under **Settings → Pages → Deploy from a branch → `main` / `/root`** if you want a second mirror.
+**Open the site:** https://gurugram-traffic-predictor.vercel.app
 
 ---
 
