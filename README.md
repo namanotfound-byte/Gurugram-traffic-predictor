@@ -287,9 +287,6 @@ set, not a bug to be fixed by more averaging.
 - **Served values are residual forecasts, not live replays.** Each cell is
   `clip(bootstrap_baseline + predicted_residual, 0, 1)` for the next occurrence of that weekday
   (weather/calendar/incidents/lags applied). It is not a copy of the latest observed CSV row.
-- **The map’s score is the residual holdout, not the bootstrap diagnostic.** Holdout label
-  agreement is 77.9% and hour ranking 88.1% (`docs/forecast_eval.md`). The ~43% / ~57% figures
-  below are bootstrap-versus-observed, not the shipped GBT.
 - **Forecast quality is holdout-gated.** Residual model holdout skill must be > 0 to serve at all;
   re-derive from `model/forecast_model.py train` after new data — do not quote stale README figures.
 - **GitHub Actions scheduling is best-effort.** Collection can lag or, after 60 days of repo
