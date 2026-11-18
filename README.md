@@ -206,11 +206,11 @@ disables them after 60 days of repo inactivity) — for a guaranteed cadence, ru
 ### 3. The API
 
 `backend/app.py` (Flask) precomputes the full 13×7×24 grid once at startup and serves it from
-memory. Critically, it serves **measured** values first — the observed CSV overwrites a cell if
-a real observation exists for it — and only calls the trained model to fill cells that have never
-been measured at all (currently zero of 2,184). If no model is loaded, model-backed endpoints
-return HTTP 503 rather than inventing a number; there is no hand-typed fallback table. 79 tests
-in `backend/test_api.py` currently pass. Full endpoint contract: [`docs/api_contract.md`](docs/api_contract.md).
+memory. The map serves **residual forecasts** (`clip(baseline + residual, 0, 1)`), not a replay of
+the latest CSV cell. The observed file is for training, lags, and evaluation. If no model is
+loaded or holdout skill ≤ 0, model-backed endpoints return HTTP 503 rather than inventing a
+number; there is no hand-typed fallback table. `backend/test_api.py`: **77 passed, 0 failed**
+(15 Oct 2026). Full endpoint contract: [`docs/api_contract.md`](docs/api_contract.md).
 
 ### 4. The static bundle
 
@@ -218,16 +218,16 @@ in `backend/test_api.py` currently pass. Full endpoint contract: [`docs/api_cont
 grid to `frontend/data/bundle.json`, so the exact same numbers the live API would serve are
 available with zero server — this is what the GitHub Pages deployment reads.
 
-### 5. The forecasting model (gated)
+### 5. The forecasting model
 
 `model/forecast_model.py` is the product model: instead of relearning the whole diurnal curve,
 it predicts the **residual** — how far actual conditions deviate from the bootstrap baseline — as
 a function of weather, calendar, incidents, corridor, and leak-safe lags from observed history.
-The trained artifact is `models/forecast_residual_gbt.joblib` (time holdout; re-run
-`model/forecast_model.py train` for current numbers). As of the 2026-09-23 training run, the
-leakage-free holdout has **skill = 0.5789** (baseline MAE 0.1029 vs effective model MAE 0.0433;
-MLP was worse and is not shipped). Model selection and reporting use 1,660 later holdout rows;
-after that evaluation is frozen, the production estimator is refit on all **14,895** usable rows.
+The trained artifact is `models/forecast_residual_gbt.joblib`. As of the **2026-10-15** training
+run (`tools/evaluate_forecast.py`): holdout **skill = 0.5417** (baseline MAE 0.1007 vs model MAE
+0.0461) on 2,218 later rows (4–15 Oct); label agreement 77.9%; hour-ranking concordance 88.1%.
+MLP holdout skill was −1.07 and is not shipped. After that evaluation, the production estimator
+was refit on all **20,198** usable rows (from 24,490 raw live rows, 16 Aug – 15 Oct).
 
 **The weekly map, advice, best-time, and `/now` all serve this forecast**
 (`clip(baseline + predicted_residual, 0, 1)`, origin `residual_adjusted`). The observed CSV is
@@ -280,15 +280,16 @@ set, not a bug to be fixed by more averaging.
 
 ## Limitations
 
-- **Accuracy is honest, not flattering.** Full 2,184-cell coverage means every figure in
-  `docs/accuracy_report.md` is computed at scale (n=15,234), but bootstrap-vs-observed concordance
-  is still only ~57% and label agreement ~43% — the product ranks hours better than it pins exact
-  severity, and neither is a model CV score.
+- **Accuracy is honest, not flattering.** The map’s score is residual holdout skill **0.5417**,
+  label agreement **77.9%**, ranking **88.1%** (`docs/forecast_eval.md`). Bootstrap-vs-observed
+  (`docs/accuracy_report.md`, n=15,234) is still ~57% ranking / ~43% labels — that diagnostic is
+  not what the map serves.
 - **Served values are residual forecasts, not live replays.** Each cell is
   `clip(bootstrap_baseline + predicted_residual, 0, 1)` for the next occurrence of that weekday
   (weather/calendar/incidents/lags applied). It is not a copy of the latest observed CSV row.
-- **Exact severity is the weak point.** Expect the label to be right a little under half the time;
-  hour ranking concordance is modestly above chance — see "Accuracy" above.
+- **The map’s score is the residual holdout, not the bootstrap diagnostic.** Holdout label
+  agreement is 77.9% and hour ranking 88.1% (`docs/forecast_eval.md`). The ~43% / ~57% figures
+  below are bootstrap-versus-observed, not the shipped GBT.
 - **Forecast quality is holdout-gated.** Residual model holdout skill must be > 0 to serve at all;
   re-derive from `model/forecast_model.py train` after new data — do not quote stale README figures.
 - **GitHub Actions scheduling is best-effort.** Collection can lag or, after 60 days of repo
@@ -314,7 +315,7 @@ Gurugram-traffic-predictor/
 ├── backend/
 │   ├── app.py                   # Flask API v2 — precomputed residual-forecast grid
 │   ├── requirements.txt
-│   └── test_api.py              # 79 tests
+│   └── test_api.py              # 77 tests passed (15 Oct 2026)
 │
 ├── model/
 │   └── forecast_model.py        # gated residual (weather/calendar/incident) model

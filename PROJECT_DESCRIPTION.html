@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gurugram Traffic Congestion Predictor - Naman Arora, Class 12</title>
+<style>
+:root{--ink:#16181d;--sub:#5b6169;--rule:#d8dce2;--accent:#0f5fa6;--codebg:#f5f6f8;--boxbg:#f4f7fa}
+*{box-sizing:border-box}
+body{margin:0;padding:48px 56px;max-width:840px;margin-inline:auto;
+  font-family:Charter,Georgia,"Times New Roman",serif;color:var(--ink);
+  font-size:11.5pt;line-height:1.62;background:#fff}
+h1{font-size:24pt;line-height:1.2;margin:0 0 4px;letter-spacing:-.015em;font-weight:700}
+h2{font-size:14pt;margin:30px 0 10px;padding-bottom:5px;border-bottom:1.5px solid var(--rule);
+  font-weight:700;letter-spacing:-.01em;break-after:avoid}
+h3{font-size:12pt;margin:20px 0 6px;font-weight:700;break-after:avoid}
+p{margin:0 0 11px;text-align:justify;hyphens:auto}
+ul{margin:0 0 12px;padding-left:22px}
+li{margin-bottom:5px}
+a{color:var(--accent);text-decoration:none;word-break:break-word}
+code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:.87em;
+  background:var(--codebg);padding:1px 4px;border-radius:3px}
+pre{background:var(--codebg);border:1px solid var(--rule);border-left:3px solid var(--accent);
+  border-radius:4px;padding:12px 14px;overflow-x:auto;margin:0 0 14px;break-inside:avoid}
+pre code{background:none;padding:0;font-size:.85em;line-height:1.45}
+.tw{overflow-x:auto;margin:0 0 15px}
+table{border-collapse:collapse;width:100%;font-size:10pt;break-inside:avoid}
+th{text-align:left;font-weight:700;border-bottom:1.5px solid var(--ink);padding:7px 10px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:9pt;
+  text-transform:uppercase;letter-spacing:.05em}
+td{padding:6px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+tbody tr:last-child td{border-bottom:1.5px solid var(--ink)}
+hr{border:none;border-top:1px solid var(--rule);margin:26px 0}
+strong{font-weight:700}
+em{color:var(--sub)}
+h1 + p{color:var(--sub);font-size:11pt;margin-bottom:2px}
+.plain{background:var(--boxbg);border-left:3px solid var(--accent);border-radius:0 4px 4px 0;
+  padding:11px 15px;margin:0 0 14px;break-inside:avoid;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:10pt;line-height:1.55;text-align:left}
+.plain p{margin:0 0 8px;text-align:left}
+.plain p:last-child{margin-bottom:0}
+.plain .lbl{display:block;font-size:8.5pt;text-transform:uppercase;letter-spacing:.07em;
+  font-weight:700;color:var(--accent);margin-bottom:5px}
+.plain ul{margin:6px 0 0;padding-left:20px}
+.plain li{margin-bottom:3px}
+@media print{
+  body{padding:0;font-size:10.5pt;max-width:none}
+  @page{margin:17mm 16mm}
+  h2{break-after:avoid}
+  a{color:var(--ink)}
+  .plain{background:#f7f8f9}
+}
+</style>
+</head>
+<body>
+<h1>Gurugram Traffic Congestion Predictor</h1>
+<p><strong>Naman Arora — Class 12</strong><br>Computer Science Project</p>
+<p>Repository: <a href="https://github.com/namanotfound-byte/Gurugram-traffic-predictor">https://github.com/namanotfound-byte/Gurugram-traffic-predictor</a><br>Live site: <a href="https://gurugram-traffic-predictor.vercel.app">https://gurugram-traffic-predictor.vercel.app</a></p>
+<hr>
+
+<h2>1. What it does</h2>
+<p>The project answers one question: <strong>if I have to drive down one of Gurugram's main roads, what time should I leave?</strong></p>
+<p>It covers 13 corridors — MG Road, Golf Course Road, NH-48, Dwarka Expressway, Sohna Road, KMP Expressway and seven others — and for each of them holds a congestion value for every hour of every day of the week. That is 13 × 7 × 24 = <strong>2,184 slots</strong>. The site draws these on a map, colours each road by how congested that typical hour is, opens on the road and hour that save the most time, and shows Best time / Avoid chips plus a “You save” figure versus the quietest hour.</p>
+<p>A trip planner lets a user type two real places. The route comes from TomTom Routing; where it overlaps a monitored corridor, the residual forecast is applied so the user can compare hours on an actual journey, not only on a named corridor.</p>
+
+<h3>The one number everything is built on</h3>
+<p>Every road, at every hour, is reduced to a single number called the <strong>congestion index</strong>:</p>
+<pre><code>congestion_index = 1 − (free-flow travel time ÷ expected travel time)</code></pre>
+<div class="plain">
+<span class="lbl">In plain terms</span>
+<p>“Free-flow travel time” is how long the road takes when it is completely empty. “Expected travel time” is how long it is expected to take in that slot. The index is the fraction of the trip lost to traffic.</p>
+<ul>
+<li><strong>0.0</strong> — empty. You lose no time.</li>
+<li><strong>0.2</strong> — a fifth of the time is traffic. A 20-minute free-flow drive takes 25.</li>
+<li><strong>0.5</strong> — half the time is traffic. The trip takes <em>twice</em> as long as empty.</li>
+</ul>
+<p>The index is always between 0 and 1, and bigger is worse. It is a ratio, not a speed, so a short stretch of MG Road and a long stretch of NH-48 can be compared on the same scale. Extra minutes versus empty are <code>free-flow × index / (1 − index)</code>.</p>
+</div>
+<p>A raw decimal is not useful to a driver, so the index is converted into four labels. The cut-offs are round travel-time multipliers, not percentiles of my own data, so the boundaries do not drift as more rows arrive.</p>
+<div class="tw"><table><thead><tr><th>Label</th><th>Index</th><th>Meaning</th></tr></thead><tbody><tr><td>Free</td><td>below 0.091</td><td>under 1.10× free-flow time</td></tr><tr><td>Moderate</td><td>below 0.200</td><td>1.10× to 1.25×</td></tr><tr><td>Heavy</td><td>below 0.310</td><td>1.25× to 1.45×</td></tr><tr><td>Severe</td><td>0.310 and above</td><td>over 1.45×</td></tr></tbody></table></div>
+
+<h2>2. Why I built it the way I did</h2>
+<p>My first version generated its own traffic from a formula I wrote. It looked convincing and it was worthless — I was grading a model against numbers I had invented. I deleted that and rebuilt on measured TomTom readings only. Nothing in the repository is synthetic now.</p>
+<p>That decision drove the rest. Real data is slow, gappy, and often less flattering than you would like. A lot of the engineering exists to deal with those facts honestly rather than to paper over them: fail with HTTP 503 if no model is loaded, never invent a fallback table, and only quote accuracy numbers that an evaluation script printed.</p>
+
+<h2>3. Where the data comes from</h2>
+<p><strong>The baseline grid.</strong> <code>bootstrap_collect.py</code> swept the TomTom Routing API once for all 2,184 slots. Requesting a route with a future <code>departAt</code> and <code>computeTravelTimeFor=all</code> returns TomTom’s historical model for that road at that hour. I had planned to use Flow Segment Data; that endpoint returned 403 on this project’s key, so Routing became the only live and historical source. The limitation of this baseline is that it is <strong>date-blind</strong>: six future Fridays at 6 PM return the same answer, festival week included.</p>
+<p><strong>Live observations.</strong> <code>collect_live.py</code> polls the same API for travel time now and writes an observed index, plus:</p>
+<ul>
+<li>weather from Open-Meteo (rain, trailing three-hour rainfall, visibility, temperature) — no API key</li>
+<li>calendar features — Indian public holidays via <code>holidays.India(subdiv="HR")</code>, festival periods, month-end</li>
+<li>incidents from TomTom Incidents, attached only if they fall within 300 m of the corridor’s digitised polyline</li>
+</ul>
+<p>Collection ran on GitHub Actions as an hourly job that looped four rounds fifteen minutes apart (GitHub’s scheduler is unreliable at a 15-minute cron). After the residual model was trained on 15 October 2026, collection was stopped so the submitted snapshot would not keep drifting.</p>
+<p><strong>What has accumulated.</strong> The live CSV holds <strong>24,490 rows from 16 August 2026 20:00 through 15 October 2026 16:00</strong> — <strong>61 calendar days</strong>, all 13 corridors, all seven weekdays. Training does not use every raw row. <strong>3,119</strong> were dropped because TomTom’s reported length was more than 2% off the mapped corridor (wrong physical road, worst on KMP, Southern Peripheral Road and Old Delhi–Gurgaon Road). <strong>1,173</strong> had no matching baseline cell. That leaves <strong>20,198 usable training rows</strong>. In that training table: 2,313 rainy rows, 16,562 incident-affected rows, 6 holidays, 13/13 corridors.</p>
+
+<h2>4. How a prediction is produced</h2>
+<p>The map does <em>not</em> replay the latest CSV cell. Flask precomputes all 2,184 slots as</p>
+<pre><code>clip(baseline + predicted_residual, 0, 1)</code></pre>
+<p>and tags each cell <code>residual_adjusted</code>. The observed CSV is used to train, to build lag features, and to score the model. If the residual artifact is missing or its holdout skill is ≤ 0, model-backed endpoints return <strong>HTTP 503</strong>. There is no hand-written lookup table.</p>
+<p>A static bundle (<code>frontend/data/bundle.json</code>) is the same grid dumped for the public site, so GitHub Pages or Vercel can serve the map without a Python process. Place search and connected routing for the trip planner run as small Vercel functions.</p>
+<p><code>backend/test_api.py</code> was run on 15 October 2026: <strong>77 passed, 0 failed</strong>.</p>
+
+<h2>5. What the model is</h2>
+<p>The shipped model is a <strong>GradientBoostingRegressor</strong> that predicts the <em>residual</em> — how far a real hour departed from TomTom’s date-blind average — from weather, calendar, incidents, road class, and leak-safe lags (what that road was doing recently and a week earlier). File: <code>models/forecast_residual_gbt.joblib</code>, version <code>forecast-gbt-2026-10-15</code>, trained 15 October 2026 23:14. An MLP was tried on the same split and lost (holdout skill −1.07); it is not shipped. Dwarka Expressway has its own override estimator inside the artifact because that corridor does not behave like the others.</p>
+<div class="plain">
+<span class="lbl">Why residual, not “predict congestion from scratch”</span>
+<p>Rush hour already dominates the signal. The baseline already knows that. The model is asked only to explain the leftover: rain, a jam 200 m up the road, yesterday’s lag, a holiday. If it cannot beat the baseline on later days it never trained on, it must not ship. Skill is <code>1 − model MAE / baseline MAE</code>. Skill ≤ 0 means the baseline alone is better.</p>
+</div>
+<p><strong>Feature importances</strong> from the shipped GBT (they sum to 1.0):</p>
+<div class="tw"><table><thead><tr><th>Feature</th><th>Importance</th></tr></thead><tbody>
+<tr><td>hour_sin</td><td>0.5469</td></tr>
+<tr><td>lag_prior_idx</td><td>0.1604</td></tr>
+<tr><td>hour_cos</td><td>0.1175</td></tr>
+<tr><td>incident_total_delay_s</td><td>0.0554</td></tr>
+<tr><td>road_class_enc</td><td>0.0492</td></tr>
+<tr><td>lag_week_idx</td><td>0.0260</td></tr>
+<tr><td>other features (weather, holidays, flags)</td><td>each under 0.016</td></tr>
+</tbody></table></div>
+<p>Time of day (<code>hour_sin</code> + <code>hour_cos</code>) is about <strong>66%</strong> of the fit. Recent lag is next. That is unglamorous — rush hour is still the main story — but it is what the trees used. Rain flags have almost no importance in this fit; incidents and lag carry more of the residual.</p>
+
+<h2>6. How accurate it actually is</h2>
+<p>I score the <em>shipped residual model</em> on later live traffic, not on the rows it was trained on, and not on a number copied from an old README.</p>
+<p>Time holdout, last 20% of distinct days:</p>
+<div class="tw"><table><thead><tr><th></th><th></th></tr></thead><tbody>
+<tr><td>Train</td><td>17,980 rows (16 Aug – 3 Oct 2026)</td></tr>
+<tr><td>Test</td><td>2,218 rows (4 Oct – 15 Oct 2026)</td></tr>
+<tr><td>Baseline MAE (date-blind average vs live)</td><td>0.1007</td></tr>
+<tr><td>Model MAE (baseline + residual vs live)</td><td>0.0461</td></tr>
+<tr><td>Skill</td><td><strong>0.5417</strong></td></tr>
+<tr><td>Exact label agreement</td><td><strong>77.9%</strong> (n = 2,218)</td></tr>
+<tr><td>Hour-ranking concordance</td><td><strong>88.1%</strong> (2,277 / 2,585 pairs; 154 corridor–date groups)</td></tr>
+<tr><td>Production refit after that test</td><td>all 20,198 usable rows</td></tr>
+</tbody></table></div>
+<div class="plain">
+<span class="lbl">What those three scores mean</span>
+<p><strong>MAE</strong> — average miss on the 0–1 index. 0.046 is well under one label band (~0.11 wide).</p>
+<p><strong>Label agreement</strong> — how often Free / Moderate / Heavy / Severe matches the live reading. Random among four labels is 25%.</p>
+<p><strong>Hour-ranking concordance</strong> — given two hours on the same road and date, how often the model correctly says which is worse. 50% is a coin flip. This is closest to “when should I leave?”</p>
+</div>
+<p>The production estimator is then refit on all 20,198 rows. The numbers above are from the holdout-only snapshot, so they are not an in-sample exam on homework questions.</p>
+<p>Earlier, with only 115 live rows, bootstrap-versus-observed ranking looked like 89%. On thousands of rows that diagnostic fell to about 57% ranking and about 42–43% labels. That was the date-blind average, not this residual model. I kept that episode in the story because it is why the residual model exists: the formula could not see rain, incidents, or yesterday.</p>
+<p>What the site will not claim: a typical-week residual will not reproduce the worst jam you remember. The largest extra delay on the served typical-week grid is about <strong>13 minutes</strong> (KMP Expressway, Monday 08:00 versus 22:00). A 30-minute one-off jam is a different question (a peak/quantile model), not a fatter number on this grid.</p>
+
+<h2>7. Decisions I would defend</h2>
+<p><strong>Gate on skill, then ship.</strong> The trainer refused until rainy/dry/incident/day thresholds were met. After they were met, the model still had to beat the baseline on later days. Skill 0.54 cleared that. Skill ≤ 0 would have meant 503, not a silent fallback.</p>
+<p><strong>One source of truth.</strong> Corridor coordinates and road class live in <code>corridors.py</code>. Collectors, trainer and API all import it.</p>
+<p><strong>Incident matching by geometry.</strong> Distance to the digitised polyline, 300 m buffer from real incident-distance data, not a bounding box.</p>
+<p><strong>Fail loudly.</strong> 503 rather than a fabricated number; every cell carries an origin; tests fail if a default table appears.</p>
+<p><strong>Do not feed corridor identity as a cheat code.</strong> An earlier leave-one-corridor-out test on the first grid model got worse when <code>corridor_id</code> was a feature. The residual model may still encode it; time of day and lag dominate anyway.</p>
+
+<h2>8. Limitations</h2>
+<ul>
+<li>Served values are a <strong>typical week</strong> (baseline + residual for that weekday and hour), not “what NH-48 is doing this minute.”</li>
+<li>Time of day still does most of the work. Rain flags barely moved this GBT; lag and incidents matter more for the leftover.</li>
+<li>Dwarka Expressway remains a special case (construction traffic). It has an override in the artifact rather than being averaged away.</li>
+<li>3,119 live rows were unusable because the router snapped to the wrong length. Tightening via-points would recover training data, especially on KMP and SPR.</li>
+<li>Collection is stopped at 15 October 2026, so the submitted model will not keep learning new weeks unless collection is turned back on and the model is retrained.</li>
+<li>GitHub Actions schedules are best-effort and go dormant after 60 days of inactivity.</li>
+</ul>
+
+<h2>9. What I would do next</h2>
+<p>Turn collection back on, especially Monday rush hours, then retrain and re-run <code>tools/evaluate_forecast.py</code>. Recover the dropped length-mismatch rows. If the product needs “how bad can this hour get?”, train a labelled quantile/peak model instead of inflating You save on the typical-week grid.</p>
+
+<h2>10. Glossary</h2>
+<div class="tw"><table><thead><tr><th>Term</th><th>What it means here</th></tr></thead><tbody>
+<tr><td>Congestion index</td><td>Fraction of travel time lost to traffic. 0 = empty, 0.5 = twice free-flow.</td></tr>
+<tr><td>Free-flow time</td><td>Empty-road travel time. The comparison for “vs empty.”</td></tr>
+<tr><td>Corridor</td><td>One of the 13 tracked stretches.</td></tr>
+<tr><td>Slot</td><td>One corridor × weekday × hour. 2,184 of them.</td></tr>
+<tr><td>Baseline</td><td>TomTom’s historical average for that slot. Date-blind.</td></tr>
+<tr><td>Residual</td><td>Live index minus baseline. What the GBT predicts.</td></tr>
+<tr><td>Skill</td><td>1 − model MAE / baseline MAE. Positive means the model beats the average.</td></tr>
+<tr><td>MAE</td><td>Mean absolute error on the congestion index.</td></tr>
+<tr><td>Concordance</td><td>How often the worse of two hours is ranked correctly. 50% = coin flip.</td></tr>
+<tr><td>Gradient boosting</td><td>Many small trees in sequence, each correcting the last.</td></tr>
+<tr><td>Holdout</td><td>Later days kept out of training and used only to score.</td></tr>
+</tbody></table></div>
+
+<h2>11. Technical summary</h2>
+<div class="tw"><table><thead><tr><th></th><th></th></tr></thead><tbody>
+<tr><td>Language</td><td>Python 3, HTML/CSS/JavaScript</td></tr>
+<tr><td>Backend</td><td>Flask; 77 tests in <code>backend/test_api.py</code> passed (15 Oct 2026)</td></tr>
+<tr><td>Machine learning</td><td>scikit-learn GradientBoostingRegressor (residual); MLP tried, not shipped</td></tr>
+<tr><td>Data handling</td><td>pandas, NumPy, joblib</td></tr>
+<tr><td>Frontend</td><td>MapLibre GL JS (vendored), no framework</td></tr>
+<tr><td>Data sources</td><td>TomTom Routing, TomTom Incidents, Open-Meteo, <code>holidays</code></td></tr>
+<tr><td>Hosting</td><td>Vercel (static frontend + place/route functions). GitHub Pages optional for the map only</td></tr>
+<tr><td>Dataset</td><td>2,184-slot baseline; 24,490 live rows (16 Aug – 15 Oct); 20,198 used to train</td></tr>
+<tr><td>Shipped model</td><td><code>forecast-gbt-2026-10-15</code>, skill 0.5417, 2,184 residual-adjusted cells</td></tr>
+</tbody></table></div>
+<p>To run locally: clone the repository and run <code>./run.sh</code>. Do not open the HTML as a <code>file://</code> page — browsers block the map and data.</p>
+<hr>
+<p><em>Figures in this document were taken from <code>data/gurugram_observed.csv</code>, <code>models/forecast_residual_gbt.joblib</code>, <code>tools/evaluate_forecast.py --no-write</code>, <code>model/forecast_model.py readiness</code>, and <code>pytest backend/test_api.py</code> as of 15–16 October 2026. They were not copied from an older README.</em></p>
+</body>
+</html>
