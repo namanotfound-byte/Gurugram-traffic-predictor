@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Viva notes — Gurugram Traffic Predictor</title>
+<style>
+body{margin:0;padding:40px 48px;max-width:780px;margin-inline:auto;
+  font-family:Charter,Georgia,"Times New Roman",serif;color:#16181d;
+  font-size:11pt;line-height:1.5;background:#fff}
+h1{font-size:18pt;margin:0 0 4px}
+h1+p{color:#5b6169;margin:0 0 18px;font-size:10.5pt}
+h2{font-size:12pt;margin:22px 0 8px;padding-bottom:4px;border-bottom:1.5px solid #d8dce2}
+q,.q{font-weight:700;display:block;margin:14px 0 4px}
+p{margin:0 0 8px}
+ul{margin:0 0 10px;padding-left:20px}
+li{margin-bottom:3px}
+code{font-family:Menlo,Consolas,monospace;font-size:.86em;background:#f5f6f8;padding:1px 4px}
+table{border-collapse:collapse;width:100%;font-size:10pt;margin:0 0 12px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid #d8dce2;vertical-align:top}
+th{border-bottom:1.5px solid #16181d;font-size:9pt;text-transform:uppercase}
+@media print{body{padding:0}@page{margin:16mm}}
+</style>
+</head>
+<body>
+<h1>Viva notes</h1>
+<p>Naman Arora · Gurugram Traffic Congestion Predictor · read these answers out loud</p>
+
+<h2>What is the project?</h2>
+<p class="q">What did you make?</p>
+<p>A website that tells you <strong>when to leave</strong> on 13 Gurugram roads. You pick a day. The map colours each road for each hour. It shows best time, avoid time, and extra minutes versus an empty road. You can also type two places and see a trip.</p>
+<p>Site: <code>gurugram-traffic-predictor.vercel.app</code></p>
+
+<p class="q">What is the one question it answers?</p>
+<p>If I have to drive this road on this weekday, which hour is better?</p>
+
+<h2>The number</h2>
+<p class="q">What is congestion index?</p>
+<p>How much of the trip is lost to traffic, from 0 (empty) to 1 (stuck).</p>
+<pre>index = 1 − (empty time ÷ expected time)</pre>
+<p>Empty time = TomTom’s no-traffic time. Expected time = travel time with traffic. Extra minutes = <code>empty × index / (1 − index)</code>.</p>
+<p>Labels: Free below 0.091, Moderate below 0.20, Heavy below 0.31, Severe above that (about 1.10×, 1.25×, 1.45× empty time).</p>
+
+<p class="q">How do you predict?</p>
+<pre>served value = clip(baseline + residual, 0, 1)</pre>
+<p><strong>Baseline</strong> = TomTom’s typical hour for that weekday (date-blind: every Friday 6pm is the same). <strong>Residual</strong> = leftover the model learned (rain, jams nearby, what the road did recently). <code>clip</code> keeps it between 0 and 1.</p>
+
+<h2>Data</h2>
+<p class="q">Where does data come from?</p>
+<p>TomTom <strong>Routing</strong> API only. Same API for typical hour and live time. Weather from Open-Meteo (free, no key). Jams from TomTom Incidents, only if within 300 m of the road line. Holidays: Python <code>holidays</code> for Haryana.</p>
+
+<p class="q">Why Routing, not Flow Segment?</p>
+<p>This TomTom key is Routing-only. Flow Segment and Search returned 403. So both live and typical times come from Routing: future <code>departAt</code> for the typical week, <code>departAt=now</code> for live.</p>
+
+<p class="q">How much data?</p>
+<p>24,490 live rows, 16 Aug to 15 Oct 2026, 61 days. After dropping wrong-length routes and rows with no baseline: <strong>20,198</strong> used to train. Grid is 13 × 7 × 24 = <strong>2,184</strong> slots.</p>
+
+<p class="q">Why drop rows?</p>
+<p>If TomTom’s route length is more than 2% off the mapped road, it snapped to the wrong road. Those rows would train the model on a different street.</p>
+
+<h2>Model</h2>
+<p class="q">Which algorithm?</p>
+<p>scikit-learn <strong>GradientBoostingRegressor</strong>. Many small decision trees, each one fixes the last one’s mistakes. It predicts the leftover, not the whole congestion from scratch. Saved as a <code>.joblib</code> file.</p>
+
+<p class="q">Why leftover, not the full number?</p>
+<p>Rush hour is already in TomTom’s typical hour. The model only has to explain the extra: a jam, rain, yesterday. If it cannot beat that typical hour on later days, we do not ship it.</p>
+
+<p class="q">What features?</p>
+<p>Mainly hour of day (sine and cosine so 23:00 is near 00:00), recent lag, incidents, road class (arterial / expressway / highway). Time of day does most of the work. That matches real life: 8am is busy, 2am is not.</p>
+
+<p class="q">Did you try anything else?</p>
+<p>An MLP (neural net) on the same split. It was worse. Not used.</p>
+
+<p class="q">How do you know it works?</p>
+<p>Train on earlier days, test on later days (4–15 Oct). Labels match live 77.9% of the time. Ranking two hours correctly 88.1% of the time. 50% ranking would be a coin flip. Then the final model was refit on all 20,198 rows.</p>
+
+<h2>What we used (say this list)</h2>
+<table>
+<thead><tr><th>Thing</th><th>What for</th><th>Why this</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>All backend, training, collection</td><td>School language; libraries for ML and tables</td></tr>
+<tr><td>Flask</td><td>API: /now, /advice, trip</td><td>Small web server. Easy to explain.</td></tr>
+<tr><td>pandas / NumPy</td><td>CSV and arrays</td><td>Standard for tables of numbers</td></tr>
+<tr><td>scikit-learn</td><td>Gradient boosting</td><td>One import, trees, feature importance</td></tr>
+<tr><td>joblib</td><td>Save / load the model file</td><td>What sklearn uses to pickle models</td></tr>
+<tr><td>requests</td><td>Call TomTom and Open-Meteo</td><td>HTTP from Python</td></tr>
+<tr><td>pytest</td><td>77 tests on the API</td><td>Catch fake tables and broken math</td></tr>
+<tr><td>MapLibre GL JS</td><td>The map</td><td>Open-source. No Google Maps bill.</td></tr>
+<tr><td>Vercel</td><td>Host the site</td><td>Static map + two small functions for places and route</td></tr>
+<tr><td>GitHub Actions</td><td>Collected data every hour</td><td>Computer at school cannot stay on 24/7</td></tr>
+<tr><td>OpenStreetMap</td><td>Road start/end points</td><td>Nominatim geocoding for coordinates</td></tr>
+</tbody>
+</table>
+
+<h2>Files (if she points at the repo)</h2>
+<table>
+<thead><tr><th>File</th><th>Say</th></tr></thead>
+<tbody>
+<tr><td><code>corridors.py</code></td><td>Only place the 13 roads are defined. Everything else imports this.</td></tr>
+<tr><td><code>bootstrap_collect.py</code></td><td>One sweep of all 2,184 typical hours from TomTom.</td></tr>
+<tr><td><code>collect_live.py</code></td><td>Live poll + weather + incidents into the CSV.</td></tr>
+<tr><td><code>model/forecast_model.py</code></td><td>Train the residual GBT.</td></tr>
+<tr><td><code>backend/app.py</code></td><td>Flask API. Fills the 2,184 cells.</td></tr>
+<tr><td><code>frontend/index.html</code></td><td>Map and buttons.</td></tr>
+<tr><td><code>frontend/data/bundle.json</code></td><td>The 2,184 numbers the live site reads.</td></tr>
+<tr><td><code>api/places.mjs</code> / <code>route.mjs</code></td><td>Trip search and TomTom route on Vercel.</td></tr>
+</tbody>
+</table>
+
+<h2>Roads</h2>
+<p>13 corridors. Classes: arterial, expressway, highway.</p>
+<ul>
+<li>NH-48, MG Road, Golf Course Road, Sohna Road</li>
+<li>Dwarka Expressway, Golf Course Extension, Mehrauli–Gurgaon Road, SPR</li>
+<li>KMP, Delhi–Mumbai Expressway, NH-352W, Old Delhi–Gurgaon Road, Pataudi Road</li>
+</ul>
+<p class="q">Why 13, not 8?</p>
+<p>Eight roads were mostly arterials. Holding out Dwarka or NH-48 left no similar road to learn from. Extra expressways and highways were added so each class has siblings.</p>
+<p class="q">Why not use corridor name as a feature?</p>
+<p>The model should learn “expressway at 8am”, not memorise “Dwarka”. We use road class, not corridor id.</p>
+
+<h2>Site behaviour</h2>
+<p class="q">Is this live Google Maps?</p>
+<p>No. It is a typical week (baseline + residual). Not “NH-48 this second.” Trip planner uses live TomTom for the path; congestion on our 13 roads still uses the typical-week forecast.</p>
+<p class="q">What if the model file is missing?</p>
+<p>API returns HTTP 503. No made-up table. Tests check that.</p>
+<p class="q">Biggest extra time you show?</p>
+<p>About 13 minutes, KMP, Monday 8am versus 10pm. A 30-minute jam on one day is not what this typical-week grid is for.</p>
+<p class="q">How do I run it?</p>
+<p><code>./run.sh</code> — Flask + a local web server. Do not double-click the HTML; the browser blocks the map data on <code>file://</code>.</p>
+
+<h2>One-liners if she goes fast</h2>
+<ul>
+<li>Language: Python + a bit of JavaScript for the map.</li>
+<li>ML: gradient boosting on the leftover vs TomTom typical hour.</li>
+<li>Data: measured TomTom, not made-up traffic.</li>
+<li>Train: 20,198 rows. Test on later days: 77.9% labels, 88.1% ranking.</li>
+<li>Frontend: MapLibre. Host: Vercel.</li>
+</ul>
+</body>
+</html>
